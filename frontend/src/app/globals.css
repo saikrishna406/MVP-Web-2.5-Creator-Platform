@@ -1875,29 +1875,32 @@ body {
   top: 50%;
   left: 7%;
   transform: translateY(-50%);
-  max-width: 680px;
+  max-width: 620px;
   z-index: 10;
   pointer-events: none;
 }
 
 .slide-content::before {
-  content: '';
+  content: 'RAPIDMVP';
   display: block;
-  width: 40px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.6);
-  margin-bottom: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
 }
 
 .slide-title {
   font-family: var(--font-sans);
-  font-size: clamp(2.5rem, 5.5vw, 5rem);
+  font-size: clamp(2rem, 4vw, 3.75rem);
   font-weight: 300;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
   margin-bottom: 1.25rem;
   color: #fff;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 20px rgba(0, 0, 0, 0.5);
 }
 
 .slide-title span {
@@ -1907,12 +1910,12 @@ body {
 
 .slide-description {
   font-family: var(--font-sans);
-  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
-  line-height: 1.7;
+  font-size: clamp(0.85rem, 1.2vw, 1rem);
+  line-height: 1.8;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.75);
-  max-width: 420px;
-  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 380px;
+  letter-spacing: 0.02em;
 }
 
 .slides-navigation {
