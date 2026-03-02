@@ -1,209 +1,575 @@
+'use client';
 import Link from 'next/link';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
 import {
   Zap, Coins, Star, Lock, ShoppingBag, BarChart3, Users,
-  ArrowRight, Sparkles, Globe, Shield, ChevronRight,
+  ArrowRight, Shield, TrendingUp, Check, ChevronDown,
+  Crown, Heart, Play, Sparkles, MessageCircle, Globe,
 } from 'lucide-react';
 
-export default function LandingPage() {
+import { Component as HeroSlider } from '@/components/ui/lumina-interactive-list';
+import { DesignSteps } from '@/components/ui/design-steps';
+/* ═══ ANIMATION HELPERS ═══ */
+function useInViewOnce(margin = '-60px') {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: margin as `${number}px` });
+  return { ref, inView };
+}
+
+function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const { ref, inView } = useInViewOnce();
   return (
-    <div className="min-h-screen">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold gradient-text">Rapid MVP</span>
+    <motion.div ref={ref}
+      initial={{ opacity: 0, y: 32 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+function StaggerGrid({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const { ref, inView } = useInViewOnce();
+  return (
+    <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+      className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+function StaggerItem({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.div
+      variants={{ hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } } }}
+      className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+/* ═══ TICKER STRIP ═══ */
+const tickerItems = ['Musicians', 'Illustrators', 'Streamers', 'Writers', 'Educators', 'Photographers', 'Podcasters', 'Coaches', 'Chefs', 'Gamers', 'Comedians', 'Filmmakers'];
+
+function TickerStrip() {
+  const doubled = [...tickerItems, ...tickerItems];
+  return (
+    <div className="hero-ticker-strip">
+      <motion.div className="ticker-track"
+        animate={{ x: ['0%', '-50%'] }}
+        transition={{ duration: 30, ease: 'linear', repeat: Infinity }}>
+        {doubled.map((item, i) => (
+          <span key={i} className="ticker-item">
+            <span className="ticker-dot" />
+            {item}
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+/* ═══ SCROLLER STRIP ═══ */
+const scrollerItems = [
+  '⚡ Token-Gated Content',
+  '🏆 Gamified Rewards',
+  '💳 Stripe Payments',
+  '🔒 Exclusive Access',
+  '⭐ Daily Bonuses',
+  '📊 Live Analytics',
+  '🎁 Creator Store',
+  '🚀 Zero Gas Fees',
+  '👑 Fan Leaderboard',
+];
+
+function ScrollerStrip() {
+  const doubled = [...scrollerItems, ...scrollerItems];
+  return (
+    <div className="scroller-section">
+      <div className="infinite-scroller-wrapper">
+        <motion.div className="infinite-scroller-track"
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ duration: 36, ease: 'linear', repeat: Infinity }}>
+          {doubled.map((item, i) => <span key={i} className="scroller-item">{item}</span>)}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ HERO DASHBOARD CARDS ═══ */
+function HeroCards() {
+  return (
+    <div className="hero-right-panel">
+      {/* Main creator card */}
+      <motion.div className="hero-card"
+        initial={{ opacity: 0, y: 40, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.9, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}>
+        <div className="hero-card-header">
+          <div className="hc-avatar violet">🎵</div>
+          <div>
+            <div className="hc-name">Aria Storm</div>
+            <div className="hc-sub">Music Artist · Pro Plan</div>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="btn-secondary text-sm">
-              Sign In
-            </Link>
-            <Link href="/register" className="btn-primary text-sm">
-              Get Started <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px]" />
-          <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-secondary/15 rounded-full blur-[120px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-accent/10 rounded-full blur-[100px]" />
-        </div>
-
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary-light text-sm font-medium mb-8 animate-fade-in">
-            <Sparkles className="w-4 h-4" />
-            Web 2.5 Creator Economy Platform
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            Monetize Your
-            <br />
-            <span className="gradient-text">Creative Vision</span>
-          </h1>
-
-          <p className="text-xl text-foreground-muted max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            The next-gen platform that combines the best of Web3 tokenomics with centralized simplicity.
-            Token-gated content, gamified engagement, and a creator-first economy.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <Link href="/register" className="btn-primary text-base px-8 py-3.5">
-              Start Creating <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link href="/register" className="btn-secondary text-base px-8 py-3.5">
-              Join as Fan
-            </Link>
-          </div>
-
-          {/* Floating cards */}
-          <div className="mt-16 grid grid-cols-3 gap-4 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.5s' }}>
-            <div className="card text-center py-6 animate-float" style={{ animationDelay: '0s' }}>
-              <Coins className="w-8 h-8 text-accent mx-auto mb-2" />
-              <div className="text-2xl font-bold">Tokens</div>
-              <div className="text-xs text-foreground-muted">Purchase & Spend</div>
-            </div>
-            <div className="card text-center py-6 animate-float" style={{ animationDelay: '0.5s' }}>
-              <Star className="w-8 h-8 text-secondary mx-auto mb-2" />
-              <div className="text-2xl font-bold">Points</div>
-              <div className="text-xs text-foreground-muted">Earn & Redeem</div>
-            </div>
-            <div className="card text-center py-6 animate-float" style={{ animationDelay: '1s' }}>
-              <Lock className="w-8 h-8 text-primary-light mx-auto mb-2" />
-              <div className="text-2xl font-bold">Gated</div>
-              <div className="text-xs text-foreground-muted">Exclusive Content</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Two Economy Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Two-Economy <span className="gradient-text">System</span>
-            </h2>
-            <p className="text-foreground-muted max-w-xl mx-auto">
-              A dual-currency system that incentivizes both monetary support and active engagement
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Tokens */}
-            <div className="card p-8 border-accent/30 bg-gradient-to-br from-accent/10 to-transparent">
-              <div className="w-14 h-14 rounded-2xl bg-accent/20 flex items-center justify-center mb-6">
-                <Coins className="w-7 h-7 text-accent" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3">Creator Tokens</h3>
-              <p className="text-foreground-muted mb-6">
-                Purchased via Stripe. Use tokens to unlock exclusive content, support creators directly, and access gated experiences.
-              </p>
-              <ul className="space-y-3">
-                {['Purchase via secure Stripe checkout', 'Unlock token-gated content', 'Support creators directly', 'Threshold access for holders'].map(item => (
-                  <li key={item} className="flex items-center gap-2 text-sm">
-                    <ChevronRight className="w-4 h-4 text-accent shrink-0" /> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Points */}
-            <div className="card p-8 border-secondary/30 bg-gradient-to-br from-secondary/10 to-transparent">
-              <div className="w-14 h-14 rounded-2xl bg-secondary/20 flex items-center justify-center mb-6">
-                <Star className="w-7 h-7 text-secondary" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3">Engagement Points</h3>
-              <p className="text-foreground-muted mb-6">
-                Earned through platform engagement. Like posts, comment, log in daily — earn points and redeem them for exclusive rewards.
-              </p>
-              <ul className="space-y-3">
-                {['Daily login bonuses', 'Like & comment rewards', 'Redeem for store items', 'Climb the leaderboard'].map(item => (
-                  <li key={item} className="flex items-center gap-2 text-sm">
-                    <ChevronRight className="w-4 h-4 text-secondary shrink-0" /> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div style={{ marginLeft: 'auto', background: 'rgba(16,185,129,0.1)', color: '#10B981', fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: 999, border: '1px solid rgba(16,185,129,0.2)' }}>
+            Live ✦
           </div>
         </div>
-      </section>
 
-      {/* Features Grid */}
-      <section className="py-20 px-6 bg-background-secondary/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Built for <span className="gradient-text">Creators & Fans</span>
-            </h2>
-            <p className="text-foreground-muted max-w-xl mx-auto">
-              Everything you need to build a thriving creator economy
-            </p>
+        <div className="hc-stats-row">
+          <div className="hc-stat">
+            <div className="hc-val">12,450</div>
+            <div className="hc-label">Tokens Earned</div>
           </div>
+          <div className="hc-stat">
+            <div className="hc-val">8,241</div>
+            <div className="hc-label">Active Fans</div>
+          </div>
+          <div className="hc-stat">
+            <div className="hc-val" style={{ color: '#10B981' }}>+38%</div>
+            <div className="hc-label">Growth</div>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: <Lock className="w-6 h-6" />, title: 'Token-Gated Content', description: 'Create exclusive content that fans unlock with tokens. Set fixed costs or threshold requirements.' },
-              { icon: <ShoppingBag className="w-6 h-6" />, title: 'Redemption Store', description: 'Offer exclusive rewards fans can redeem with their earned points — shoutouts, merch, experiences.' },
-              { icon: <BarChart3 className="w-6 h-6" />, title: 'Creator Analytics', description: 'Track token sales, fan engagement, post performance, and revenue — all in one dashboard.' },
-              { icon: <Shield className="w-6 h-6" />, title: 'Secure by Design', description: 'All wallet operations are atomic, server-validated, and designed to prevent double-spending.' },
-              { icon: <Users className="w-6 h-6" />, title: 'Fan Engagement', description: 'Gamified engagement with daily rewards, action-based points, and platform-wide leaderboards.' },
-              { icon: <Globe className="w-6 h-6" />, title: 'Web 2.5 Ready', description: 'Web3 tokenomics without the complexity. No wallets, no gas fees — just seamless UX.' },
-            ].map((feature) => (
-              <div key={feature.title} className="card p-6 hover:border-primary/30 transition-all group">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary-light mb-4 group-hover:bg-primary/20 transition-colors">
-                  {feature.icon}
+        <div className="hc-bar-row">
+          <div className="hc-bar-label">
+            <span>Monthly Revenue</span>
+            <span style={{ color: 'var(--coral)', fontWeight: 700 }}>$4,820</span>
+          </div>
+          <div className="hc-bar-track">
+            <motion.div className="hc-bar-fill"
+              initial={{ width: 0 }}
+              animate={{ width: '78%' }}
+              transition={{ duration: 1.4, delay: 1.2, ease: [0.22, 1, 0.36, 1] }} />
+          </div>
+        </div>
+
+        <div className="hc-tags">
+          <span className="hc-tag">🎵 Music</span>
+          <span className="hc-tag active">Token-Gated</span>
+          <span className="hc-tag">💬 Community</span>
+        </div>
+      </motion.div>
+
+      {/* Floating notification badge */}
+      <motion.div className="hero-badge-card"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}>
+        <div className="badge-icon">⭐</div>
+        <div>
+          <div className="badge-label">Points Redeemed Today</div>
+          <div className="badge-val">24,800 pts</div>
+        </div>
+      </motion.div>
+
+      {/* Fan stats card */}
+      <motion.div className="hero-card"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}>
+        <div className="hero-card-header" style={{ marginBottom: '1rem' }}>
+          <div className="hc-avatar amber">🛍️</div>
+          <div>
+            <div className="hc-name">New Redemption</div>
+            <div className="hc-sub">Fan redeemed &quot;Private Shoutout&quot;</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {[
+            { icon: <Heart size={14} />, val: '4.8K', label: 'Likes' },
+            { icon: <MessageCircle size={14} />, val: '938', label: 'Comments' },
+            { icon: <Users size={14} />, val: '8.2K', label: 'Fans' },
+          ].map(s => (
+            <div key={s.label} style={{
+              flex: 1,
+              background: 'var(--gray-50)',
+              borderRadius: 10,
+              padding: '0.65rem 0.5rem',
+              textAlign: 'center',
+            }}>
+              <div style={{ color: 'var(--gray-400)', marginBottom: 3, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--gray-900)' }}>{s.val}</div>
+              <div style={{ fontSize: '0.6rem', color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ═══ FAQ ═══ */
+const faqs = [
+  { q: 'What is Rapid MVP Creator?', a: 'A Web 2.5 creator monetization platform combining token economics with everyday simplicity — no crypto wallets, no gas fees. Creators earn, fans support.' },
+  { q: 'How do Creator Tokens work?', a: 'Fans purchase token packages via Stripe. Tokens unlock exclusive content, let fans support creators directly, or grant threshold access to gated experiences.' },
+  { q: 'What are Engagement Points?', a: "Points are earned by interacting — daily logins, liking or commenting on posts. They can be redeemed in the creator's store for exclusive rewards." },
+  { q: 'Is there a fee for creators?', a: 'Creators keep the majority of every token purchase. Platform fees are minimal, transparent, and only charged on successful transactions.' },
+  { q: 'How secure are payments?', a: 'All payments go through Stripe with PCI compliance. Every wallet operation is atomic server-side — zero chance of double-spending or manipulation.' },
+];
+
+function FaqItem({ q, a, i }: { q: string; a: string; i: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <FadeUp delay={i * 0.05}>
+      <div className="faq-item">
+        <button onClick={() => setOpen(!open)} className="faq-question" aria-expanded={open}>
+          <span>{q}</span>
+          <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.28 }}>
+            <ChevronDown size={18} color="var(--gray-400)" />
+          </motion.div>
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div key="ans"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}>
+              <p className="faq-answer">{a}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </FadeUp>
+  );
+}
+
+/* ═══ DATA ═══ */
+const features = [
+  { icon: <Lock size={20} />, title: 'Token-Gated Content', desc: 'Create posts fans must unlock with tokens. Fixed cost or token-threshold gates for tiered access.', color: 'violet' },
+  { icon: <ShoppingBag size={20} />, title: 'Redemption Store', desc: 'Let fans cash in engagement points for shoutouts, merch, and custom experiences.', color: 'amber' },
+  { icon: <BarChart3 size={20} />, title: 'Creator Analytics', desc: 'Revenue, top fans, post performance — all in one clean dashboard designed for growth.', color: 'coral' },
+  { icon: <Shield size={20} />, title: 'Atomic Security', desc: 'All wallet ops run in transactions. Zero double-spending risk, ever. Bank-grade protection.', color: 'sky' },
+  { icon: <Crown size={20} />, title: 'Fan Leaderboard', desc: 'Celebrate top supporters publicly. Gamified rankings fuel loyalty and community.', color: 'emerald' },
+  { icon: <Sparkles size={20} />, title: 'Web 2.5 Ready', desc: 'Token economics without complexity. No wallets. No gas fees. Just seamless, familiar UX.', color: 'violet' },
+];
+
+const creators = [
+  {
+    emoji: '🎵', name: 'Aria Storm', handle: '@ariastorm', role: 'Music Artist',
+    quote: 'My fans love unlocking exclusive sessions. Token-gating changed how I monetize entirely.',
+    tokens: '12,400', fans: '8.2K', growth: '+340% revenue',
+  },
+  {
+    emoji: '🎨', name: 'Leo Chen', handle: '@leovisuals', role: 'Visual Artist',
+    quote: "The points system keeps my community coming back every single day. It's genuinely addictive!",
+    tokens: '9,800', fans: '5.6K', growth: '+220% engagement',
+  },
+  {
+    emoji: '🏋️', name: 'Zara Pulse', handle: '@zarapulse', role: 'Fitness Coach',
+    quote: 'I set up my store and my superfans immediately started redeeming. Zero learning curve.',
+    tokens: '21,300', fans: '14.1K', growth: '3× token sales',
+  },
+];
+
+const steps = [
+  {
+    icon: <Users size={22} />, color: 'violet', title: 'Sign up in seconds',
+    desc: 'Choose Creator or Fan. Fill in your profile and go live instantly. No technical setup required — just your passion and creativity.',
+  },
+  {
+    icon: <Coins size={22} />, color: 'ink', title: 'Set up your economy',
+    desc: 'Create token-gated posts, set your pricing, and build your redemption store. Full control, your rules, your brand.',
+  },
+  {
+    icon: <TrendingUp size={22} />, color: 'amber', title: 'Watch your revenue grow',
+    desc: 'Fans buy tokens, earn points, and engage. You get paid instantly via Stripe. Track everything in your analytics dashboard.',
+  },
+];
+
+const stats = [
+  { num: '50K+', label: 'Active Creators', suffix: '' },
+  { num: '$2M+', label: 'Creator Earnings', suffix: '' },
+  { num: '1.2M+', label: 'Fan Memberships', suffix: '' },
+  { num: '99.9', label: 'Uptime SLA', suffix: '%' },
+];
+
+/* ════════════════════════════════════════
+   PAGE
+   ════════════════════════════════════════ */
+export default function LandingPage() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Trigger immediately to check initial scroll position
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <>
+      <div className="lp-root">
+
+        {/* ── NAV ── */}
+        <motion.nav className={`lp-nav ${isScrolled ? 'scrolled' : ''}`}
+          initial={{ y: -80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+          <div className="lp-nav-inner patreon-style">
+            {/* Left Nav */}
+            <div className="lp-nav-links">
+              {['Creators', 'Features', 'Pricing', 'Resources'].map(l => (
+                <a key={l} href={`#${l.toLowerCase().replace(/\s+/g, '-')}`} className="lp-nav-link">
+                  {l}
+                </a>
+              ))}
+              <a href="#updates" className="lp-nav-pill-link">Updates</a>
+            </div>
+
+            {/* Center Logo */}
+            <Link href="/" className="lp-logo center-logo">
+              <span className="lp-logo-text">RAPIDMVP</span>
+            </Link>
+
+            {/* Right CTAs */}
+            <div className="lp-nav-ctas">
+              <Link href="/search" className="btn-nav-outline-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                Find a Creator
+              </Link>
+              <Link href="/login" className="btn-nav-outline-pill">Log in</Link>
+              <Link href="/register" className="btn-nav-solid-pill">Get Started</Link>
+            </div>
+          </div>
+        </motion.nav>
+
+        {/* ── HERO ── */}
+        <section className="lp-hero" style={{ height: '100vh', padding: 0, position: 'relative', border: 'none', background: 'transparent' }}>
+          <HeroSlider />
+        </section>
+
+        {/* ── SCROLLER ── */}
+        <ScrollerStrip />
+
+        {/* ── STATS BAR ── */}
+        <FadeUp>
+          <div className="stats-bar">
+            {stats.map(s => (
+              <div key={s.label} className="stats-bar-item">
+                <div className="stats-bar-num">
+                  {s.num}<span>{s.suffix}</span>
                 </div>
-                <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                <p className="text-sm text-foreground-muted leading-relaxed">{feature.description}</p>
+                <div className="stats-bar-label">{s.label}</div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </FadeUp>
 
-      {/* CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="card p-12 border-primary/30 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px]" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-[80px]" />
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
-              <p className="text-foreground-muted mb-8 max-w-lg mx-auto">
-                Join as a creator to monetize your content or as a fan to support your favorites. The creator economy awaits.
+        {/* ── ECONOMY ── */}
+        <section className="lp-section" id="features">
+          <FadeUp>
+            <div className="section-header">
+              <div className="section-label">
+                <span className="section-label-dot" /> Dual Currency
+              </div>
+              <h2 className="section-h2">
+                Two economies.<br /><em>One platform.</em>
+              </h2>
+              <p className="section-sub">
+                A dual-currency model — tokens you buy, points you earn. Together they create a thriving creator ecosystem built for long-term loyalty.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/register" className="btn-primary text-base px-8 py-3.5">
-                  Create Account <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link href="/login" className="btn-secondary text-base px-8 py-3.5">
-                  Sign In
+            </div>
+          </FadeUp>
+
+          <StaggerGrid className="economy-grid">
+            <StaggerItem>
+              <div className="economy-card">
+                <div className="economy-card-accent accent-violet" />
+                <div className="economy-num violet">01</div>
+                <div className="economy-title">Creator Tokens</div>
+                <p className="economy-desc">
+                  Purchased via Stripe. Fans spend tokens to unlock exclusive content, support creators directly, or gain threshold access to gated experiences.
+                </p>
+                <ul className="economy-list">
+                  {['Purchase via Stripe checkout', 'Unlock token-gated posts', 'Direct creator support', 'Threshold access tiers'].map(item => (
+                    <li key={item} className="economy-list-item">
+                      <div className="eli-check violet"><Check size={10} strokeWidth={3} /></div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/register" className="economy-cta">
+                  Learn more <ArrowRight size={14} />
                 </Link>
               </div>
+            </StaggerItem>
+
+            <StaggerItem>
+              <div className="economy-card">
+                <div className="economy-card-accent accent-amber" />
+                <div className="economy-num amber">02</div>
+                <div className="economy-title">Engagement Points</div>
+                <p className="economy-desc">
+                  Earned by showing up — daily logins, liking posts, leaving comments. Redeem for exclusive rewards from your favourite creator&apos;s store.
+                </p>
+                <ul className="economy-list">
+                  {['Daily login bonuses', 'Like & comment rewards', 'Redeem in creator stores', 'Climb the leaderboard'].map(item => (
+                    <li key={item} className="economy-list-item">
+                      <div className="eli-check amber"><Check size={10} strokeWidth={3} /></div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/register" className="economy-cta amber">
+                  Learn more <ArrowRight size={14} />
+                </Link>
+              </div>
+            </StaggerItem>
+          </StaggerGrid>
+        </section>
+
+
+        {/* ── HOW IT WORKS ── */}
+        <DesignSteps />
+
+        {/* ── FEATURES ── */}
+        <div className="lp-section-dark" id="features">
+          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+            <FadeUp>
+              <div className="section-header">
+                <div className="section-label" style={{ color: 'var(--coral-light)', background: 'rgba(255,66,77,0.12)' }}>
+                  <span className="section-label-dot" style={{ background: 'var(--coral)' }} />
+                  Platform Features
+                </div>
+                <h2 className="section-h2 section-h2-light">
+                  Everything you need <br /><em>to build &amp; grow.</em>
+                </h2>
+              </div>
+            </FadeUp>
+
+            <StaggerGrid className="features-grid">
+              {features.map(f => (
+                <StaggerItem key={f.title}>
+                  <div className="feature-card">
+                    <div className={`fi-wrap ${f.color}`}>{f.icon}</div>
+                    <div className="feature-title">{f.title}</div>
+                    <p className="feature-desc">{f.desc}</p>
+                  </div>
+                </StaggerItem>
+              ))}
+            </StaggerGrid>
+          </div>
+        </div>
+
+        {/* ── CREATORS ── */}
+        <section className="lp-section" id="creators">
+          <FadeUp>
+            <div className="section-header">
+              <div className="section-label">
+                <span className="section-label-dot" /> Success Stories
+              </div>
+              <h2 className="section-h2">
+                Real creators.<br /><em>Real results.</em>
+              </h2>
+              <p className="section-sub">
+                Join thousands of creators who already earn a living doing what they love on RapidMVP.
+              </p>
+            </div>
+          </FadeUp>
+
+          <StaggerGrid className="creators-grid">
+            {creators.map(c => (
+              <StaggerItem key={c.name}>
+                <div className="creator-card">
+                  <div className="cc-top">
+                    <div className="cc-avi">{c.emoji}</div>
+                    <div>
+                      <div className="cc-name">{c.name}</div>
+                      <div className="cc-handle">{c.handle}</div>
+                      <div className="cc-role">{c.role}</div>
+                    </div>
+                  </div>
+                  <p className="cc-quote">&ldquo;{c.quote}&rdquo;</p>
+                  <div className="cc-stats">
+                    <div className="cc-stat">
+                      <div className="cc-val">{c.tokens}</div>
+                      <div className="cc-label">Tokens Earned</div>
+                    </div>
+                    <div className="cc-stat">
+                      <div className="cc-val">{c.fans}</div>
+                      <div className="cc-label">Active Fans</div>
+                    </div>
+                  </div>
+                  <div className="cc-pill">
+                    <TrendingUp size={11} /> {c.growth}
+                  </div>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerGrid>
+        </section>
+
+        {/* ── FAQ ── */}
+        <div className="lp-section-full" id="faq">
+          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+            <FadeUp>
+              <div className="section-header section-header-center">
+                <div className="section-label">
+                  <span className="section-label-dot" /> Got Questions?
+                </div>
+                <h2 className="section-h2">Frequently <em>asked</em></h2>
+                <p className="section-sub" style={{ margin: '0 auto' }}>
+                  Everything you need to know about the platform and how to get started.
+                </p>
+              </div>
+            </FadeUp>
+            <div className="faq-wrapper">
+              {faqs.map((f, i) => <FaqItem key={i} q={f.q} a={f.a} i={i} />)}
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="py-10 px-6 border-t border-border">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
-            <span className="font-bold gradient-text">Rapid MVP Creator</span>
-          </div>
-          <p className="text-sm text-foreground-muted">
-            © 2026 Rapid MVP Creator. Web 2.5 Creator Economy Platform.
-          </p>
+        {/* ── CTA ── */}
+        <div className="cta-section">
+          <div className="cta-noise" />
+          <FadeUp>
+            <div className="cta-inner">
+              <div className="cta-label">Start Today — It&apos;s Free</div>
+              <h2 className="cta-h2">Your creator<br />empire starts here.</h2>
+              <p className="cta-sub">
+                Join as a creator to monetize your content, or as a fan to support your favourites. No credit card required to get started.
+              </p>
+              <div className="cta-btns">
+                <Link href="/register" className="btn-cta-primary" id="cta-create-account">
+                  Create free account <ArrowRight size={16} />
+                </Link>
+                <Link href="/login" className="btn-cta-ghost" id="cta-sign-in">
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          </FadeUp>
         </div>
-      </footer>
-    </div>
+
+        {/* ── FOOTER ── */}
+        <footer className="lp-footer">
+          <div className="footer-inner">
+            <div className="footer-logo">
+              <div className="footer-logo-mark">
+                <Zap size={13} color="#fff" strokeWidth={2.5} />
+              </div>
+              <span className="footer-logo-text">RapidMVP</span>
+            </div>
+            <p className="footer-copy">© 2026 Rapid MVP Creator. Web 2.5 Creator Economy Platform.</p>
+            <div className="footer-links">
+              <a href="#features" className="footer-link">Features</a>
+              <a href="#how-it-works" className="footer-link">How It Works</a>
+              <a href="#faq" className="footer-link">FAQ</a>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+    </>
   );
 }

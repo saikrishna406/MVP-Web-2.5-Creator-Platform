@@ -1,0 +1,161 @@
+# Rapid MVP Creator Platform - Implementation Plan
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Frontend["Next.js App Router"]
+        Auth["Auth Pages"]
+        FanDash["Fan Dashboard"]
+        CreatorDash["Creator Dashboard"]
+        Store["Redemption Store"]
+        Feed["Content Feed"]
+    end
+    
+    subgraph Backend["API Routes"]
+        AuthAPI["Auth API"]
+        WalletAPI["Wallet API"]
+        ContentAPI["Content API"]
+        StripeAPI["Stripe Webhook"]
+        GamificationAPI["Gamification Engine"]
+        RedemptionAPI["Redemption API"]
+    end
+    
+    subgraph Supabase["Supabase"]
+        PG["PostgreSQL"]
+        SupaAuth["Auth"]
+        RLS["Row Level Security"]
+    end
+    
+    subgraph External["External Services"]
+        Stripe["Stripe Checkout"]
+    end
+    
+    Frontend --> Backend
+    Backend --> Supabase
+    StripeAPI --> Stripe
+```
+
+## Database Schema
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User profile with role (fan/creator) |
+| `wallets` | Token and points balances |
+| `token_packages` | Predefined Stripe purchase packages |
+| `token_transactions` | Token purchase/spend history |
+| `point_transactions` | Points earn/spend history |
+| `posts` | Creator content (public/gated) |
+| `post_unlocks` | Fan-post unlock records |
+| `post_likes` | Likes on posts |
+| `post_comments` | Comments on posts |
+| `redemption_items` | Creator store items |
+| `redemption_orders` | Fan redemption orders |
+| `daily_rewards` | Track daily login rewards |
+
+## Folder Structure
+
+```
+mvp1/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   ├── login/page.tsx
+│   │   │   ├── register/page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── (dashboard)/
+│   │   │   ├── fan/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── wallet/page.tsx
+│   │   │   │   ├── feed/page.tsx
+│   │   │   │   ├── store/page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   ├── creator/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── posts/page.tsx
+│   │   │   │   ├── store/page.tsx
+│   │   │   │   ├── analytics/page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   └── layout.tsx
+│   │   ├── api/
+│   │   │   ├── stripe/
+│   │   │   │   ├── checkout/route.ts
+│   │   │   │   └── webhook/route.ts
+│   │   │   ├── wallet/route.ts
+│   │   │   ├── posts/route.ts
+│   │   │   ├── gamification/route.ts
+│   │   │   └── redemption/route.ts
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── dashboard/
+│   │   ├── auth/
+│   │   └── shared/
+│   ├── lib/
+│   │   ├── supabase/
+│   │   ├── stripe.ts
+│   │   ├── utils.ts
+│   │   └── constants.ts
+│   ├── hooks/
+│   └── types/
+├── supabase/
+│   └── schema.sql
+├── public/
+├── .env.local.example
+├── next.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+## Implementation Phases
+
+### Phase 1: Project Setup & Auth
+- [x] Initialize Next.js with Tailwind
+- [ ] Configure Supabase client
+- [ ] Auth pages (login, register)
+- [ ] Role-based middleware
+- [ ] Protected routes
+
+### Phase 2: Database & Wallet
+- [ ] Create SQL schema
+- [ ] Wallet display components
+- [ ] Transaction history
+
+### Phase 3: Stripe Integration
+- [ ] Token packages
+- [ ] Checkout session API
+- [ ] Webhook handler
+
+### Phase 4: Content System
+- [ ] Post creation (creator)
+- [ ] Content feed (fan)
+- [ ] Token-gated unlocking
+- [ ] Likes & comments
+
+### Phase 5: Gamification
+- [ ] Points engine
+- [ ] Daily login rewards
+- [ ] Action-based points
+- [ ] Rate limiting
+
+### Phase 6: Redemption Store
+- [ ] Item creation (creator)
+- [ ] Store browsing (fan)
+- [ ] Point redemption
+
+### Phase 7: Dashboards & Polish
+- [ ] Fan dashboard
+- [ ] Creator dashboard
+- [ ] Analytics
+- [ ] Leaderboard
+
+## Security Checklist
+- [ ] All balance updates in database transactions
+- [ ] Stripe webhook signature verification
+- [ ] RLS policies on all tables
+- [ ] Rate limiting on gamification APIs
+- [ ] Server-side validation for all operations
+- [ ] No frontend trust for balance updates
