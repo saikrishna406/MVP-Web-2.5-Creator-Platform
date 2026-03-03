@@ -336,42 +336,65 @@ export function Component() {
 
             const initRenderer = async () => {
                 const canvas = document.querySelector(".webgl-canvas") as HTMLCanvasElement; if (!canvas) return;
-                scene = new THREE.Scene(); camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-                renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
-                renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-                shaderMaterial = new THREE.ShaderMaterial({
-                    uniforms: {
-                        uTexture1: { value: null }, uTexture2: { value: null }, uProgress: { value: 0 },
-                        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-                        uTexture1Size: { value: new THREE.Vector2(1, 1) }, uTexture2Size: { value: new THREE.Vector2(1, 1) },
-                        uEffectType: { value: 0 },
-                        uGlobalIntensity: { value: 1.0 }, uSpeedMultiplier: { value: 1.0 }, uDistortionStrength: { value: 1.0 }, uColorEnhancement: { value: 1.0 },
-                        uGlassRefractionStrength: { value: 1.0 }, uGlassChromaticAberration: { value: 1.0 }, uGlassBubbleClarity: { value: 1.0 }, uGlassEdgeGlow: { value: 1.0 }, uGlassLiquidFlow: { value: 1.0 },
-                        // Init others defaults
-                        uFrostIntensity: { value: 1.0 }, uFrostCrystalSize: { value: 1.0 }, uFrostIceCoverage: { value: 1.0 }, uFrostTemperature: { value: 1.0 }, uFrostTexture: { value: 1.0 },
-                        uRippleFrequency: { value: 25.0 }, uRippleAmplitude: { value: 0.08 }, uRippleWaveSpeed: { value: 1.0 }, uRippleRippleCount: { value: 1.0 }, uRippleDecay: { value: 1.0 },
-                        uPlasmaIntensity: { value: 1.2 }, uPlasmaSpeed: { value: 0.8 }, uPlasmaEnergyIntensity: { value: 0.4 }, uPlasmaContrastBoost: { value: 0.3 }, uPlasmaTurbulence: { value: 1.0 },
-                        uTimeshiftDistortion: { value: 1.6 }, uTimeshiftBlur: { value: 1.5 }, uTimeshiftFlow: { value: 1.4 }, uTimeshiftChromatic: { value: 1.5 }, uTimeshiftTurbulence: { value: 1.4 }
-                    },
-                    vertexShader, fragmentShader
-                });
-                scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), shaderMaterial));
+                try {
+                    scene = new THREE.Scene(); camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                    renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+                    renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-                for (const s of slides) { try { slideTextures.push(await loadMediaTexture(s.media)); } catch { console.warn("Failed texture"); } }
-                if (slideTextures.length > 0) {
-                    shaderMaterial.uniforms.uTexture1.value = slideTextures[0];
-                    shaderMaterial.uniforms.uTexture2.value = slideTextures.length > 1 ? slideTextures[1] : slideTextures[0];
-                    shaderMaterial.uniforms.uTexture1Size.value = slideTextures[0].userData.size;
-                    shaderMaterial.uniforms.uTexture2Size.value = (slideTextures.length > 1 ? slideTextures[1] : slideTextures[0]).userData.size;
-                    texturesLoaded = true; sliderEnabled = true;
-                    updateShaderUniforms(); // Apply config
-                    document.querySelector(".slider-wrapper")?.classList.add("loaded"); // Fade in immediately
-                    safeStartTimer(500);
+                    shaderMaterial = new THREE.ShaderMaterial({
+                        uniforms: {
+                            uTexture1: { value: null }, uTexture2: { value: null }, uProgress: { value: 0 },
+                            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                            uTexture1Size: { value: new THREE.Vector2(1, 1) }, uTexture2Size: { value: new THREE.Vector2(1, 1) },
+                            uEffectType: { value: 0 },
+                            uGlobalIntensity: { value: 1.0 }, uSpeedMultiplier: { value: 1.0 }, uDistortionStrength: { value: 1.0 }, uColorEnhancement: { value: 1.0 },
+                            uGlassRefractionStrength: { value: 1.0 }, uGlassChromaticAberration: { value: 1.0 }, uGlassBubbleClarity: { value: 1.0 }, uGlassEdgeGlow: { value: 1.0 }, uGlassLiquidFlow: { value: 1.0 },
+                            // Init others defaults
+                            uFrostIntensity: { value: 1.0 }, uFrostCrystalSize: { value: 1.0 }, uFrostIceCoverage: { value: 1.0 }, uFrostTemperature: { value: 1.0 }, uFrostTexture: { value: 1.0 },
+                            uRippleFrequency: { value: 25.0 }, uRippleAmplitude: { value: 0.08 }, uRippleWaveSpeed: { value: 1.0 }, uRippleRippleCount: { value: 1.0 }, uRippleDecay: { value: 1.0 },
+                            uPlasmaIntensity: { value: 1.2 }, uPlasmaSpeed: { value: 0.8 }, uPlasmaEnergyIntensity: { value: 0.4 }, uPlasmaContrastBoost: { value: 0.3 }, uPlasmaTurbulence: { value: 1.0 },
+                            uTimeshiftDistortion: { value: 1.6 }, uTimeshiftBlur: { value: 1.5 }, uTimeshiftFlow: { value: 1.4 }, uTimeshiftChromatic: { value: 1.5 }, uTimeshiftTurbulence: { value: 1.4 }
+                        },
+                        vertexShader, fragmentShader
+                    });
+                    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), shaderMaterial));
+
+                    // Create a fallback placeholder texture for failed loads
+                    const createFallbackTexture = () => {
+                        const c = document.createElement('canvas'); c.width = 2; c.height = 2;
+                        const ctx = c.getContext('2d');
+                        if (ctx) { ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, 0, 2, 2); }
+                        const t = new THREE.CanvasTexture(c);
+                        t.userData = { size: new THREE.Vector2(2, 2) };
+                        return t;
+                    };
+
+                    for (const s of slides) {
+                        try {
+                            slideTextures.push(await loadMediaTexture(s.media));
+                        } catch (e) {
+                            console.warn("Failed texture:", s.media, e);
+                            slideTextures.push(createFallbackTexture());
+                        }
+                    }
+                    if (slideTextures.length > 0) {
+                        shaderMaterial.uniforms.uTexture1.value = slideTextures[0];
+                        shaderMaterial.uniforms.uTexture2.value = slideTextures.length > 1 ? slideTextures[1] : slideTextures[0];
+                        shaderMaterial.uniforms.uTexture1Size.value = slideTextures[0].userData.size;
+                        shaderMaterial.uniforms.uTexture2Size.value = (slideTextures.length > 1 ? slideTextures[1] : slideTextures[0]).userData.size;
+                        texturesLoaded = true; sliderEnabled = true;
+                        updateShaderUniforms(); // Apply config
+                        document.querySelector(".slider-wrapper")?.classList.add("loaded"); // Fade in immediately
+                        safeStartTimer(500);
+                    }
+
+                    const render = () => { rafId = requestAnimationFrame(render); if (renderer) renderer.render(scene, camera); };
+                    render();
+                } catch (e) {
+                    console.warn("WebGL initialization failed, falling back gracefully:", e);
+                    document.querySelector(".slider-wrapper")?.classList.add("loaded");
                 }
-
-                const render = () => { rafId = requestAnimationFrame(render); renderer.render(scene, camera); };
-                render();
             };
 
             createSlidesNavigation(); updateCounter(0);
