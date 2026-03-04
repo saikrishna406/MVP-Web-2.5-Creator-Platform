@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { UnlockPostSchema } from '@/lib/validations';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { logSuspiciousActivity, getClientIp } from '@/lib/security';
 
 // GET wallet data
 export async function GET() {
@@ -12,7 +14,6 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get wallet
         const { data: wallet, error: walletError } = await supabase
             .from('wallets')
             .select('*')
@@ -23,28 +24,14 @@ export async function GET() {
             return NextResponse.json({ error: 'Wallet not found' }, { status: 404 });
         }
 
-        // Get recent token transactions
-        const { data: tokenTxs } = await supabase
-            .from('token_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-        // Get recent point transactions
-        const { data: pointTxs } = await supabase
-            .from('point_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-        // Get token packages
-        const { data: packages } = await supabase
-            .from('token_packages')
-            .select('*')
-            .eq('is_active', true)
-            .order('price_cents', { ascending: true });
+        const [{ data: tokenTxs }, { data: pointTxs }, { data: packages }] = await Promise.all([
+            supabase.from('token_transactions').select('*')
+                .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+            supabase.from('point_transactions').select('*')
+                .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+            supabase.from('token_packages').select('*')
+                .eq('is_active', true).order('price_cents', { ascending: true }),
+        ]);
 
         return NextResponse.json({
             wallet,
@@ -53,7 +40,7 @@ export async function GET() {
             packages: packages || [],
         });
     } catch (error) {
-        console.error('Wallet API error:', error);
+        console.error('[wallet] GET error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
@@ -68,87 +55,69 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { postId } = await request.json();
-
-        if (!postId) {
-            return NextResponse.json({ error: 'Post ID required' }, { status: 400 });
+        // Rate limit
+        const rl = checkRateLimit(`unlock:${user.id}`, RATE_LIMITS.unlock);
+        if (!rl.allowed) {
+            const svc = await createServiceClient();
+            await logSuspiciousActivity(svc, {
+                userId: user.id,
+                activityType: 'rate_limit_unlock',
+                severity: 'medium',
+                description: 'Unlock rate limit exceeded',
+                ipAddress: getClientIp(request.headers),
+                endpoint: '/api/wallet',
+            });
+            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }
 
-        // Get the post to check cost
-        const { data: post, error: postError } = await supabase
-            .from('posts')
-            .select('*')
-            .eq('id', postId)
-            .single();
-
-        if (postError || !post) {
-            return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+        // Validate
+        const body = await request.json();
+        const parsed = UnlockPostSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+                { status: 400 }
+            );
         }
 
-        if (post.access_type === 'public') {
-            return NextResponse.json({ error: 'Post is already public' }, { status: 400 });
-        }
+        const { postId } = parsed.data;
+        const idempotencyKey = `unlock_${user.id}_${postId}`;
 
-        // Check if already unlocked
-        const { data: existingUnlock } = await supabase
-            .from('post_unlocks')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('post_id', postId)
-            .single();
-
-        if (existingUnlock) {
-            return NextResponse.json({ error: 'Already unlocked' }, { status: 400 });
-        }
-
-        let tokenCost = 0;
-
-        if (post.access_type === 'token_gated') {
-            tokenCost = post.token_cost || 0;
-        } else if (post.access_type === 'threshold_gated') {
-            // For threshold gated, check if user meets threshold
-            const { data: wallet } = await supabase
-                .from('wallets')
-                .select('token_balance')
-                .eq('user_id', user.id)
-                .single();
-
-            if (!wallet || wallet.token_balance < (post.threshold_amount || 0)) {
-                return NextResponse.json({
-                    error: `You need at least ${post.threshold_amount} tokens to access this content`
-                }, { status: 403 });
-            }
-
-            // Threshold gated doesn't cost tokens, just requires holding them
-            // Create unlock record without spending
-            const serviceClient = await createServiceClient();
-            await serviceClient
-                .from('post_unlocks')
-                .insert({ user_id: user.id, post_id: postId, tokens_spent: 0 });
-
-            return NextResponse.json({ success: true, message: 'Content unlocked' });
-        }
-
-        // For token_gated, use the atomic function
+        // Use atomic unlock_post() stored procedure
         const serviceClient = await createServiceClient();
-        const { data: result, error } = await serviceClient.rpc('handle_token_spend', {
+        const { data: result, error } = await serviceClient.rpc('unlock_post', {
             p_user_id: user.id,
             p_post_id: postId,
-            p_amount: tokenCost,
+            p_idempotency_key: idempotencyKey,
         });
 
         if (error) {
-            console.error('Token spend error:', error);
-            return NextResponse.json({ error: 'Failed to process' }, { status: 500 });
+            console.error('[wallet] unlock_post error:', error);
+
+            // Check for maintenance mode
+            if (error.message?.includes('maintenance mode')) {
+                return NextResponse.json({ error: 'System is in maintenance mode' }, { status: 503 });
+            }
+            return NextResponse.json({ error: 'Failed to process unlock' }, { status: 500 });
         }
 
-        if (!result) {
+        const row = Array.isArray(result) ? result[0] : result;
+
+        if (!row?.success) {
             return NextResponse.json({ error: 'Insufficient tokens' }, { status: 400 });
         }
 
-        return NextResponse.json({ success: true, message: 'Content unlocked', tokensSpent: tokenCost });
+        if (row.already_unlocked) {
+            return NextResponse.json({ success: true, message: 'Already unlocked', tokensSpent: 0 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: 'Content unlocked',
+            tokensSpent: row.tokens_spent,
+        });
     } catch (error) {
-        console.error('Wallet POST error:', error);
+        console.error('[wallet] POST error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
