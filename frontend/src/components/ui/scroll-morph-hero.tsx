@@ -275,27 +275,71 @@ export default function IntroAnimation() {
                     animate={introPhase === "circle" ? { filter: "blur(0px)", y: 0 } : { filter: "blur(10px)", y: 20 }}
                     initial={{ filter: "blur(10px)", y: 20 }}
                     transition={{ duration: 1 }}
-                    className="absolute z-0 flex flex-col items-center justify-center text-center pointer-events-none top-1/2 -translate-y-1/2"
+                    className="absolute z-0 flex flex-col items-center justify-center text-center pointer-events-none top-1/2 -translate-y-1/2 px-4"
                 >
-                    <h1 className="text-2xl font-medium tracking-tight text-gray-800 md:text-5xl lg:text-7xl">
-                        The future is built on AI.
+                    <h1 style={{ fontFamily: 'var(--font-jakarta)', lineHeight: 1.1 }}>
+                        <span
+                            className="block text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter"
+                            style={{ color: '#0f172a', letterSpacing: '-0.03em' }}
+                        >
+                            Your{' '}
+                            <em style={{
+                                fontStyle: 'italic',
+                                fontWeight: 800,
+                                background: 'linear-gradient(120deg, #6366f1, #8b5cf6)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}>creativity.</em>
+                        </span>
+                        <span
+                            className="block text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter mt-0.5"
+                            style={{ letterSpacing: '-0.03em' }}
+                        >
+                            Your{' '}
+                            <em style={{
+                                fontStyle: 'italic',
+                                fontWeight: 800,
+                                background: 'linear-gradient(120deg, #ec4899, #f43f5e)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}>economy.</em>
+                        </span>
                     </h1>
-                    <p className="mt-4 text-xs font-bold tracking-[0.2em] text-gray-400">
-                        SCROLL TO EXPLORE
+                    <p className="mt-4 text-[9px] font-bold tracking-[0.3em] uppercase text-gray-400">
+                        Scroll to Explore
                     </p>
                 </motion.div>
 
                 {/* Arc Active Content (Fades in) */}
                 <motion.div
                     style={{ opacity: contentOpacity, y: contentY }}
-                    className="absolute top-[15%] md:top-[20%] z-10 flex flex-col items-center justify-center text-center pointer-events-none px-4"
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none px-6"
                 >
-                    <h2 className="text-3xl md:text-5xl lg:text-7xl font-semibold text-gray-900 tracking-tight mb-4">
-                        Explore Our Vision
+                    <p
+                        className="mb-3 text-[10px] font-black tracking-[0.35em] uppercase"
+                        style={{ color: '#6366f1', letterSpacing: '0.35em' }}
+                    >
+                        ✦ &nbsp;Web 2.5 Creator Platform&nbsp; ✦
+                    </p>
+                    <h2 style={{
+                        fontFamily: 'var(--font-jakarta)',
+                        lineHeight: 1.08,
+                        letterSpacing: '-0.035em',
+                    }} className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter mb-4">
+                        <span style={{ color: '#0f172a' }}>Meet your </span>
+                        <em style={{
+                            fontStyle: 'italic',
+                            background: 'linear-gradient(120deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                        }}>Creators</em>
                     </h2>
-                    <p className="text-sm md:text-base lg:text-xl text-gray-600 max-w-2xl leading-relaxed">
-                        Discover a world where technology meets creativity. <br className="hidden md:block" />
-                        Scroll through our curated collection of innovations designed to shape the future.
+                    <p className="text-xs md:text-sm font-medium text-gray-500 max-w-xs md:max-w-sm leading-relaxed">
+                        RapidMVP connects fans with creators they love —{" "}
+                        through memberships, tokens &amp; a thriving economy.
                     </p>
                 </motion.div>
 
