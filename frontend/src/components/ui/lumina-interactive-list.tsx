@@ -318,19 +318,50 @@ export function Component() {
                 if (src.endsWith('.mp4') || src.endsWith('.webm')) {
                     const video = document.createElement('video');
                     video.src = src;
-                    video.crossOrigin = 'anonymous';
+                    if (src.startsWith('http')) {
+                        video.crossOrigin = 'anonymous';
+                    }
                     video.loop = true;
                     video.muted = true;
+                    video.defaultMuted = true;
                     video.playsInline = true;
-                    video.play().then(() => {
+                    // Attributes for robust autoplay
+                    video.setAttribute('muted', '');
+                    video.setAttribute('playsinline', '');
+                    video.setAttribute('autoplay', '');
+                    video.style.display = 'none';
+
+                    // Appending to DOM prevents browser garbage collection of inactive media elements
+                    document.body.appendChild(video);
+
+                    const handleReady = () => {
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => console.warn('Video autoplay blocked:', e));
+                        }
                         const t = new THREE.VideoTexture(video);
                         t.minFilter = t.magFilter = THREE.LinearFilter;
-                        t.userData = { size: new THREE.Vector2(video.videoWidth, video.videoHeight) };
+                        t.userData = { size: new THREE.Vector2(video.videoWidth || 1920, video.videoHeight || 1080) };
                         resolve(t);
-                    }).catch(reject);
+                    };
+
+                    video.addEventListener('canplay', handleReady, { once: true });
+                    video.addEventListener('error', (e) => {
+                        console.error("Video load error:", e);
+                        reject(e);
+                    });
+                    video.load();
                 } else {
                     const l = new THREE.TextureLoader();
-                    l.load(src, (t: any) => { t.minFilter = t.magFilter = THREE.LinearFilter; t.userData = { size: new THREE.Vector2(t.image.width, t.image.height) }; resolve(t); }, undefined, reject);
+                    l.setCrossOrigin('anonymous'); // MUST be set for external images (Unsplash) to work in WebGL
+                    l.load(src, (t: any) => {
+                        t.minFilter = t.magFilter = THREE.LinearFilter;
+                        t.userData = { size: new THREE.Vector2(t.image.width, t.image.height) };
+                        resolve(t);
+                    }, undefined, (err: any) => {
+                        console.error("Image load error:", err);
+                        reject(err);
+                    });
                 }
             });
 

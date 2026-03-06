@@ -8,7 +8,7 @@ import {
   Crown, Heart, Play, Sparkles, MessageCircle, Globe,
 } from 'lucide-react';
 
-import { Component as HeroSlider } from '@/components/ui/lumina-interactive-list';
+import IntroAnimation from '@/components/ui/scroll-morph-hero';
 import { DesignSteps } from '@/components/ui/design-steps';
 /* ═══ ANIMATION HELPERS ═══ */
 function useInViewOnce(margin = '-60px') {
@@ -344,8 +344,8 @@ export default function LandingPage() {
         </motion.nav>
 
         {/* ── HERO ── */}
-        <section className="lp-hero" style={{ height: '100vh', padding: 0, position: 'relative', border: 'none', background: 'transparent' }}>
-          <HeroSlider />
+        <section className="lp-hero" style={{ height: 'calc(100vh - 80px)', padding: 0, position: 'relative', border: 'none', background: 'transparent', zIndex: 10 }}>
+          <IntroAnimation />
         </section>
 
         {/* ── SCROLLER ── */}
