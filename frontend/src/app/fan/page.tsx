@@ -51,151 +51,137 @@ export default async function FanDashboardPage() {
         .eq('user_id', user.id);
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="fan-dashboard animate-fade-in">
             {/* Welcome Header */}
-            <div>
-                <h1 className="text-3xl font-bold mb-2">
+            <div className="fan-welcome">
+                <h1 className="fan-welcome-title">
                     Welcome back, <span className="gradient-text">{profile?.display_name}</span> 👋
                 </h1>
-                <p className="text-foreground-muted">Here&apos;s your creator economy overview</p>
+                <p className="fan-welcome-sub">Here&apos;s your creator economy overview</p>
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="stat-card bg-gradient-to-br from-accent/20 to-accent/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-accent/20 text-accent-light">
-                            <Coins className="w-5 h-5" />
-                        </div>
+            <div className="fan-stats-grid">
+                <div className="fan-stat-card fan-stat-tokens">
+                    <div className="fan-stat-icon-wrap fan-stat-icon-tokens">
+                        <Coins className="fan-stat-icon" />
                     </div>
-                    <div className="text-2xl font-bold mb-1">{formatTokens(wallet?.token_balance || 0)}</div>
-                    <div className="text-sm text-foreground-muted">Creator Tokens</div>
+                    <div className="fan-stat-value">{formatTokens(wallet?.token_balance || 0)}</div>
+                    <div className="fan-stat-label">Creator Tokens</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-secondary/20 to-secondary/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-secondary/20 text-secondary-light">
-                            <Star className="w-5 h-5" />
-                        </div>
+                <div className="fan-stat-card fan-stat-points">
+                    <div className="fan-stat-icon-wrap fan-stat-icon-points">
+                        <Star className="fan-stat-icon" />
                     </div>
-                    <div className="text-2xl font-bold mb-1">{formatPoints(wallet?.points_balance || 0)}</div>
-                    <div className="text-sm text-foreground-muted">Points Earned</div>
+                    <div className="fan-stat-value">{formatPoints(wallet?.points_balance || 0)}</div>
+                    <div className="fan-stat-label">Points Earned</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-primary/20 to-primary/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-primary/20 text-primary-light">
-                            <Newspaper className="w-5 h-5" />
-                        </div>
+                <div className="fan-stat-card fan-stat-content">
+                    <div className="fan-stat-icon-wrap fan-stat-icon-content">
+                        <Newspaper className="fan-stat-icon" />
                     </div>
-                    <div className="text-2xl font-bold mb-1">{unlockedPosts?.length || 0}</div>
-                    <div className="text-sm text-foreground-muted">Content Unlocked</div>
+                    <div className="fan-stat-value">{unlockedPosts?.length || 0}</div>
+                    <div className="fan-stat-label">Content Unlocked</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-success/20 to-success/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-success/20 text-success">
-                            <ShoppingBag className="w-5 h-5" />
-                        </div>
+                <div className="fan-stat-card fan-stat-redeemed">
+                    <div className="fan-stat-icon-wrap fan-stat-icon-redeemed">
+                        <ShoppingBag className="fan-stat-icon" />
                     </div>
-                    <div className="text-2xl font-bold mb-1">{orders?.length || 0}</div>
-                    <div className="text-sm text-foreground-muted">Items Redeemed</div>
+                    <div className="fan-stat-value">{orders?.length || 0}</div>
+                    <div className="fan-stat-label">Items Redeemed</div>
                 </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link href="/fan/wallet" className="card hover:border-accent/50 group transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-accent/10 group-hover:bg-accent/20 transition-colors">
-                            <Coins className="w-6 h-6 text-accent" />
-                        </div>
-                        <div>
-                            <div className="font-semibold">Buy Tokens</div>
-                            <div className="text-sm text-foreground-muted">Support your favorite creators</div>
-                        </div>
+            <div className="fan-actions-grid">
+                <Link href="/fan/wallet" className="fan-action-card">
+                    <div className="fan-action-icon-wrap fan-action-icon-tokens">
+                        <Coins className="fan-action-icon" />
+                    </div>
+                    <div className="fan-action-text">
+                        <div className="fan-action-title">Buy Tokens</div>
+                        <div className="fan-action-desc">Support your favorite creators</div>
                     </div>
                 </Link>
 
-                <Link href="/fan/feed" className="card hover:border-primary/50 group transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <Newspaper className="w-6 h-6 text-primary-light" />
-                        </div>
-                        <div>
-                            <div className="font-semibold">Browse Feed</div>
-                            <div className="text-sm text-foreground-muted">Discover exclusive content</div>
-                        </div>
+                <Link href="/fan/feed" className="fan-action-card">
+                    <div className="fan-action-icon-wrap fan-action-icon-feed">
+                        <Newspaper className="fan-action-icon" />
+                    </div>
+                    <div className="fan-action-text">
+                        <div className="fan-action-title">Browse Feed</div>
+                        <div className="fan-action-desc">Discover exclusive content</div>
                     </div>
                 </Link>
 
-                <Link href="/fan/store" className="card hover:border-success/50 group transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-success/10 group-hover:bg-success/20 transition-colors">
-                            <Gift className="w-6 h-6 text-success" />
-                        </div>
-                        <div>
-                            <div className="font-semibold">Redeem Points</div>
-                            <div className="text-sm text-foreground-muted">Get rewards for engagement</div>
-                        </div>
+                <Link href="/fan/store" className="fan-action-card">
+                    <div className="fan-action-icon-wrap fan-action-icon-store">
+                        <Gift className="fan-action-icon" />
+                    </div>
+                    <div className="fan-action-text">
+                        <div className="fan-action-title">Redeem Points</div>
+                        <div className="fan-action-desc">Get rewards for engagement</div>
                     </div>
                 </Link>
             </div>
 
             {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="fan-activity-grid">
                 {/* Token Transactions */}
-                <div className="card">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-accent" />
+                <div className="fan-activity-card">
+                    <div className="fan-activity-header">
+                        <h3 className="fan-activity-title">
+                            <TrendingUp className="fan-activity-title-icon" />
                             Recent Token Activity
                         </h3>
-                        <Link href="/fan/wallet" className="text-sm text-primary-light hover:text-primary">View all</Link>
+                        <Link href="/fan/wallet" className="fan-activity-link">View all</Link>
                     </div>
                     {recentTokenTxs && recentTokenTxs.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="fan-activity-list">
                             {recentTokenTxs.map((tx) => (
-                                <div key={tx.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                                <div key={tx.id} className="fan-activity-item">
                                     <div>
-                                        <div className="text-sm font-medium">{tx.description}</div>
-                                        <div className="text-xs text-foreground-muted">{formatRelativeTime(tx.created_at)}</div>
+                                        <div className="fan-activity-item-desc">{tx.description}</div>
+                                        <div className="fan-activity-item-time">{formatRelativeTime(tx.created_at)}</div>
                                     </div>
-                                    <div className={`text-sm font-bold ${tx.amount > 0 ? 'text-success' : 'text-error'}`}>
+                                    <div className={`fan-activity-item-amount ${tx.amount > 0 ? 'positive' : 'negative'}`}>
                                         {tx.amount > 0 ? '+' : ''}{tx.amount} tokens
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-foreground-muted text-sm text-center py-6">No token activity yet</p>
+                        <p className="fan-activity-empty">No token activity yet</p>
                     )}
                 </div>
 
                 {/* Point Transactions */}
-                <div className="card">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                            <Star className="w-4 h-4 text-secondary" />
+                <div className="fan-activity-card">
+                    <div className="fan-activity-header">
+                        <h3 className="fan-activity-title">
+                            <Star className="fan-activity-title-icon fan-activity-title-icon-points" />
                             Recent Points Activity
                         </h3>
                     </div>
                     {recentPointTxs && recentPointTxs.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="fan-activity-list">
                             {recentPointTxs.map((tx) => (
-                                <div key={tx.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                                <div key={tx.id} className="fan-activity-item">
                                     <div>
-                                        <div className="text-sm font-medium">{tx.description}</div>
-                                        <div className="text-xs text-foreground-muted">{formatRelativeTime(tx.created_at)}</div>
+                                        <div className="fan-activity-item-desc">{tx.description}</div>
+                                        <div className="fan-activity-item-time">{formatRelativeTime(tx.created_at)}</div>
                                     </div>
-                                    <div className={`text-sm font-bold ${tx.amount > 0 ? 'text-success' : 'text-error'}`}>
+                                    <div className={`fan-activity-item-amount ${tx.amount > 0 ? 'positive' : 'negative'}`}>
                                         {tx.amount > 0 ? '+' : ''}{tx.amount} pts
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-foreground-muted text-sm text-center py-6">Start engaging to earn points!</p>
+                        <p className="fan-activity-empty">Start engaging to earn points!</p>
                     )}
                 </div>
             </div>
