@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-<<<<<<< HEAD
-=======
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
@@ -15,47 +13,44 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         const body = await request.json();
 
-        // Ensure user is the creator of the post
-        const { data: post, error: fetchError } = await supabase
-            .from('posts')
+        // Check ownership
+        const { data: item, error: fetchError } = await supabase
+            .from('redemption_items')
             .select('creator_id')
             .eq('id', id)
             .single();
 
-        if (fetchError || !post) {
-            return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+        if (fetchError || !item) {
+            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
 
-        if (post.creator_id !== user.id) {
+        if (item.creator_id !== user.id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const { data: updatedPost, error: updateError } = await supabase
-            .from('posts')
+        const { data: updatedItem, error: updateError } = await supabase
+            .from('redemption_items')
             .update({
-                title: body.title,
-                content: body.content,
-                image_url: body.image_url,
-                access_type: body.access_type,
-                token_cost: body.access_type === 'token_gated' ? body.token_cost : 0,
-                threshold_amount: body.access_type === 'threshold_gated' ? body.threshold_amount : 0,
+                name: body.name,
+                description: body.description,
+                point_cost: body.point_cost,
+                quantity_available: body.quantity_available,
             })
             .eq('id', id)
             .select()
             .single();
 
         if (updateError) {
-            return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
         }
 
-        return NextResponse.json({ post: updatedPost }, { status: 200 });
+        return NextResponse.json({ item: updatedItem }, { status: 200 });
     } catch (error) {
-        console.error('[posts][id] PUT error:', error);
+        console.error('[redemption][id] PUT error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
->>>>>>> hasif_branch
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
@@ -66,43 +61,34 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-<<<<<<< HEAD
-        // Verify creator owns the post
-=======
-        // Ensure user is the creator of the post
->>>>>>> hasif_branch
-        const { data: post, error: fetchError } = await supabase
-            .from('posts')
+        // Check ownership
+        const { data: item, error: fetchError } = await supabase
+            .from('redemption_items')
             .select('creator_id')
             .eq('id', id)
             .single();
 
-        if (fetchError || !post) {
-            return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+        if (fetchError || !item) {
+            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
 
-        if (post.creator_id !== user.id) {
+        if (item.creator_id !== user.id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        // For audit purposes or simply delete
         const { error: deleteError } = await supabase
-            .from('posts')
+            .from('redemption_items')
             .delete()
             .eq('id', id);
 
         if (deleteError) {
-            return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
         }
 
-<<<<<<< HEAD
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('[posts] DELETE error:', error);
-=======
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        console.error('[posts][id] DELETE error:', error);
->>>>>>> hasif_branch
+        console.error('[redemption][id] DELETE error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { Coins, Users, ShoppingBag, FileText, TrendingUp, Eye } from 'lucide-react';
+import { Coins, Users, ShoppingBag, FileText, TrendingUp, Eye, ChevronRight } from 'lucide-react';
 import { formatTokens, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -57,148 +57,176 @@ export default async function CreatorDashboardPage() {
     const pendingOrders = orders?.filter(o => o.item?.creator_id === user.id) || [];
 
     return (
+<<<<<<< HEAD
         <div className="space-y-10 animate-fade-in">
+=======
+        <div className="space-y-12 animate-fade-in">
+>>>>>>> hasif_branch
             {/* Welcome Header */}
             <div>
-                <h1 className="text-3xl font-bold mb-2">
-                    Creator Studio <span className="gradient-text">✨</span>
+                <h1 className="text-4xl font-semibold mb-2 tracking-tight">
+                    Creator Studio <span className="text-gray-900">✨</span>
                 </h1>
-                <p className="text-foreground-muted">Welcome back, {profile?.display_name}</p>
+                <p className="text-gray-500 text-lg">Welcome back, {profile?.display_name}</p>
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="stat-card bg-gradient-to-br from-accent/20 to-accent/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-accent/20 text-accent-light">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="stat-card">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
                             <Coins className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="text-2xl font-bold mb-1">{formatTokens(totalTokensEarned)}</div>
-                    <div className="text-sm text-foreground-muted">Tokens Earned</div>
+                    <div className="text-3xl font-semibold mb-1 tracking-tight">{formatTokens(totalTokensEarned)}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Tokens Earned</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-primary/20 to-primary/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-primary/20 text-primary-light">
+                <div className="stat-card">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
                             <Users className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="text-2xl font-bold mb-1">{uniqueFans}</div>
-                    <div className="text-sm text-foreground-muted">Active Fans</div>
+                    <div className="text-3xl font-semibold mb-1 tracking-tight">{uniqueFans}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Active Fans</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-secondary/20 to-secondary/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-secondary/20 text-secondary-light">
+                <div className="stat-card">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
                             <FileText className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="text-2xl font-bold mb-1">{posts?.length || 0}</div>
-                    <div className="text-sm text-foreground-muted">Total Posts</div>
+                    <div className="text-3xl font-semibold mb-1 tracking-tight">{posts?.length || 0}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Posts</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-success/20 to-success/5">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="p-2.5 rounded-xl bg-success/20 text-success">
+                <div className="stat-card">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
                             <ShoppingBag className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="text-2xl font-bold mb-1">{pendingOrders.length}</div>
-                    <div className="text-sm text-foreground-muted">Pending Orders</div>
+                    <div className="text-3xl font-semibold mb-1 tracking-tight">{pendingOrders.length}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Pending Orders</div>
                 </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href="/creator/posts" className="card hover:border-primary/50 group transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <FileText className="w-6 h-6 text-primary-light" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Link href="/creator/profile" className="card group hover:border-gray-400">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors border border-gray-200">
+                            <Users className="w-6 h-6 text-gray-900" />
                         </div>
-                        <div>
-                            <div className="font-semibold">Create New Post</div>
-                            <div className="text-sm text-foreground-muted">Share content with your fans</div>
+                        <div className="flex-1">
+                            <div className="font-semibold text-gray-900">Manage Profile</div>
+                            <div className="text-sm text-gray-500">Edit bio, packages &amp; links</div>
                         </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition-colors" />
                     </div>
                 </Link>
 
-                <Link href="/creator/store" className="card hover:border-accent/50 group transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-accent/10 group-hover:bg-accent/20 transition-colors">
-                            <ShoppingBag className="w-6 h-6 text-accent" />
+                <Link href="/creator/posts" className="card group hover:border-gray-400">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors border border-gray-200">
+                            <FileText className="w-6 h-6 text-gray-900" />
                         </div>
-                        <div>
-                            <div className="font-semibold">Manage Store</div>
-                            <div className="text-sm text-foreground-muted">Create & manage redemption items</div>
+                        <div className="flex-1">
+                            <div className="font-semibold text-gray-900">Create New Post</div>
+                            <div className="text-sm text-gray-500">Share content with your fans</div>
                         </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition-colors" />
+                    </div>
+                </Link>
+
+                <Link href="/creator/store" className="card group hover:border-gray-400">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors border border-gray-200">
+                            <ShoppingBag className="w-6 h-6 text-gray-900" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="font-semibold text-gray-900">Manage Store</div>
+                            <div className="text-sm text-gray-500">Create &amp; manage redemption items</div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition-colors" />
                     </div>
                 </Link>
             </div>
 
             {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Recent Posts */}
                 <div className="card">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-primary-light" />
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-gray-900" />
                             Recent Posts
                         </h3>
-                        <Link href="/creator/posts" className="text-sm text-primary-light hover:text-primary">View all</Link>
+                        <Link href="/creator/posts" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">View all</Link>
                     </div>
                     {posts && posts.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {posts.slice(0, 5).map((post) => (
-                                <div key={post.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                                <div key={post.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 last:pb-0">
                                     <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-medium truncate">{post.title}</div>
-                                        <div className="text-xs text-foreground-muted flex items-center gap-2">
+                                        <div className="text-sm font-medium text-gray-900 truncate">{post.title}</div>
+                                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
                                             <span>{formatRelativeTime(post.created_at)}</span>
+<<<<<<< HEAD
                                             <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' :
                                                 post.access_type === 'token_gated' ? 'badge-accent' :
                                                     'badge-primary'
                                                 }`}>
+=======
+                                            <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' : 'badge-primary'}`}>
+>>>>>>> hasif_branch
                                                 {post.access_type.replace('_', ' ')}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 text-xs text-foreground-muted">
-                                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.likes_count}</span>
+                                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                                        <Eye className="w-3.5 h-3.5" />
+                                        {post.likes_count}
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-foreground-muted text-sm text-center py-6">No posts yet. Create your first one!</p>
+                        <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-100">
+                            No posts yet. Create your first one!
+                        </div>
                     )}
                 </div>
 
                 {/* Pending Orders */}
                 <div className="card">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                            <ShoppingBag className="w-4 h-4 text-accent" />
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <ShoppingBag className="w-5 h-5 text-gray-900" />
                             Pending Redemptions
                         </h3>
-                        <Link href="/creator/store" className="text-sm text-primary-light hover:text-primary">View all</Link>
+                        <Link href="/creator/store" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">View all</Link>
                     </div>
                     {pendingOrders.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {pendingOrders.slice(0, 5).map((order) => (
-                                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                                <div key={order.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 last:pb-0">
                                     <div>
-                                        <div className="text-sm font-medium">{order.item?.name}</div>
-                                        <div className="text-xs text-foreground-muted">
+                                        <div className="text-sm font-medium text-gray-900">{order.item?.name}</div>
+                                        <div className="text-xs text-gray-500 mt-0.5">
                                             by @{order.profile?.username} · {formatRelativeTime(order.created_at)}
                                         </div>
                                     </div>
-                                    <div className="badge badge-accent">{order.points_spent} pts</div>
+                                    <div className="badge badge-primary font-semibold">{order.points_spent} pts</div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-foreground-muted text-sm text-center py-6">No pending orders</p>
+                        <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-100">
+                            No pending orders
+                        </div>
                     )}
                 </div>
             </div>

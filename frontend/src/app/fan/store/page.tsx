@@ -36,7 +36,7 @@ export default function FanStorePage() {
 
         const data = await res.json();
         if (res.ok) {
-            setToast({ message: `🎉 Successfully redeemed! -${data.pointsSpent} points`, type: 'success' });
+            setToast({ message: `Successfully redeemed! -${data.pointsSpent} points`, type: 'success' });
             fetchItems(); // Refresh
         } else {
             setToast({ message: data.error || 'Failed to redeem', type: 'error' });
@@ -47,68 +47,75 @@ export default function FanStorePage() {
     if (loading) return <PageLoader />;
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Redemption Store</h1>
-                <p className="text-foreground-muted">Spend your earned points on exclusive rewards</p>
+        <div className="space-y-12 animate-fade-in max-w-7xl mx-auto">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Redemption Store</h1>
+                <p className="text-gray-500">Spend your earned points on exclusive rewards</p>
             </div>
 
             {items.length === 0 ? (
-                <div className="card text-center py-16">
-                    <ShoppingBag className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No items available</h3>
-                    <p className="text-foreground-muted">Creators haven&apos;t added any store items yet. Check back soon!</p>
+                <div className="card flex flex-col items-center justify-center py-20 text-center">
+                    <ShoppingBag className="w-12 h-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No items available</h3>
+                    <p className="text-gray-500">Creators haven&apos;t added any store items yet. Check back soon!</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {items.map((item) => (
-                        <div key={item.id} className="card overflow-hidden group hover:border-secondary/50 transition-all hover:scale-[1.01]">
+                        <div key={item.id} className="card p-5 flex flex-col hover:border-gray-400 group transition-all">
                             {/* Item image placeholder */}
-                            <div className="h-40 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-xl mb-4 flex items-center justify-center">
+                            <div className="h-44 bg-gray-50 border border-gray-100 rounded-lg mb-5 flex items-center justify-center overflow-hidden">
                                 {item.image_url ? (
-                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover rounded-xl" />
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                                 ) : (
-                                    <Package className="w-12 h-12 text-foreground-muted/50" />
+                                    <Package className="w-10 h-10 text-gray-300" />
                                 )}
                             </div>
 
                             {/* Creator info */}
                             {item.creator && (
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-[10px] font-bold">
+                                    <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 text-[10px] font-bold overflow-hidden">
                                         {getInitials(item.creator.display_name || 'C')}
                                     </div>
-                                    <span className="text-xs text-foreground-muted">by {item.creator.display_name}</span>
+                                    <span className="text-xs font-medium text-gray-500">by {item.creator.display_name}</span>
                                 </div>
                             )}
 
-                            <h3 className="font-bold text-lg mb-2">{item.name}</h3>
-                            <p className="text-sm text-foreground-muted mb-4 line-clamp-2">{item.description}</p>
+                            <h3 className="font-bold text-gray-900 text-lg mb-2 tracking-tight line-clamp-1">{item.name}</h3>
+                            <p className="text-sm text-gray-500 mb-6 line-clamp-2 min-h-[40px] leading-relaxed">{item.description}</p>
 
-                            <div className="flex items-center justify-between mt-auto">
-                                <div className="flex items-center gap-1.5">
-                                    <Star className="w-4 h-4 text-secondary" />
-                                    <span className="font-bold text-secondary">{formatPoints(item.point_cost)} pts</span>
+                            <div className="flex items-end justify-between mt-auto mb-5">
+                                <div>
+                                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Cost</div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Star className="w-4 h-4 text-gray-900" />
+                                        <span className="font-bold text-gray-900">{formatPoints(item.point_cost)} pts</span>
+                                    </div>
                                 </div>
-                                <span className="text-xs text-foreground-muted">
-                                    {item.quantity_available > 0 ? `${item.quantity_available} left` : 'Out of stock'}
-                                </span>
+                                <div className="text-right">
+                                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Stock</div>
+                                    <span className={`text-sm font-semibold ${item.quantity_available > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                        {item.quantity_available > 0 ? `${item.quantity_available} left` : 'Out of stock'}
+                                    </span>
+                                </div>
                             </div>
 
                             <button
                                 onClick={() => handleRedeem(item.id)}
                                 disabled={redeeming === item.id || item.quantity_available <= 0}
-                                className="btn-primary w-full mt-4"
+                                className="btn-primary w-full"
                             >
                                 {redeeming === item.id ? (
-                                    <span className="flex items-center gap-2">
+                                    <span className="flex items-center justify-center gap-2">
                                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Redeeming...
+                                        Processing
                                     </span>
                                 ) : item.quantity_available <= 0 ? (
-                                    'Out of Stock'
+                                    'Sold Out'
                                 ) : (
-                                    <span className="flex items-center gap-2">
+                                    <span className="flex items-center justify-center gap-2">
                                         <Check className="w-4 h-4" /> Redeem
                                     </span>
                                 )}

@@ -25,8 +25,13 @@ export default async function CreatorLayout({ children }: { children: React.Reac
     return (
         <div className="dashboard-layout">
             <Sidebar profile={profile} wallet={wallet} />
+<<<<<<< HEAD
             <main className="dashboard-main">
                 <div className="dashboard-content">
+=======
+            <main className="lg:ml-64 min-h-screen">
+                <div className="page-container pt-20 lg:pt-12">
+>>>>>>> hasif_branch
                     {children}
                 </div>
             </main>
