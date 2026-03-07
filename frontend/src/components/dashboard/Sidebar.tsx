@@ -9,7 +9,8 @@ import { Profile, Wallet } from '@/types';
 import { formatTokens, formatPoints, getInitials } from '@/lib/utils';
 import {
     LayoutDashboard, Newspaper, Wallet as WalletIcon, ShoppingBag,
-    FileText, BarChart3, Zap, LogOut, Menu, X, Coins, Star, Trophy, User
+    FileText, BarChart3, Zap, LogOut, Menu, X, Coins, Star, Trophy, User,
+    Search, ChevronLeft, ChevronRight, Settings
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -25,9 +26,15 @@ interface SidebarProps {
 export default function Sidebar({ profile, wallet }: SidebarProps) {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const supabase = createClient();
 
     const navItems = profile.role === 'creator' ? NAV_ITEMS_CREATOR : NAV_ITEMS_FAN;
+
+    const filteredNavItems = searchQuery
+        ? navItems.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase()))
+        : navItems;
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -39,105 +46,156 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
         setMobileOpen(false);
     }, [pathname]);
 
+    // Emit custom event for layout to listen to
+    useEffect(() => {
+        const event = new CustomEvent('sidebar-toggle', { detail: { collapsed } });
+        window.dispatchEvent(event);
+    }, [collapsed]);
+
+    const sidebarWidth = collapsed ? 'w-[76px]' : 'w-[260px]';
+
     const sidebarContent = (
-        <div className="flex flex-col h-full bg-[#FAFAFA] dark:bg-[#0A0A0A] border-r border-black/5 dark:border-white/5">
-            {/* Logo */}
-            <div className="p-6 flex items-center justify-between">
-                <Link href={`/${profile.role}`} className="flex items-center gap-3 group">
-                    <div className="w-8 h-8 rounded-xl bg-black dark:bg-white flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
-                        <Zap className="w-4 h-4 text-white dark:text-black" />
+        <div className="sidebar-container flex flex-col h-full" data-collapsed={collapsed}>
+            {/* Header: Logo + Collapse Toggle */}
+            <div className="sidebar-header">
+                <Link href={`/${profile.role}`} className="sidebar-logo-link">
+                    <div className="sidebar-logo-mark">
+                        <Zap className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-black dark:text-white">Rapid MVP</span>
+                    {!collapsed && (
+                        <span className="sidebar-logo-text">Rapid MVP</span>
+                    )}
                 </Link>
-                {/* Mobile Close Button inside sidebar */}
+                {/* Desktop collapse toggle */}
+                <button
+                    onClick={() => setCollapsed(!collapsed)}
+                    className="sidebar-collapse-btn hidden lg:flex"
+                    title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                >
+                    {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                </button>
+                {/* Mobile close button */}
                 <button
                     onClick={() => setMobileOpen(false)}
-                    className="lg:hidden p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-gray-500"
+                    className="sidebar-collapse-btn lg:hidden"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                 </button>
             </div>
 
-            {/* Content Scrollable Area */}
-            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-6">
-
-                {/* User info */}
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#1A1A1A] shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-black/5 dark:border-white/5 relative overflow-hidden">
-                    <div className="relative z-10 flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0 border-2 border-white dark:border-[#1A1A1A]">
-                            {profile.avatar_url ? (
-                                <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                            ) : (
-                                getInitials(profile.display_name)
-                            )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-sm truncate text-black dark:text-white">{profile.display_name}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">@{profile.username}</div>
-                        </div>
-                    </div>
-                    <div className="mt-3 flex items-center">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase ${profile.role === 'creator'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400'
-                            : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                            }`}>
-                            {profile.role === 'creator' ? 'Creator' : 'Fan'}
-                        </span>
+            {/* Search */}
+            {!collapsed && (
+                <div className="sidebar-search-wrapper">
+                    <div className="sidebar-search">
+                        <Search className="sidebar-search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="sidebar-search-input"
+                        />
                     </div>
                 </div>
+            )}
+            {collapsed && (
+                <div className="sidebar-search-wrapper sidebar-search-collapsed">
+                    <button className="sidebar-icon-btn" title="Search">
+                        <Search className="w-[18px] h-[18px]" />
+                    </button>
+                </div>
+            )}
 
-                {/* Wallet summary */}
-                {wallet && (
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-2xl bg-white dark:bg-[#1A1A1A] shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center transition-transform hover:scale-[1.02]">
-                            <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center mb-2">
-                                <Coins className="w-4 h-4 text-orange-500" />
+            {/* Navigation */}
+            <nav className="sidebar-nav">
+                {filteredNavItems.map((item) => {
+                    const Icon = iconMap[item.icon] || LayoutDashboard;
+                    const isActive = pathname === item.href;
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+                            title={collapsed ? item.label : undefined}
+                        >
+                            <div className="sidebar-nav-icon-wrapper">
+                                <Icon className="sidebar-nav-icon" />
                             </div>
-                            <div className="text-base font-bold text-black dark:text-white leading-none mb-1">{formatTokens(wallet.token_balance)}</div>
-                            <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Tokens</div>
+                            {!collapsed && (
+                                <span className="sidebar-nav-label">{item.label}</span>
+                            )}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Wallet Summary (only when expanded) */}
+            {wallet && !collapsed && (
+                <div className="sidebar-wallet-section">
+                    <div className="sidebar-wallet-card">
+                        <div className="sidebar-wallet-item">
+                            <Coins className="w-4 h-4 text-amber-500" />
+                            <div className="sidebar-wallet-info">
+                                <span className="sidebar-wallet-value">{formatTokens(wallet.token_balance)}</span>
+                                <span className="sidebar-wallet-label">Tokens</span>
+                            </div>
                         </div>
-                        <div className="p-3 rounded-2xl bg-white dark:bg-[#1A1A1A] shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center transition-transform hover:scale-[1.02]">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center mb-2">
-                                <Star className="w-4 h-4 text-blue-500" />
+                        <div className="sidebar-wallet-divider" />
+                        <div className="sidebar-wallet-item">
+                            <Star className="w-4 h-4 text-blue-500" />
+                            <div className="sidebar-wallet-info">
+                                <span className="sidebar-wallet-value">{formatPoints(wallet.points_balance)}</span>
+                                <span className="sidebar-wallet-label">Points</span>
                             </div>
-                            <div className="text-base font-bold text-black dark:text-white leading-none mb-1">{formatPoints(wallet.points_balance)}</div>
-                            <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Points</div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Navigation */}
-                <nav className="space-y-1">
-                    <div className="px-2 mb-2 text-[11px] font-semibold tracking-wider text-gray-400 uppercase">Menu</div>
-                    {navItems.map((item) => {
-                        const Icon = iconMap[item.icon] || LayoutDashboard;
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'
-                                    }`}
-                            >
-                                <Icon className="w-4 h-4" />
-                                {item.label}
-                            </Link>
-                        );
-                    })}
-                </nav>
+            {/* Settings Link */}
+            <div className="sidebar-bottom-actions">
+                <button
+                    className={`sidebar-nav-item`}
+                    title={collapsed ? 'Settings' : undefined}
+                >
+                    <div className="sidebar-nav-icon-wrapper">
+                        <Settings className="sidebar-nav-icon" />
+                    </div>
+                    {!collapsed && (
+                        <span className="sidebar-nav-label">Settings</span>
+                    )}
+                </button>
             </div>
 
-            {/* Logout */}
-            <div className="p-4 mt-auto border-t border-black/5 dark:border-white/5">
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
-                >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                </button>
+            {/* User Profile at Bottom */}
+            <div className="sidebar-user-section">
+                <div className="sidebar-user-info">
+                    <div className="sidebar-user-avatar">
+                        {profile.avatar_url ? (
+                            <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                            getInitials(profile.display_name)
+                        )}
+                    </div>
+                    {!collapsed && (
+                        <div className="sidebar-user-details">
+                            <span className="sidebar-user-name">{profile.display_name}</span>
+                            <span className="sidebar-user-email">@{profile.username}</span>
+                        </div>
+                    )}
+                </div>
+                {!collapsed && (
+                    <button
+                        onClick={handleLogout}
+                        className="sidebar-logout-btn"
+                        title="Sign Out"
+                    >
+                        <LogOut className="w-4 h-4" />
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -148,7 +206,7 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
             {!mobileOpen && (
                 <button
                     onClick={() => setMobileOpen(true)}
-                    className="lg:hidden fixed top-4 left-4 z-30 p-2.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-black/5 dark:border-white/5 shadow-sm text-black dark:text-white"
+                    className="sidebar-mobile-trigger"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
@@ -157,18 +215,22 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm z-40 transition-opacity"
+                    className="sidebar-mobile-overlay"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 h-screen w-[280px] z-50 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
-                    }`}
+                className={`sidebar-aside ${sidebarWidth} ${mobileOpen ? 'sidebar-mobile-open' : 'sidebar-mobile-closed'}`}
             >
                 {sidebarContent}
             </aside>
+
+            {/* Spacer div to push main content — only on desktop */}
+            <div
+                className={`sidebar-spacer ${collapsed ? 'w-[76px]' : 'w-[260px]'}`}
+            />
         </>
     );
 }
