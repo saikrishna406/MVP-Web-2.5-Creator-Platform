@@ -1,6 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+<<<<<<< HEAD
 /* ════════════════════════════════════════
    DESIGN TOKENS — Patreon-inspired professional
    ════════════════════════════════════════ */
@@ -98,9 +99,51 @@
   --color-error: #FF3B30;
   --color-border: #D2D2D7;
   --font-sans: 'Inter', -apple-system, sans-serif;
+=======
+@theme inline {
+  --color-background: var(--gray-50);
+  --color-foreground: var(--gray-900);
+  --color-foreground-muted: var(--gray-500);
+  --color-border: var(--gray-200);
+  --color-border-light: var(--gray-100);
+  --color-primary: #000000;
+  --color-primary-light: #333333;
+  --color-accent: #000000;
+  --color-success: #10B981;
+  --color-error: #EF4444;
+  --color-secondary: #6B7280;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+>>>>>>> hasif_branch
 }
 
-/* ════════ RESET ════════ */
+:root {
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* Fallbacks for older pages */
+  --coral: #000000;
+  --coral-light: #333333;
+  --coral-soft: #f3f4f6;
+  --coral-dark: #000000;
+}
+
+/* Base */
 *,
 *::before,
 *::after {
@@ -109,18 +152,14 @@
   padding: 0;
 }
 
-html {
-  font-size: 16px;
-}
-
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  min-height: 100vh;
-  overflow-x: clip;
+  background-color: var(--gray-50);
+  color: var(--gray-900);
+  font-family: 'Inter', -apple-system, sans-serif;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+<<<<<<< HEAD
   line-height: 1.6;
 }
 
@@ -2299,12 +2338,15 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+=======
+>>>>>>> hasif_branch
 }
 
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
 
   to {
@@ -2313,20 +2355,63 @@ body {
   }
 }
 
-.btn-primary {
-  background: var(--coral);
-  color: #fff;
-  padding: 0.65rem 1.5rem;
-  border-radius: var(--r-full);
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.gradient-text {
+  color: var(--gray-900);
   font-weight: 700;
+}
+
+/* Standard UI Components (Apple-style) */
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  /* 24px */
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-card {
+  background-color: #ffffff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #000000;
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 0.625rem 1.25rem;
+  /* 10px 20px */
+  font-weight: 500;
   font-size: 0.875rem;
-  border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  text-decoration: none;
+  border: 1px solid #000000;
   cursor: pointer;
+<<<<<<< HEAD
   transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
@@ -2334,183 +2419,146 @@ body {
   background: var(--coral-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
+=======
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+>>>>>>> hasif_branch
 }
 
 .btn-secondary {
-  background: var(--white);
+  background-color: #ffffff;
   color: var(--gray-900);
-  padding: 0.65rem 1.5rem;
-  border-radius: var(--r-full);
-  font-weight: 600;
+  border-radius: var(--radius-lg);
+  padding: 0.625rem 1.25rem;
+  font-weight: 500;
   font-size: 0.875rem;
-  border: 1px solid var(--border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  text-decoration: none;
+  border: 1px solid var(--gray-300);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
+<<<<<<< HEAD
   border-color: var(--gray-400);
   background: var(--gray-50);
+=======
+  background-color: var(--gray-50);
+>>>>>>> hasif_branch
 }
 
-/* ════════════════════════════════════════
-   LUMINA INTERACTIVE LIST COMPONENT CSS
-   ════════════════════════════════════════ */
-:root {
-  --lumina-font-mono: "PPSupplyMono", monospace, ui-monospace, SFMono-Regular;
-  --lumina-font-sans: "PP Neue Montreal", sans-serif, system-ui, -apple-system;
-  --lumina-font-display: "Cormorant Garamond", serif;
-}
-
-.slider-wrapper {
-  position: relative;
+/* Inputs */
+.input {
   width: 100%;
-  height: 100vh;
-  background: var(--gray-900);
-  color: #fff;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 1s ease-in-out;
+  background-color: #ffffff;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--gray-900);
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-.slider-wrapper.loaded {
-  opacity: 1;
+.input:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
 }
 
-.webgl-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
+.textarea {
   width: 100%;
-  height: 100%;
-  z-index: 1;
+  background-color: #ffffff;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--gray-900);
+  outline: none;
+  transition: all 0.2s ease;
+  resize: vertical;
+  min-height: 120px;
 }
 
-.slide-number {
-  display: none;
+.textarea:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
 }
 
-.slide-total {
-  display: none;
-}
-
-.slide-content {
-  position: absolute;
-  top: 50%;
-  left: 7%;
-  transform: translateY(-50%);
-  max-width: 620px;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.slide-content::before {
-  content: 'RAPIDMVP';
-  display: block;
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.25em;
-  color: rgba(255, 255, 255, 0.45);
-  text-transform: uppercase;
-  margin-bottom: 2rem;
+  background-color: var(--gray-100);
+  color: var(--gray-700);
 }
 
-.slide-title {
-  font-family: var(--font-sans);
-  font-size: clamp(2rem, 4vw, 3.75rem);
-  font-weight: 300;
-  line-height: 1.18;
-  letter-spacing: -0.01em;
-  margin-bottom: 1.25rem;
-  color: #fff;
-  text-shadow: 0 1px 20px rgba(0, 0, 0, 0.5);
+.badge-success {
+  background-color: #ecfdf5;
+  color: #059669;
 }
 
-.slide-title span {
-  display: inline-block;
-  white-space: nowrap;
+.badge-warning {
+  background-color: #fffbeb;
+  color: #d97706;
 }
 
-.slide-description {
-  font-family: var(--font-sans);
-  font-size: clamp(0.85rem, 1.2vw, 1rem);
-  line-height: 1.8;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.6);
-  max-width: 380px;
-  letter-spacing: 0.02em;
+.badge-primary,
+.badge-accent {
+  background-color: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
 }
 
-.slides-navigation {
-  display: none !important;
-}
-
-.slide-nav-item {
-  flex: 1;
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.3s;
-}
-
-.slide-nav-item:hover {
-  opacity: 0.7;
-}
-
-.slide-nav-item.active {
-  opacity: 1;
-}
-
-.slide-progress-line {
-  display: none;
-}
-
-.slide-progress-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: var(--coral-light);
-  width: 0%;
-  border-radius: 999px;
-}
-
-.slide-nav-title {
-  font-family: var(--lumina-font-sans);
-  font-size: 0.9rem;
+/* Typography Overrides */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--gray-900);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.02em;
 }
 
-@media (max-width: 768px) {
-  .slide-content {
-    left: 2rem;
-    right: 2rem;
-    top: 60%;
-  }
+p,
+span,
+div {
+  color: var(--gray-700);
+}
 
-  .slides-navigation {
-    left: 2rem;
-    right: 2rem;
-    bottom: 2rem;
-  }
+.text-foreground-muted {
+  color: var(--gray-500);
+}
 
-  .slide-number {
-    top: 1.5rem;
-    left: 2rem;
-  }
+.text-foreground {
+  color: var(--gray-900);
+}
 
-  .slide-total {
-    top: 1.7rem;
-    left: 4.5rem;
-  }
+/* Layout Utilities */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  /* Section space 48px, padding 24px */
+}
 
+<<<<<<< HEAD
   .slide-nav-title {
     display: none;
   }
@@ -3071,4 +3119,45 @@ body {
   to {
     opacity: 1;
   }
+=======
+/* Legacy resets */
+.bg-gradient-to-br {
+  background: #ffffff;
+}
+
+/* Fix text colors */
+.text-primary-light,
+.text-accent-light,
+.text-secondary-light,
+.text-accent,
+.text-primary,
+.text-secondary {
+  color: var(--gray-900);
+}
+
+.bg-accent\/10,
+.bg-primary\/10,
+.bg-success\/10,
+.bg-secondary\/10 {
+  background-color: var(--gray-100);
+}
+
+.bg-accent\/20,
+.bg-primary\/20,
+.bg-success\/20,
+.bg-secondary\/20 {
+  background-color: var(--gray-100);
+}
+
+.hover\:bg-accent\/20:hover,
+.hover\:bg-primary\/20:hover,
+.hover\:bg-success\/20:hover {
+  background-color: var(--gray-200);
+}
+
+.border-accent\/50,
+.border-primary\/50,
+.border-success\/50 {
+  border-color: var(--gray-300);
+>>>>>>> hasif_branch
 }

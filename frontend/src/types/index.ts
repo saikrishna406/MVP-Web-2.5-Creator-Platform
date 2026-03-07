@@ -6,6 +6,9 @@ export interface Profile {
   username: string;
   display_name: string;
   avatar_url: string | null;
+  banner_url: string | null;
+  category: string | null;
+  social_links: Record<string, string>;
   role: UserRole;
   bio: string | null;
   created_at: string;
@@ -150,4 +153,18 @@ export interface PointAction {
   points: number;
   daily_limit: number;
   description: string;
+}
+
+export interface CreatorPackage {
+  id: string;
+  creator_id: string;
+  name: string;
+  token_price: number;
+  post_limit: number;
+  description: string | null;
+  badge_name: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
