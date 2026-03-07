@@ -69,116 +69,116 @@ export default async function AnalyticsPage() {
         .slice(0, 5);
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-12 animate-fade-in max-w-7xl mx-auto">
             <div>
-                <h1 className="text-3xl font-bold mb-2">Analytics</h1>
-                <p className="text-foreground-muted">Track your performance and audience engagement</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 mt-4 tracking-tight">Analytics</h1>
+                <p className="text-gray-500">Track your performance and audience engagement</p>
             </div>
 
             {/* Overview Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="stat-card bg-gradient-to-br from-accent/20 to-accent/5">
-                    <div className="p-2.5 rounded-xl bg-accent/20 text-accent-light w-fit mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="stat-card">
+                    <div className="p-3 rounded-full bg-gray-100 text-gray-900 w-fit mb-4 border border-gray-200 shadow-sm">
                         <Coins className="w-5 h-5" />
                     </div>
-                    <div className="text-2xl font-bold">{formatTokens(totalTokensFromUnlocks)}</div>
-                    <div className="text-sm text-foreground-muted">Total Tokens Earned</div>
+                    <div className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">{formatTokens(totalTokensFromUnlocks)}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Tokens Earned</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-primary/20 to-primary/5">
-                    <div className="p-2.5 rounded-xl bg-primary/20 text-primary-light w-fit mb-3">
+                <div className="stat-card">
+                    <div className="p-3 rounded-full bg-gray-100 text-gray-900 w-fit mb-4 border border-gray-200 shadow-sm">
                         <Users className="w-5 h-5" />
                     </div>
-                    <div className="text-2xl font-bold">{uniqueFans}</div>
-                    <div className="text-sm text-foreground-muted">Unique Fans</div>
+                    <div className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">{uniqueFans}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Unique Fans</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-error/20 to-error/5">
-                    <div className="p-2.5 rounded-xl bg-error/20 text-error w-fit mb-3">
+                <div className="stat-card">
+                    <div className="p-3 rounded-full bg-gray-100 text-gray-900 w-fit mb-4 border border-gray-200 shadow-sm">
                         <Heart className="w-5 h-5" />
                     </div>
-                    <div className="text-2xl font-bold">{totalLikes}</div>
-                    <div className="text-sm text-foreground-muted">Total Likes</div>
+                    <div className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">{totalLikes}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Likes</div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-secondary/20 to-secondary/5">
-                    <div className="p-2.5 rounded-xl bg-secondary/20 text-secondary-light w-fit mb-3">
+                <div className="stat-card">
+                    <div className="p-3 rounded-full bg-gray-100 text-gray-900 w-fit mb-4 border border-gray-200 shadow-sm">
                         <BarChart3 className="w-5 h-5" />
                     </div>
-                    <div className="text-2xl font-bold">{totalComments}</div>
-                    <div className="text-sm text-foreground-muted">Total Comments</div>
+                    <div className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">{totalComments}</div>
+                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Comments</div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Top Posts */}
                 <div className="card">
-                    <h3 className="font-semibold mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-primary-light" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-gray-900" />
                         Top Performing Posts
                     </h3>
                     {topPosts.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {topPosts.map((post, i) => (
-                                <div key={post.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                            i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
-                                                'bg-background text-foreground-muted'
+                                <div key={post.id} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 last:pb-0">
+                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900' :
+                                        i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
+                                            'bg-white text-gray-500 border-gray-100'
                                         }`}>
                                         #{i + 1}
                                     </span>
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium truncate">{post.title}</div>
-                                        <div className="text-xs text-foreground-muted">{formatRelativeTime(post.created_at)}</div>
+                                        <div className="text-sm font-medium text-gray-900 truncate tracking-tight">{post.title}</div>
+                                        <div className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(post.created_at)}</div>
                                     </div>
-                                    <div className="flex items-center gap-3 text-xs text-foreground-muted">
-                                        <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-error" />{post.likes_count || 0}</span>
-                                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.comments_count || 0}</span>
+                                    <div className="flex items-center gap-3 text-xs font-semibold text-gray-500">
+                                        <span className="flex items-center gap-1.5"><Heart className="w-3.5 h-3.5 text-gray-400" />{post.likes_count || 0}</span>
+                                        <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-gray-400" />{post.comments_count || 0}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-foreground-muted text-sm text-center py-6">No posts yet</p>
+                        <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-gray-100">No posts yet</div>
                     )}
                 </div>
 
                 {/* Fan Leaderboard */}
                 <div className="card">
-                    <h3 className="font-semibold mb-4 flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-accent" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-gray-900" />
                         Top Fans (by Tokens Spent)
                     </h3>
                     {topFans.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {topFans.map((fan, i) => (
-                                <div key={fan.username} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                            i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
-                                                'bg-background text-foreground-muted'
+                                <div key={fan.username} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 last:pb-0">
+                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900' :
+                                        i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
+                                            'bg-white text-gray-500 border-gray-100'
                                         }`}>
                                         {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                                     </span>
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium">{fan.display_name}</div>
-                                        <div className="text-xs text-foreground-muted">@{fan.username}</div>
+                                        <div className="text-sm font-medium text-gray-900 tracking-tight">{fan.display_name}</div>
+                                        <div className="text-xs text-gray-400 mt-0.5">@{fan.username}</div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm font-bold text-accent">
-                                        <Coins className="w-3 h-3" /> {formatTokens(fan.total_spent)}
+                                    <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900">
+                                        <Coins className="w-4 h-4" /> {formatTokens(fan.total_spent)}
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-foreground-muted text-sm text-center py-6">No fan activity yet</p>
+                        <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-gray-100">No fan activity yet</div>
                     )}
                 </div>
             </div>
 
             {/* Points Leaderboard Preview (all users) */}
             <div className="card">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Star className="w-4 h-4 text-secondary" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-gray-900" />
                     Platform Points Leaderboard (Top 10)
                 </h3>
                 <LeaderboardSection />
@@ -197,7 +197,7 @@ async function LeaderboardSection() {
         .limit(10);
 
     if (!topWallets || topWallets.length === 0) {
-        return <p className="text-foreground-muted text-sm text-center py-6">No leaderboard data yet</p>;
+        return <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-gray-100">No leaderboard data yet</div>;
     }
 
     const userIds = topWallets.map(w => w.user_id);
@@ -207,26 +207,26 @@ async function LeaderboardSection() {
         .in('user_id', userIds);
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
             {topWallets.map((wallet, i) => {
                 const profile = profiles?.find(p => p.user_id === wallet.user_id);
                 return (
-                    <div key={wallet.user_id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                i === 1 ? 'bg-foreground-muted/30 text-foreground' :
-                                    i === 2 ? 'bg-accent/10 text-accent-light' :
-                                        'bg-background text-foreground-muted'
+                    <div key={wallet.user_id} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 last:pb-0">
+                        <span className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900 shadow-sm' :
+                            i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
+                                i === 2 ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                                    'bg-white text-gray-400 border-gray-100'
                             }`}>
                             {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                         </span>
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium">{profile?.display_name || 'Unknown'}</div>
-                            <div className="text-xs text-foreground-muted">
+                            <div className="text-sm font-semibold text-gray-900 tracking-tight">{profile?.display_name || 'Unknown'}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">
                                 @{profile?.username || 'unknown'} · {profile?.role === 'creator' ? '✨ Creator' : '❤️ Fan'}
                             </div>
                         </div>
-                        <div className="flex items-center gap-1 text-sm font-bold text-secondary">
-                            <Star className="w-4 h-4" /> {formatPoints(wallet.points_balance)}
+                        <div className="flex items-center gap-1.5 text-base font-bold text-gray-900">
+                            <Star className="w-5 h-5 fill-current text-gray-900" /> {formatPoints(wallet.points_balance)}
                         </div>
                     </div>
                 );

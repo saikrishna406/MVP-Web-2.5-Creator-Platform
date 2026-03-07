@@ -72,6 +72,7 @@ export const NAV_ITEMS_FAN = [
 
 export const NAV_ITEMS_CREATOR = [
     { href: '/creator', label: 'Dashboard', icon: 'LayoutDashboard' },
+    { href: '/creator/profile', label: 'Profile', icon: 'User' },
     { href: '/creator/posts', label: 'Posts', icon: 'FileText' },
     { href: '/creator/store', label: 'Store', icon: 'ShoppingBag' },
     { href: '/creator/analytics', label: 'Analytics', icon: 'BarChart3' },

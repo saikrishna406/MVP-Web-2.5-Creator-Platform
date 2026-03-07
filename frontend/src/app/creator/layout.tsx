@@ -26,7 +26,7 @@ export default async function CreatorLayout({ children }: { children: React.Reac
         <div className="min-h-screen">
             <Sidebar profile={profile} wallet={wallet} />
             <main className="lg:ml-64 min-h-screen">
-                <div className="p-4 lg:p-8 pt-16 lg:pt-8 max-w-6xl mx-auto">
+                <div className="page-container pt-20 lg:pt-12">
                     {children}
                 </div>
             </main>
