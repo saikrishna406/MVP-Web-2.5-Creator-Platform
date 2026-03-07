@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, FileText, Lock, Globe, Shield, Eye, Heart, MessageCircle, X } from 'lucide-react';
+import { Plus, FileText, Lock, Globe, Shield, Eye, Heart, MessageCircle, X, Trash2, Image as ImageIcon } from 'lucide-react';
 import { formatRelativeTime, truncateText } from '@/lib/utils';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
@@ -12,11 +12,13 @@ export default function CreatorPostsPage() {
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [creating, setCreating] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     // Form state
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
     const [accessType, setAccessType] = useState<'public' | 'token_gated' | 'threshold_gated'>('public');
     const [tokenCost, setTokenCost] = useState(10);
     const [thresholdAmount, setThresholdAmount] = useState(100);
@@ -44,6 +46,7 @@ export default function CreatorPostsPage() {
             body: JSON.stringify({
                 title,
                 content,
+                image_url: imageUrl || undefined,
                 access_type: accessType,
                 token_cost: accessType === 'token_gated' ? tokenCost : 0,
                 threshold_amount: accessType === 'threshold_gated' ? thresholdAmount : 0,
@@ -54,6 +57,7 @@ export default function CreatorPostsPage() {
             setToast({ message: 'Post created successfully!', type: 'success' });
             setTitle('');
             setContent('');
+            setImageUrl('');
             setAccessType('public');
             setShowCreate(false);
             fetchPosts();
@@ -62,6 +66,24 @@ export default function CreatorPostsPage() {
             setToast({ message: data.error || 'Failed to create post', type: 'error' });
         }
         setCreating(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
+
+        setDeletingId(id);
+        const res = await fetch(`/api/posts/${id}`, {
+            method: 'DELETE',
+        });
+
+        if (res.ok) {
+            setToast({ message: 'Post deleted successfully', type: 'success' });
+            setPosts(posts.filter(p => p.id !== id));
+        } else {
+            const data = await res.json();
+            setToast({ message: data.error || 'Failed to delete post', type: 'error' });
+        }
+        setDeletingId(null);
     };
 
     const getAccessIcon = (type: string) => {
@@ -92,7 +114,7 @@ export default function CreatorPostsPage() {
 
             {/* Create Post Modal */}
             {showCreate && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                     <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold">Create New Post</h2>
@@ -127,14 +149,30 @@ export default function CreatorPostsPage() {
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium mb-2 text-foreground-muted">Image URL (Optional)</label>
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-background-secondary p-2.5 rounded-xl border border-border">
+                                        <ImageIcon className="w-5 h-5 text-foreground-muted" />
+                                    </div>
+                                    <input
+                                        type="url"
+                                        value={imageUrl}
+                                        onChange={(e) => setImageUrl(e.target.value)}
+                                        placeholder="https://example.com/image.jpg"
+                                        className="input flex-1"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium mb-3 text-foreground-muted">Access Type</label>
                                 <div className="grid grid-cols-3 gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setAccessType('public')}
                                         className={`p-3 rounded-xl border-2 text-center transition-all ${accessType === 'public'
-                                                ? 'border-success bg-success/10'
-                                                : 'border-border hover:border-border-light'
+                                            ? 'border-success bg-success/10'
+                                            : 'border-border hover:border-border-light'
                                             }`}
                                     >
                                         <Globe className={`w-5 h-5 mx-auto mb-1 ${accessType === 'public' ? 'text-success' : 'text-foreground-muted'}`} />
@@ -144,8 +182,8 @@ export default function CreatorPostsPage() {
                                         type="button"
                                         onClick={() => setAccessType('token_gated')}
                                         className={`p-3 rounded-xl border-2 text-center transition-all ${accessType === 'token_gated'
-                                                ? 'border-accent bg-accent/10'
-                                                : 'border-border hover:border-border-light'
+                                            ? 'border-accent bg-accent/10'
+                                            : 'border-border hover:border-border-light'
                                             }`}
                                     >
                                         <Lock className={`w-5 h-5 mx-auto mb-1 ${accessType === 'token_gated' ? 'text-accent' : 'text-foreground-muted'}`} />
@@ -155,8 +193,8 @@ export default function CreatorPostsPage() {
                                         type="button"
                                         onClick={() => setAccessType('threshold_gated')}
                                         className={`p-3 rounded-xl border-2 text-center transition-all ${accessType === 'threshold_gated'
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-border hover:border-border-light'
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-border hover:border-border-light'
                                             }`}
                                     >
                                         <Shield className={`w-5 h-5 mx-auto mb-1 ${accessType === 'threshold_gated' ? 'text-primary-light' : 'text-foreground-muted'}`} />
@@ -198,7 +236,7 @@ export default function CreatorPostsPage() {
                             <div className="flex gap-3 pt-2">
                                 <button type="submit" disabled={creating} className="btn-primary flex-1">
                                     {creating ? (
-                                        <span className="flex items-center gap-2">
+                                        <span className="flex items-center justify-center gap-2">
                                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             Publishing...
                                         </span>
@@ -226,29 +264,52 @@ export default function CreatorPostsPage() {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {posts.map((post) => (
-                        <div key={post.id} className="card hover:border-border-light transition-all">
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        {getAccessIcon(post.access_type)}
-                                        <span className={`badge text-xs ${post.access_type === 'public' ? 'badge-success' :
+                        <div key={post.id} className="card hover:border-border-light transition-all flex flex-col overflow-hidden p-0">
+                            {post.image_url ? (
+                                <div className="w-full h-48 bg-background-secondary overflow-hidden relative">
+                                    <img src={post.image_url} alt={post.title} className="w-full h-full object-cover shrink-0" />
+                                </div>
+                            ) : null}
+                            <div className="p-6 flex-1 flex flex-col">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {getAccessIcon(post.access_type)}
+                                            <span className={`badge text-xs ${post.access_type === 'public' ? 'badge-success' :
                                                 post.access_type === 'token_gated' ? 'badge-accent' :
                                                     'badge-primary'
-                                            }`}>
-                                            {post.access_type === 'public' ? 'Public' :
-                                                post.access_type === 'token_gated' ? `${post.token_cost} tokens` :
-                                                    `Hold ${post.threshold_amount}+`}
-                                        </span>
+                                                }`}>
+                                                {post.access_type === 'public' ? 'Public' :
+                                                    post.access_type === 'token_gated' ? `${post.token_cost} tokens` :
+                                                        `Hold ${post.threshold_amount}+`}
+                                            </span>
+                                        </div>
+                                        <h3 className="font-bold text-lg mb-1 truncate">{post.title}</h3>
+                                        <p className="text-sm text-foreground-muted mb-3 line-clamp-2 min-h-[40px]">{truncateText(post.content, 120)}</p>
                                     </div>
-                                    <h3 className="font-bold text-lg mb-1">{post.title}</h3>
-                                    <p className="text-sm text-foreground-muted mb-3">{truncateText(post.content, 150)}</p>
-                                    <div className="flex items-center gap-4 text-xs text-foreground-muted">
+                                </div>
+                                <div className="mt-auto flex items-center justify-between pt-4 border-t border-border/50">
+                                    <div className="flex flex-wrap items-center gap-4 text-xs text-foreground-muted">
                                         <span>{formatRelativeTime(post.created_at)}</span>
-                                        <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{post.likes_count || 0}</span>
-                                        <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" />{post.comments_count || 0}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{post.likes_count || 0}</span>
+                                            <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" />{post.comments_count || 0}</span>
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => handleDelete(post.id)}
+                                        disabled={deletingId === post.id}
+                                        className="p-1.5 text-foreground-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors ml-2"
+                                        title="Delete Post"
+                                    >
+                                        {deletingId === post.id ? (
+                                            <span className="w-4 h-4 border-2 border-error/30 border-t-error rounded-full animate-spin block" />
+                                        ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                        )}
+                                    </button>
                                 </div>
                             </div>
                         </div>

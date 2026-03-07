@@ -57,7 +57,7 @@ export default async function CreatorDashboardPage() {
     const pendingOrders = orders?.filter(o => o.item?.creator_id === user.id) || [];
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-10 animate-fade-in">
             {/* Welcome Header */}
             <div>
                 <h1 className="text-3xl font-bold mb-2">
@@ -156,8 +156,8 @@ export default async function CreatorDashboardPage() {
                                         <div className="text-xs text-foreground-muted flex items-center gap-2">
                                             <span>{formatRelativeTime(post.created_at)}</span>
                                             <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' :
-                                                    post.access_type === 'token_gated' ? 'badge-accent' :
-                                                        'badge-primary'
+                                                post.access_type === 'token_gated' ? 'badge-accent' :
+                                                    'badge-primary'
                                                 }`}>
                                                 {post.access_type.replace('_', ' ')}
                                             </span>
