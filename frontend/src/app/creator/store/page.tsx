@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Package, ShoppingBag, Check, X, Star } from 'lucide-react';
+import { Plus, Package, ShoppingBag, Check, X, Star, Edit, Trash2 } from 'lucide-react';
 import { formatPoints, formatRelativeTime } from '@/lib/utils';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
@@ -11,10 +11,11 @@ export default function CreatorStorePage() {
     const [items, setItems] = useState<RedemptionItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
-    const [creating, setCreating] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     // Form state
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [pointCost, setPointCost] = useState(100);
@@ -33,65 +34,92 @@ export default function CreatorStorePage() {
         fetchItems();
     }, [fetchItems]);
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setCreating(true);
+    const handleOpenCreate = () => {
+        setEditingId(null);
+        setName('');
+        setDescription('');
+        setPointCost(100);
+        setQuantity(10);
+        setShowCreate(true);
+    };
 
-        const res = await fetch('/api/redemption', {
-            method: 'POST',
+    const handleOpenEdit = (item: RedemptionItem) => {
+        setEditingId(item.id);
+        setName(item.name);
+        setDescription(item.description);
+        setPointCost(item.point_cost);
+        setQuantity(item.quantity_available);
+        setShowCreate(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+
+        const url = editingId ? `/api/redemption/${editingId}` : '/api/redemption';
+        const method = editingId ? 'PUT' : 'POST';
+
+        const body = editingId
+            ? { name, description, point_cost: pointCost, quantity_available: quantity }
+            : { action: 'create', name, description, point_cost: pointCost, quantity_available: quantity };
+
+        const res = await fetch(url, {
+            method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'create',
-                name,
-                description,
-                point_cost: pointCost,
-                quantity_available: quantity,
-            }),
+            body: JSON.stringify(body),
         });
 
         if (res.ok) {
-            setToast({ message: 'Item created successfully!', type: 'success' });
-            setName('');
-            setDescription('');
-            setPointCost(100);
-            setQuantity(10);
+            setToast({ message: `Item ${editingId ? 'updated' : 'created'} successfully!`, type: 'success' });
             setShowCreate(false);
             fetchItems();
         } else {
             const data = await res.json();
-            setToast({ message: data.error || 'Failed to create item', type: 'error' });
+            setToast({ message: data.error || `Failed to ${editingId ? 'update' : 'create'} item`, type: 'error' });
         }
-        setCreating(false);
+        setSubmitting(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this store item?')) return;
+
+        const res = await fetch(`/api/redemption/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            setToast({ message: 'Item deleted successfully', type: 'success' });
+            fetchItems();
+        } else {
+            setToast({ message: 'Failed to delete item', type: 'error' });
+        }
     };
 
     if (loading) return <PageLoader />;
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="flex items-center justify-between">
+        <div className="space-y-12 animate-fade-in max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2">Your Store</h1>
-                    <p className="text-foreground-muted">Create items fans can redeem with points</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2 mt-4">Your Store</h1>
+                    <p className="text-gray-500">Create items fans can redeem with points</p>
                 </div>
-                <button onClick={() => setShowCreate(true)} className="btn-primary">
+                <button onClick={handleOpenCreate} className="btn-primary">
                     <Plus className="w-4 h-4" /> New Item
                 </button>
             </div>
 
-            {/* Create Item Modal */}
+            {/* Create / Edit Item Modal */}
             {showCreate && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="card w-full max-w-lg">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold">Create Store Item</h2>
-                            <button onClick={() => setShowCreate(false)} className="text-foreground-muted hover:text-foreground">
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="card w-full max-w-lg shadow-xl ring-1 ring-gray-900/5">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-xl font-bold text-gray-900">{editingId ? 'Edit Store Item' : 'Create Store Item'}</h2>
+                            <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-foreground-muted">Item Name</label>
+                                <label className="block text-sm font-semibold mb-2 text-gray-900">Item Name</label>
                                 <input
                                     type="text"
                                     value={name}
@@ -104,18 +132,18 @@ export default function CreatorStorePage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-foreground-muted">Description</label>
+                                <label className="block text-sm font-semibold mb-2 text-gray-900">Description</label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Describe what the fan gets..."
-                                    className="textarea"
+                                    className="textarea min-h-[120px]"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-foreground-muted">Point Cost</label>
+                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Point Cost</label>
                                     <input
                                         type="number"
                                         value={pointCost}
@@ -126,7 +154,7 @@ export default function CreatorStorePage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-foreground-muted">Quantity</label>
+                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Quantity Available</label>
                                     <input
                                         type="number"
                                         value={quantity}
@@ -138,19 +166,19 @@ export default function CreatorStorePage() {
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <button type="submit" disabled={creating} className="btn-primary flex-1">
-                                    {creating ? (
-                                        <span className="flex items-center gap-2">
+                            <div className="flex gap-4 pt-4 border-t border-gray-100">
+                                <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary w-full">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={submitting} className="btn-primary w-full">
+                                    {submitting ? (
+                                        <span className="flex items-center justify-center gap-2">
                                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Creating...
+                                            {editingId ? 'Saving...' : 'Creating...'}
                                         </span>
                                     ) : (
-                                        'Create Item'
+                                        editingId ? 'Save Changes' : 'Create Item'
                                     )}
-                                </button>
-                                <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary">
-                                    Cancel
                                 </button>
                             </div>
                         </form>
@@ -160,31 +188,53 @@ export default function CreatorStorePage() {
 
             {/* Items Grid */}
             {items.length === 0 ? (
-                <div className="card text-center py-16">
-                    <ShoppingBag className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No store items yet</h3>
-                    <p className="text-foreground-muted mb-4">Create items for fans to redeem with their points!</p>
-                    <button onClick={() => setShowCreate(true)} className="btn-primary">
+                <div className="card flex flex-col items-center justify-center py-20 text-center">
+                    <ShoppingBag className="w-12 h-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No store items yet</h3>
+                    <p className="text-gray-500 mb-6">Create items for fans to redeem with their points!</p>
+                    <button onClick={handleOpenCreate} className="btn-primary">
                         <Plus className="w-4 h-4" /> Create First Item
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {items.map((item) => (
-                        <div key={item.id} className="card group hover:border-accent/50 transition-all">
-                            <div className="h-32 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-xl mb-4 flex items-center justify-center">
-                                <Package className="w-10 h-10 text-foreground-muted/50" />
-                            </div>
-                            <h3 className="font-bold text-lg mb-1">{item.name}</h3>
-                            <p className="text-sm text-foreground-muted mb-3 line-clamp-2">{item.description}</p>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                    <Star className="w-4 h-4 text-secondary" />
-                                    <span className="font-bold text-secondary">{formatPoints(item.point_cost)} pts</span>
+                        <div key={item.id} className="card p-5 group hover:border-gray-400 transition-all flex flex-col justify-between">
+                            <div>
+                                <div className="h-40 bg-gray-50 border border-gray-100 rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
+                                    <Package className="w-10 h-10 text-gray-300" />
+                                    {/* Action overlay on hover for desktop */}
+                                    <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleOpenEdit(item)} className="p-2 bg-white border border-gray-200 text-gray-500 hover:text-gray-900 shadow-sm rounded-lg hover:bg-gray-50 transition-colors">
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(item.id)} className="p-2 bg-white border border-gray-200 text-gray-500 hover:text-red-600 shadow-sm rounded-lg hover:bg-red-50 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <span className={`text-xs font-medium ${item.quantity_available > 0 ? 'text-success' : 'text-error'}`}>
-                                    {item.quantity_available > 0 ? `${item.quantity_available} available` : 'Out of stock'}
-                                </span>
+                                <h3 className="font-bold text-gray-900 text-lg mb-1 tracking-tight line-clamp-1">{item.name}</h3>
+                                <p className="text-sm text-gray-500 mb-4 line-clamp-2 min-h-[40px] leading-relaxed">{item.description}</p>
+                            </div>
+                            <div className="flex items-center justify-between mt-auto">
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <Star className="w-4 h-4 text-gray-900" />
+                                        <span className="font-bold text-gray-900">{formatPoints(item.point_cost)} pts</span>
+                                    </div>
+                                    <span className={`text-xs font-semibold uppercase tracking-wider ${item.quantity_available > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                        {item.quantity_available > 0 ? `${item.quantity_available} left` : 'Out of stock'}
+                                    </span>
+                                </div>
+                                {/* Mobile-only edit buttons inside grid flow */}
+                                <div className="flex lg:hidden gap-1.5">
+                                    <button onClick={() => handleOpenEdit(item)} className="p-2 text-gray-400 hover:text-gray-900 rounded-lg bg-gray-50 border border-gray-100">
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-lg bg-red-50 border border-red-100">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
