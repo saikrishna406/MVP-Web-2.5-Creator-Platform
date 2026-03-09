@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 
-const jakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const sourceSans = Source_Sans_3({
+  variable: "--font-source-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Rapid MVP Creator | Web 2.5 Creator Monetization Platform",
+  title: "Black Bolts Provisions | Web 2.5 Creator Monetization Platform",
   description:
     "A next-gen creator monetization platform with token economics. Support creators, earn points, unlock exclusive content.",
   keywords: "creator economy, tokens, monetization, SaaS, content platform, web 2.5",
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
-        className={`${jakartaSans.variable} antialiased`}
+        className={`${sourceSans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         {children}

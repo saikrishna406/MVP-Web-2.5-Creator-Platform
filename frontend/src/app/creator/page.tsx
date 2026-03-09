@@ -4,7 +4,7 @@ import { formatTokens, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 
 export const metadata = {
-    title: 'Creator Dashboard | Rapid MVP Creator',
+    title: 'Creator Dashboard | Black Bolts Provisions',
     description: 'Manage your content, track earnings, and engage with fans.',
 };
 
@@ -156,8 +156,8 @@ export default async function CreatorDashboardPage() {
                                         <div className="text-xs text-foreground-muted flex items-center gap-2">
                                             <span>{formatRelativeTime(post.created_at)}</span>
                                             <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' :
-                                                    post.access_type === 'token_gated' ? 'badge-accent' :
-                                                        'badge-primary'
+                                                post.access_type === 'token_gated' ? 'badge-accent' :
+                                                    'badge-primary'
                                                 }`}>
                                                 {post.access_type.replace('_', ' ')}
                                             </span>

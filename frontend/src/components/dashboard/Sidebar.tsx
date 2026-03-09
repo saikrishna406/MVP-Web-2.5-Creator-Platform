@@ -44,10 +44,12 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
             {/* Logo */}
             <div className="p-6 border-b border-border">
                 <Link href={`/${profile.role}`} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
-                        <Zap className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-lg font-bold gradient-text">Rapid MVP</span>
+                    <img
+                        src="/images/logo-1.jpeg"
+                        alt="Black Bolts Provisions Logo"
+                        className="w-10 h-10 rounded-full object-cover shadow-[0_0_10px_rgba(255,140,0,0.3)]"
+                    />
+                    <span className="text-lg font-bold gradient-text">Black Bolts Provisions</span>
                 </Link>
             </div>
 
@@ -101,8 +103,8 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                        ? 'bg-primary/15 text-primary-light border border-primary/20'
-                                        : 'text-foreground-muted hover:text-foreground hover:bg-background/50'
+                                    ? 'bg-primary/15 text-primary-light border border-primary/20'
+                                    : 'text-foreground-muted hover:text-foreground hover:bg-background/50'
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
