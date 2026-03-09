@@ -23,10 +23,15 @@ export default async function FanLayout({ children }: { children: React.ReactNod
         .single();
 
     return (
-        <div className="min-h-screen">
+        <div className="dashboard-layout">
             <Sidebar profile={profile} wallet={wallet} />
+<<<<<<< HEAD
+            <main className="dashboard-main">
+                <div className="dashboard-content">
+=======
             <main className="lg:ml-64 min-h-screen">
-                <div className="p-4 lg:p-8 pt-16 lg:pt-8 max-w-6xl mx-auto">
+                <div className="page-container pt-20 lg:pt-12">
+>>>>>>> hasif_branch
                     {children}
                 </div>
             </main>

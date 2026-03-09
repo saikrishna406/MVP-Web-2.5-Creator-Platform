@@ -68,11 +68,14 @@ export const NAV_ITEMS_FAN = [
     { href: '/fan/feed', label: 'Feed', icon: 'Newspaper' },
     { href: '/fan/wallet', label: 'Wallet', icon: 'Wallet' },
     { href: '/fan/store', label: 'Store', icon: 'ShoppingBag' },
+    { href: '/fan/leaderboard', label: 'Leaderboard', icon: 'Trophy' },
 ];
 
 export const NAV_ITEMS_CREATOR = [
     { href: '/creator', label: 'Dashboard', icon: 'LayoutDashboard' },
+    { href: '/creator/profile', label: 'Profile', icon: 'User' },
     { href: '/creator/posts', label: 'Posts', icon: 'FileText' },
     { href: '/creator/store', label: 'Store', icon: 'ShoppingBag' },
     { href: '/creator/analytics', label: 'Analytics', icon: 'BarChart3' },
+    { href: '/creator/leaderboard', label: 'Leaderboard', icon: 'Trophy' },
 ];
