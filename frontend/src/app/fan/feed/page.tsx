@@ -124,71 +124,72 @@ export default function FeedPage() {
     if (loading) return <PageLoader />;
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Content Feed</h1>
-                <p className="text-foreground-muted">Discover and unlock exclusive creator content</p>
+        <div className="space-y-8 animate-fade-in max-w-2xl mx-auto">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Content Feed</h1>
+                <p className="text-gray-500">Discover and unlock exclusive creator content</p>
             </div>
 
             {posts.length === 0 ? (
-                <div className="card text-center py-16">
-                    <Eye className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
-                    <p className="text-foreground-muted">Check back soon for new creator content!</p>
+                <div className="card flex flex-col items-center justify-center py-20 text-center">
+                    <Eye className="w-12 h-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+                    <p className="text-gray-500">Check back soon for new creator content!</p>
                 </div>
             ) : (
-                <div className="space-y-6 max-w-2xl">
+                <div className="space-y-6">
                     {posts.map((post) => (
-                        <div key={post.id} className="card overflow-hidden">
+                        <div key={post.id} className="card p-6 overflow-hidden">
                             {/* Post Header */}
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-900 font-bold text-sm shrink-0 overflow-hidden">
                                     {post.creator?.avatar_url ? (
-                                        <img src={post.creator.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={post.creator.avatar_url} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         getInitials(post.creator?.display_name || 'C')
                                     )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <div className="font-semibold text-sm">{post.creator?.display_name}</div>
-                                    <div className="text-xs text-foreground-muted">@{post.creator?.username} · {formatRelativeTime(post.created_at)}</div>
+                                    <div className="font-semibold text-gray-900 text-sm tracking-tight">{post.creator?.display_name}</div>
+                                    <div className="text-xs text-gray-500">@{post.creator?.username} · {formatRelativeTime(post.created_at)}</div>
                                 </div>
                                 {/* Access badge */}
                                 {post.access_type !== 'public' && (
-                                    <div className={`badge ${post.is_unlocked ? 'badge-success' : 'badge-accent'}`}>
+                                    <div className={`badge ${post.is_unlocked ? 'badge-success' : 'badge-primary'}`}>
                                         {post.is_unlocked ? (
-                                            <><Unlock className="w-3 h-3" /> Unlocked</>
+                                            <><Unlock className="w-3 h-3 mr-1" /> Unlocked</>
                                         ) : post.access_type === 'token_gated' ? (
-                                            <><Lock className="w-3 h-3" /> {post.token_cost} tokens</>
+                                            <><Lock className="w-3 h-3 mr-1" /> {post.token_cost} tokens</>
                                         ) : (
-                                            <><Lock className="w-3 h-3" /> Hold {post.threshold_amount}+</>
+                                            <><Lock className="w-3 h-3 mr-1" /> Hold {post.threshold_amount}+</>
                                         )}
                                     </div>
                                 )}
                             </div>
 
                             {/* Post Title */}
-                            <h3 className="text-lg font-bold mb-2">{post.title}</h3>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">{post.title}</h3>
 
                             {/* Post Content */}
                             {isContentVisible(post) ? (
-                                <div className="text-foreground-muted leading-relaxed mb-4 whitespace-pre-wrap">
+                                <div className="text-gray-700 leading-relaxed mb-6 whitespace-pre-wrap">
                                     {post.content}
                                 </div>
                             ) : (
-                                <div className="relative mb-4">
-                                    <div className="text-foreground-muted leading-relaxed blur-sm select-none">
-                                        {truncateText(post.content, 200)}
+                                <div className="relative mb-6">
+                                    <div className="text-gray-400 leading-relaxed blur-[4px] select-none opacity-50">
+                                        {truncateText(post.content || "This is restricted content that must be unlocked. This content requires specific conditions to be met before you can view it.", 300)}
                                     </div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="absolute inset-0 flex items-center justify-center z-10 transition-transform hover:scale-[1.02]">
                                         <button
                                             onClick={() => handleUnlock(post.id)}
                                             disabled={unlocking === post.id}
-                                            className="btn-accent"
+                                            className="btn-primary"
                                         >
                                             {unlocking === post.id ? (
                                                 <span className="flex items-center gap-2">
-                                                    <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                                     Unlocking...
                                                 </span>
                                             ) : post.access_type === 'token_gated' ? (
@@ -209,16 +210,17 @@ export default function FeedPage() {
 
                             {/* Post Image */}
                             {post.image_url && isContentVisible(post) && (
-                                <div className="rounded-xl overflow-hidden mb-4">
-                                    <img src={post.image_url} alt="" className="w-full object-cover max-h-96" />
+                                <div className="rounded-xl overflow-hidden mb-6 border border-gray-100 bg-gray-50 flex justify-center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={post.image_url} alt="" className="max-w-full max-h-[500px] object-contain" />
                                 </div>
                             )}
 
                             {/* Actions */}
-                            <div className="flex items-center gap-4 pt-3 border-t border-border/50">
+                            <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
                                 <button
                                     onClick={() => handleLike(post.id)}
-                                    className={`flex items-center gap-2 text-sm transition-all ${post.is_liked ? 'text-error' : 'text-foreground-muted hover:text-error'
+                                    className={`flex items-center gap-1.5 text-sm font-medium transition-all ${post.is_liked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                                         }`}
                                 >
                                     <Heart className={`w-5 h-5 ${post.is_liked ? 'fill-current' : ''}`} />
@@ -226,53 +228,56 @@ export default function FeedPage() {
                                 </button>
                                 <button
                                     onClick={() => toggleComments(post.id)}
-                                    className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground transition-all"
+                                    className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-all"
                                 >
                                     <MessageCircle className="w-5 h-5" />
                                     {post.comments_count || 0}
                                     {expandedComments.has(post.id) ? (
-                                        <ChevronUp className="w-4 h-4" />
+                                        <ChevronUp className="w-4 h-4 ml-0.5" />
                                     ) : (
-                                        <ChevronDown className="w-4 h-4" />
+                                        <ChevronDown className="w-4 h-4 ml-0.5" />
                                     )}
                                 </button>
                             </div>
 
                             {/* Comments Section */}
                             {expandedComments.has(post.id) && (
-                                <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
-                                    {comments[post.id]?.map((comment) => (
-                                        <div key={comment.id} className="flex gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center text-xs font-bold text-foreground-muted shrink-0">
-                                                {getInitials(comment.profile?.display_name || 'U')}
-                                            </div>
-                                            <div className="flex-1 bg-background rounded-xl p-3">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-xs font-semibold">{comment.profile?.display_name}</span>
-                                                    <span className="text-xs text-foreground-muted">{formatRelativeTime(comment.created_at)}</span>
-                                                </div>
-                                                <p className="text-sm text-foreground-muted">{comment.content}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-
+                                <div className="mt-5 pt-5 border-t border-gray-100 space-y-4">
                                     {/* New comment input */}
-                                    <div className="flex gap-3 items-end">
+                                    <div className="flex gap-3 mb-6">
                                         <input
                                             type="text"
                                             value={newComment[post.id] || ''}
                                             onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
                                             placeholder="Write a comment..."
-                                            className="input flex-1 text-sm"
+                                            className="input flex-1 text-sm bg-gray-50"
                                             onKeyDown={(e) => e.key === 'Enter' && handleComment(post.id)}
                                         />
                                         <button
                                             onClick={() => handleComment(post.id)}
                                             disabled={!newComment[post.id]?.trim()}
-                                            className="btn-primary px-3 py-2.5"
+                                            className="btn-primary !px-4"
                                         >
                                             <Send className="w-4 h-4" />
                                         </button>
+                                    </div>
+
+                                    {/* Comments list */}
+                                    <div className="space-y-4">
+                                        {comments[post.id]?.map((comment, idx) => (
+                                            <div key={comment.id} className={`flex gap-3 ${idx > 0 && 'pt-4 border-t border-gray-50'}`}>
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+                                                    {getInitials(comment.profile?.display_name || 'U')}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-baseline gap-2 mb-1">
+                                                        <span className="text-sm font-semibold text-gray-900 tracking-tight">{comment.profile?.display_name}</span>
+                                                        <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at)}</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 leading-relaxed">{comment.content}</p>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

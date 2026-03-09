@@ -147,10 +147,10 @@ mvp1/
 - [ ] Point redemption
 
 ### Phase 7: Dashboards & Polish
-- [ ] Fan dashboard
-- [ ] Creator dashboard
-- [ ] Analytics
-- [ ] Leaderboard
+- [x] Fan dashboard
+- [x] Creator dashboard
+- [x] Analytics
+- [x] Leaderboard
 
 ## Security Checklist
 - [ ] All balance updates in database transactions
