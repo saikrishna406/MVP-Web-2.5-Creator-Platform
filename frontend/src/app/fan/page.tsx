@@ -4,7 +4,7 @@ import { formatTokens, formatPoints, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 
 export const metadata = {
-    title: 'Fan Dashboard | Rapid MVP Creator',
+    title: 'Fan Dashboard | Black Bolts Provisions',
     description: 'Your fan dashboard - track tokens, points, and discover content.',
 };
 

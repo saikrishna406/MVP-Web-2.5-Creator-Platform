@@ -1,6 +1,6 @@
 import { PointAction } from '@/types';
 
-export const SITE_NAME = 'Rapid MVP Creator';
+export const SITE_NAME = 'Black Bolts Provisions';
 export const SITE_DESCRIPTION = 'A Web 2.5 creator monetization platform with token economics';
 
 export const POINT_ACTIONS: Record<string, PointAction> = {

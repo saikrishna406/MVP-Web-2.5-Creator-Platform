@@ -3,7 +3,7 @@ import { BarChart3, Coins, Users, Eye, Heart, TrendingUp, Trophy, Star } from 'l
 import { formatTokens, formatPoints, formatRelativeTime } from '@/lib/utils';
 
 export const metadata = {
-    title: 'Analytics | Rapid MVP Creator',
+    title: 'Analytics | Black Bolts Provisions',
     description: 'Track your creator performance and engagement metrics.',
 };
 
@@ -122,8 +122,8 @@ export default async function AnalyticsPage() {
                             {topPosts.map((post, i) => (
                                 <div key={post.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
                                     <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                            i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
-                                                'bg-background text-foreground-muted'
+                                        i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
+                                            'bg-background text-foreground-muted'
                                         }`}>
                                         #{i + 1}
                                     </span>
@@ -154,8 +154,8 @@ export default async function AnalyticsPage() {
                             {topFans.map((fan, i) => (
                                 <div key={fan.username} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
                                     <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                            i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
-                                                'bg-background text-foreground-muted'
+                                        i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
+                                            'bg-background text-foreground-muted'
                                         }`}>
                                         {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                                     </span>
@@ -213,9 +213,9 @@ async function LeaderboardSection() {
                 return (
                     <div key={wallet.user_id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
                         <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                i === 1 ? 'bg-foreground-muted/30 text-foreground' :
-                                    i === 2 ? 'bg-accent/10 text-accent-light' :
-                                        'bg-background text-foreground-muted'
+                            i === 1 ? 'bg-foreground-muted/30 text-foreground' :
+                                i === 2 ? 'bg-accent/10 text-accent-light' :
+                                    'bg-background text-foreground-muted'
                             }`}>
                             {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                         </span>
