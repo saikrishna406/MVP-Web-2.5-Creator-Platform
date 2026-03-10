@@ -1,11 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-<<<<<<< HEAD
-import { Plus, FileText, Lock, Globe, Shield, Eye, Heart, MessageCircle, X, Trash2, Image as ImageIcon } from 'lucide-react';
-=======
 import { Plus, FileText, Lock, Globe, Shield, Eye, Heart, MessageCircle, X, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
->>>>>>> hasif_branch
 import { formatRelativeTime, truncateText } from '@/lib/utils';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
@@ -15,12 +11,7 @@ export default function CreatorPostsPage() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
-<<<<<<< HEAD
-    const [creating, setCreating] = useState(false);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-=======
     const [submitting, setSubmitting] = useState(false);
->>>>>>> hasif_branch
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     // Form state
@@ -80,11 +71,7 @@ export default function CreatorPostsPage() {
             body: JSON.stringify({
                 title,
                 content,
-<<<<<<< HEAD
-                image_url: imageUrl || undefined,
-=======
                 image_url: imageUrl,
->>>>>>> hasif_branch
                 access_type: accessType,
                 token_cost: accessType === 'token_gated' ? tokenCost : 0,
                 threshold_amount: accessType === 'threshold_gated' ? thresholdAmount : 0,
@@ -92,15 +79,7 @@ export default function CreatorPostsPage() {
         });
 
         if (res.ok) {
-<<<<<<< HEAD
-            setToast({ message: 'Post created successfully!', type: 'success' });
-            setTitle('');
-            setContent('');
-            setImageUrl('');
-            setAccessType('public');
-=======
             setToast({ message: `Post ${editingId ? 'updated' : 'created'} successfully!`, type: 'success' });
->>>>>>> hasif_branch
             setShowCreate(false);
             fetchPosts();
         } else {
@@ -168,11 +147,7 @@ export default function CreatorPostsPage() {
 
             {/* Create / Edit Post Modal */}
             {showCreate && (
-<<<<<<< HEAD
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-=======
                 <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
->>>>>>> hasif_branch
                     <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-xl font-bold text-gray-900">{editingId ? 'Edit Post' : 'Create New Post'}</h2>
@@ -207,17 +182,10 @@ export default function CreatorPostsPage() {
                             </div>
 
                             <div>
-<<<<<<< HEAD
-                                <label className="block text-sm font-medium mb-2 text-foreground-muted">Image URL (Optional)</label>
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-background-secondary p-2.5 rounded-xl border border-border">
-                                        <ImageIcon className="w-5 h-5 text-foreground-muted" />
-=======
                                 <label className="block text-sm font-semibold mb-2 text-gray-900">Media / Image URL <span className="text-gray-400 font-normal">(Optional)</span></label>
                                 <div className="flex gap-3 items-center">
                                     <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
                                         <ImageIcon className="w-5 h-5 text-gray-400" />
->>>>>>> hasif_branch
                                     </div>
                                     <input
                                         type="url"
@@ -229,17 +197,6 @@ export default function CreatorPostsPage() {
                                 </div>
                             </div>
 
-<<<<<<< HEAD
-                            <div>
-                                <label className="block text-sm font-medium mb-3 text-foreground-muted">Access Type</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAccessType('public')}
-                                        className={`p-3 rounded-xl border-2 text-center transition-all ${accessType === 'public'
-                                            ? 'border-success bg-success/10'
-                                            : 'border-border hover:border-border-light'
-=======
                             <div className="pt-2">
                                 <label className="block text-sm font-semibold mb-4 text-gray-900">Access Type</label>
                                 <div className="grid grid-cols-3 gap-4">
@@ -249,7 +206,6 @@ export default function CreatorPostsPage() {
                                         className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${accessType === 'public'
                                             ? 'border-gray-900 ring-1 ring-gray-900 bg-gray-50'
                                             : 'border-gray-200 hover:border-gray-300 bg-white'
->>>>>>> hasif_branch
                                             }`}
                                     >
                                         <Globe className={`w-5 h-5 ${accessType === 'public' ? 'text-gray-900' : 'text-gray-400'}`} />
@@ -258,15 +214,9 @@ export default function CreatorPostsPage() {
                                     <button
                                         type="button"
                                         onClick={() => setAccessType('token_gated')}
-<<<<<<< HEAD
-                                        className={`p-3 rounded-xl border-2 text-center transition-all ${accessType === 'token_gated'
-                                            ? 'border-accent bg-accent/10'
-                                            : 'border-border hover:border-border-light'
-=======
                                         className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${accessType === 'token_gated'
                                             ? 'border-gray-900 ring-1 ring-gray-900 bg-gray-50'
                                             : 'border-gray-200 hover:border-gray-300 bg-white'
->>>>>>> hasif_branch
                                             }`}
                                     >
                                         <Lock className={`w-5 h-5 ${accessType === 'token_gated' ? 'text-gray-900' : 'text-gray-400'}`} />
@@ -275,15 +225,9 @@ export default function CreatorPostsPage() {
                                     <button
                                         type="button"
                                         onClick={() => setAccessType('threshold_gated')}
-<<<<<<< HEAD
-                                        className={`p-3 rounded-xl border-2 text-center transition-all ${accessType === 'threshold_gated'
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-border hover:border-border-light'
-=======
                                         className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${accessType === 'threshold_gated'
                                             ? 'border-gray-900 ring-1 ring-gray-900 bg-gray-50'
                                             : 'border-gray-200 hover:border-gray-300 bg-white'
->>>>>>> hasif_branch
                                             }`}
                                     >
                                         <Shield className={`w-5 h-5 ${accessType === 'threshold_gated' ? 'text-gray-900' : 'text-gray-400'}`} />
@@ -322,18 +266,12 @@ export default function CreatorPostsPage() {
                                 </div>
                             )}
 
-<<<<<<< HEAD
-                            <div className="flex gap-3 pt-2">
-                                <button type="submit" disabled={creating} className="btn-primary flex-1">
-                                    {creating ? (
-=======
                             <div className="flex gap-4 pt-4 border-t border-gray-100">
                                 <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary w-full">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={submitting} className="btn-primary w-full">
                                     {submitting ? (
->>>>>>> hasif_branch
                                         <span className="flex items-center justify-center gap-2">
                                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             {editingId ? 'Saving...' : 'Publishing...'}
@@ -359,25 +297,6 @@ export default function CreatorPostsPage() {
                     </button>
                 </div>
             ) : (
-<<<<<<< HEAD
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {posts.map((post) => (
-                        <div key={post.id} className="card hover:border-border-light transition-all flex flex-col overflow-hidden p-0">
-                            {post.image_url ? (
-                                <div className="w-full h-48 bg-background-secondary overflow-hidden relative">
-                                    <img src={post.image_url} alt={post.title} className="w-full h-full object-cover shrink-0" />
-                                </div>
-                            ) : null}
-                            <div className="p-6 flex-1 flex flex-col">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            {getAccessIcon(post.access_type)}
-                                            <span className={`badge text-xs ${post.access_type === 'public' ? 'badge-success' :
-                                                post.access_type === 'token_gated' ? 'badge-accent' :
-                                                    'badge-primary'
-                                                }`}>
-=======
                 <div className="space-y-6">
                     {posts.map((post) => (
                         <div key={post.id} className="card p-0 hover:border-gray-300 hover:shadow-md transition-all">
@@ -390,25 +309,10 @@ export default function CreatorPostsPage() {
                                                     'bg-gray-100 text-gray-900'
                                                 }`}>
                                                 {getAccessIcon(post.access_type)}
->>>>>>> hasif_branch
                                                 {post.access_type === 'public' ? 'Public' :
                                                     post.access_type === 'token_gated' ? `${post.token_cost} tokens` :
                                                         `Hold ${post.threshold_amount}+`}
                                             </span>
-<<<<<<< HEAD
-                                        </div>
-                                        <h3 className="font-bold text-lg mb-1 truncate">{post.title}</h3>
-                                        <p className="text-sm text-foreground-muted mb-3 line-clamp-2 min-h-[40px]">{truncateText(post.content, 120)}</p>
-                                    </div>
-                                </div>
-                                <div className="mt-auto flex items-center justify-between pt-4 border-t border-border/50">
-                                    <div className="flex flex-wrap items-center gap-4 text-xs text-foreground-muted">
-                                        <span>{formatRelativeTime(post.created_at)}</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{post.likes_count || 0}</span>
-                                            <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" />{post.comments_count || 0}</span>
-                                        </div>
-=======
                                             <span className="text-xs font-medium text-gray-400 ml-2">{formatRelativeTime(post.created_at)}</span>
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{post.title}</h3>
@@ -433,7 +337,6 @@ export default function CreatorPostsPage() {
                                         <button onClick={() => handleDelete(post.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors rounded-lg">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
->>>>>>> hasif_branch
                                     </div>
                                     <button
                                         onClick={() => handleDelete(post.id)}

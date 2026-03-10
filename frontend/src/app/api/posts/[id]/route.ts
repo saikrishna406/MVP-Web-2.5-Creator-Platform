@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-<<<<<<< HEAD
-=======
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
@@ -55,7 +53,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 }
 
->>>>>>> hasif_branch
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
@@ -66,11 +63,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-<<<<<<< HEAD
-        // Verify creator owns the post
-=======
         // Ensure user is the creator of the post
->>>>>>> hasif_branch
         const { data: post, error: fetchError } = await supabase
             .from('posts')
             .select('creator_id')
@@ -94,15 +87,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
         }
 
-<<<<<<< HEAD
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('[posts] DELETE error:', error);
-=======
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         console.error('[posts][id] DELETE error:', error);
->>>>>>> hasif_branch
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

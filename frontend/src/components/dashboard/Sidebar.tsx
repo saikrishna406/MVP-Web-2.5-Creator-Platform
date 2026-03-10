@@ -9,22 +9,13 @@ import { Profile, Wallet } from '@/types';
 import { formatTokens, formatPoints, getInitials } from '@/lib/utils';
 import {
     LayoutDashboard, Newspaper, Wallet as WalletIcon, ShoppingBag,
-<<<<<<< HEAD
-    FileText, BarChart3, Zap, LogOut, Menu, X, Coins, Star, Trophy, User,
-    Search, ChevronLeft, ChevronRight, Settings
-=======
     FileText, BarChart3, Zap, LogOut, Menu, X, Coins, Star, User,
->>>>>>> hasif_branch
 } from 'lucide-react';
 import Image from 'next/image';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     LayoutDashboard, Newspaper, Wallet: WalletIcon, ShoppingBag,
-<<<<<<< HEAD
-    FileText, BarChart3, Trophy, User
-=======
     FileText, BarChart3, User,
->>>>>>> hasif_branch
 };
 
 interface SidebarProps {
@@ -64,35 +55,14 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
     const sidebarWidth = collapsed ? 'w-[76px]' : 'w-[260px]';
 
     const sidebarContent = (
-<<<<<<< HEAD
-        <div className="sidebar-container flex flex-col h-full" data-collapsed={collapsed}>
-            {/* Header: Logo + Collapse Toggle */}
-            <div className="sidebar-header">
-                <Link href={`/${profile.role}`} className="sidebar-logo-link">
-                    <div className="sidebar-logo-mark">
-                        <Zap className="w-4 h-4 text-white" />
-                    </div>
-                    {!collapsed && (
-                        <span className="sidebar-logo-text">Rapid MVP</span>
-                    )}
-=======
         <div className="flex flex-col h-full bg-white">
             {/* Logo */}
             <div className="p-6">
                 <Link href={`/${profile.role}`} className="flex items-center gap-3">
-<<<<<<< HEAD
-                    <img
-                        src="/images/logo-1.jpeg"
-                        alt="Black Bolts Provisions Logo"
-                        className="w-10 h-10 rounded-full object-cover shadow-[0_0_10px_rgba(255,140,0,0.3)]"
-                    />
-                    <span className="text-lg font-bold gradient-text">Black Bolts Provisions</span>
-=======
                     <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center shrink-0">
                         <Zap className="w-4 h-4 text-white" />
                     </div>
                     <span className="text-lg font-bold text-gray-900 tracking-tight">Rapid MVP</span>
->>>>>>> hasif_branch
 >>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
                 </Link>
                 {/* Desktop collapse toggle */}
@@ -112,75 +82,6 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                 </button>
             </div>
 
-<<<<<<< HEAD
-            {/* Search */}
-            {!collapsed && (
-                <div className="sidebar-search-wrapper">
-                    <div className="sidebar-search">
-                        <Search className="sidebar-search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="sidebar-search-input"
-                        />
-                    </div>
-                </div>
-            )}
-            {collapsed && (
-                <div className="sidebar-search-wrapper sidebar-search-collapsed">
-                    <button className="sidebar-icon-btn" title="Search">
-                        <Search className="w-[18px] h-[18px]" />
-                    </button>
-                </div>
-            )}
-
-            {/* Navigation */}
-            <nav className="sidebar-nav">
-                {filteredNavItems.map((item) => {
-                    const Icon = iconMap[item.icon] || LayoutDashboard;
-                    const isActive = pathname === item.href;
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
-                            title={collapsed ? item.label : undefined}
-                        >
-                            <div className="sidebar-nav-icon-wrapper">
-                                <Icon className="sidebar-nav-icon" />
-                            </div>
-                            {!collapsed && (
-                                <span className="sidebar-nav-label">{item.label}</span>
-                            )}
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            {/* Spacer */}
-            <div className="flex-1" />
-
-            {/* Wallet Summary (only when expanded) */}
-            {wallet && !collapsed && (
-                <div className="sidebar-wallet-section">
-                    <div className="sidebar-wallet-card">
-                        <div className="sidebar-wallet-item">
-                            <Coins className="w-4 h-4 text-amber-500" />
-                            <div className="sidebar-wallet-info">
-                                <span className="sidebar-wallet-value">{formatTokens(wallet.token_balance)}</span>
-                                <span className="sidebar-wallet-label">Tokens</span>
-                            </div>
-                        </div>
-                        <div className="sidebar-wallet-divider" />
-                        <div className="sidebar-wallet-item">
-                            <Star className="w-4 h-4 text-blue-500" />
-                            <div className="sidebar-wallet-info">
-                                <span className="sidebar-wallet-value">{formatPoints(wallet.points_balance)}</span>
-                                <span className="sidebar-wallet-label">Points</span>
-                            </div>
-=======
             {/* Navigation */}
             <nav className="px-4 flex-1 py-4">
                 <div className="space-y-1">
@@ -192,10 +93,6 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-<<<<<<< HEAD
-                                    ? 'bg-primary/15 text-primary-light border border-primary/20'
-                                    : 'text-foreground-muted hover:text-foreground hover:bg-background/50'
-=======
                                     ? 'bg-gray-100 text-gray-900'
                                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
 >>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
@@ -222,55 +119,11 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                             <Star className="w-4 h-4 text-gray-900 mx-auto mb-1" />
                             <div className="text-sm font-semibold text-gray-900">{formatPoints(wallet.points_balance)}</div>
                             <div className="text-[10px] uppercase tracking-wider font-medium text-gray-500">Points</div>
->>>>>>> hasif_branch
                         </div>
                     </div>
                 </div>
             )}
 
-<<<<<<< HEAD
-            {/* Settings Link */}
-            <div className="sidebar-bottom-actions">
-                <button
-                    className={`sidebar-nav-item`}
-                    title={collapsed ? 'Settings' : undefined}
-                >
-                    <div className="sidebar-nav-icon-wrapper">
-                        <Settings className="sidebar-nav-icon" />
-                    </div>
-                    {!collapsed && (
-                        <span className="sidebar-nav-label">Settings</span>
-                    )}
-                </button>
-            </div>
-
-            {/* User Profile at Bottom */}
-            <div className="sidebar-user-section">
-                <div className="sidebar-user-info">
-                    <div className="sidebar-user-avatar">
-                        {profile.avatar_url ? (
-                            <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                            getInitials(profile.display_name)
-                        )}
-                    </div>
-                    {!collapsed && (
-                        <div className="sidebar-user-details">
-                            <span className="sidebar-user-name">{profile.display_name}</span>
-                            <span className="sidebar-user-email">@{profile.username}</span>
-                        </div>
-                    )}
-                </div>
-                {!collapsed && (
-                    <button
-                        onClick={handleLogout}
-                        className="sidebar-logout-btn"
-                        title="Sign Out"
-                    >
-                        <LogOut className="w-4 h-4" />
-                    </button>
-                )}
-=======
             {/* User info & Logout */}
             <div className="p-4 border-t border-gray-100">
                 <div className="flex items-center justify-between mb-4 px-2">
@@ -297,24 +150,12 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                     <LogOut className="w-4 h-4" />
                     Sign Out
                 </button>
->>>>>>> hasif_branch
             </div>
         </div>
     );
 
     return (
         <>
-<<<<<<< HEAD
-            {/* Mobile toggle */}
-            {!mobileOpen && (
-                <button
-                    onClick={() => setMobileOpen(true)}
-                    className="sidebar-mobile-trigger"
-                >
-                    <Menu className="w-5 h-5" />
-                </button>
-            )}
-=======
             {/* Mobile toggle bar */}
             <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center px-4 z-40">
                 <button
@@ -325,28 +166,19 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                 </button>
                 <div className="ml-2 font-bold tracking-tight text-gray-900">Rapid MVP</div>
             </div>
->>>>>>> hasif_branch
 
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div
-<<<<<<< HEAD
-                    className="sidebar-mobile-overlay"
-=======
                     className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
->>>>>>> hasif_branch
                     onClick={() => setMobileOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside
-<<<<<<< HEAD
-                className={`sidebar-aside ${sidebarWidth} ${mobileOpen ? 'sidebar-mobile-open' : 'sidebar-mobile-closed'}`}
-=======
                 className={`fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 ease-out ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
                     }`}
->>>>>>> hasif_branch
             >
                 {sidebarContent}
             </aside>
