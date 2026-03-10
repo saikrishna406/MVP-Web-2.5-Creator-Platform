@@ -51,13 +51,34 @@ export default async function FanDashboardPage() {
         .eq('user_id', user.id);
 
     return (
-        <div className="space-y-12 animate-fade-in">
-            {/* Welcome Header */}
-            <div>
-                <h1 className="text-4xl font-semibold mb-2 tracking-tight">
-                    Welcome back, {profile?.display_name} 👋
+        <div className="space-y-12 pb-24">
+            {/* Kinetic Marquee Banner */}
+            <div className="w-full overflow-hidden bg-gray-900 border-y border-gray-800 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 sm:rounded-2xl sm:border mb-8">
+                <div className="whitespace-nowrap flex items-center animate-marquee">
+                    <span className="text-white/80 text-sm font-semibold tracking-widest uppercase flex items-center gap-8 px-4">
+                        <span>• {unlockedPosts?.length || 0} Content Unlocked</span>
+                        <span>• {formatTokens(wallet?.token_balance || 0)} Tokens Balance</span>
+                        <span>• {formatPoints(wallet?.points_balance || 0)} Points Earned</span>
+                        <span>• {orders?.length || 0} Rewards Claimed</span>
+                        <span>• Welcome to Web 2.5</span>
+                        <span>• Support Creators</span>
+                        <span>• {unlockedPosts?.length || 0} Content Unlocked</span>
+                        <span>• {formatTokens(wallet?.token_balance || 0)} Tokens Balance</span>
+                        <span>• {formatPoints(wallet?.points_balance || 0)} Points Earned</span>
+                        <span>• {orders?.length || 0} Rewards Claimed</span>
+                    </span>
+                </div>
+            </div>
+
+            {/* Welcome Header - Magazine Typography */}
+            <div className="animate-fade-in-up">
+                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
+                    Welcome back,<br />
+                    <span className="text-gray-400 font-medium italic">{profile?.display_name}</span>
                 </h1>
-                <p className="text-gray-500 text-lg">Here&apos;s your creator economy overview</p>
+                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-2xl">
+                    Here's your personal creator economy overview. Support, engage, and earn.
+                </p>
             </div>
 
             {/* Stat Cards */}

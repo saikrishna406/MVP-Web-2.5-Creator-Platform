@@ -47,79 +47,98 @@ export default function FanStorePage() {
     if (loading) return <PageLoader />;
 
     return (
-        <div className="space-y-12 animate-fade-in max-w-7xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Redemption Store</h1>
-                <p className="text-gray-500">Spend your earned points on exclusive rewards</p>
+        <div className="space-y-12 pb-24 animate-fade-in-up max-w-7xl mx-auto">
+            <div className="mb-12">
+                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
+                    Redemption Store
+                </h1>
+                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-2xl">
+                    Spend your earned points on exclusive lifestyle rewards.
+                </p>
             </div>
 
             {items.length === 0 ? (
-                <div className="card flex flex-col items-center justify-center py-20 text-center">
-                    <ShoppingBag className="w-12 h-12 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No items available</h3>
-                    <p className="text-gray-500">Creators haven&apos;t added any store items yet. Check back soon!</p>
+                <div className="card flex flex-col items-center justify-center py-32 text-center rounded-3xl border-dashed">
+                    <ShoppingBag className="w-16 h-16 text-gray-200 mb-6" />
+                    <h3 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-gray-900 mb-2">No items available</h3>
+                    <p className="text-gray-500 text-lg">Creators haven&apos;t added any store items yet. Check back soon!</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {items.map((item) => (
-                        <div key={item.id} className="card p-5 flex flex-col hover:border-gray-400 group transition-all">
-                            {/* Item image placeholder */}
-                            <div className="h-44 bg-gray-50 border border-gray-100 rounded-lg mb-5 flex items-center justify-center overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    {items.map((item, index) => (
+                        <div key={item.id}
+                            className="group relative flex flex-col justify-end overflow-hidden rounded-[2rem] bg-gray-100 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl"
+                            style={{ minHeight: '440px', animationDelay: `${index * 50}ms` }}
+                        >
+                            {/* Full-bleed background image with scale effect */}
+                            <div className="absolute inset-0 z-0">
                                 {item.image_url ? (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
                                 ) : (
-                                    <Package className="w-10 h-10 text-gray-300" />
+                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center transition-transform duration-700 ease-out group-hover:scale-105">
+                                        <Package className="w-16 h-16 text-gray-300" />
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Creator info */}
-                            {item.creator && (
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 text-[10px] font-bold overflow-hidden">
-                                        {getInitials(item.creator.display_name || 'C')}
+                            {/* Heavy dark gradient overlay for text readability */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 transition-opacity duration-500 group-hover:opacity-90" />
+
+                            {/* Content container (Glassmorphism on hover) */}
+                            <div className="relative z-20 p-6 pt-12 transform transition-transform duration-500">
+                                {/* Creator Info */}
+                                {item.creator && (
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white text-xs font-bold overflow-hidden shadow-sm">
+                                            {getInitials(item.creator.display_name || 'C')}
+                                        </div>
+                                        <span className="text-sm font-medium text-white/80 tracking-wide">by {item.creator.display_name}</span>
                                     </div>
-                                    <span className="text-xs font-medium text-gray-500">by {item.creator.display_name}</span>
-                                </div>
-                            )}
-
-                            <h3 className="font-bold text-gray-900 text-lg mb-2 tracking-tight line-clamp-1">{item.name}</h3>
-                            <p className="text-sm text-gray-500 mb-6 line-clamp-2 min-h-[40px] leading-relaxed">{item.description}</p>
-
-                            <div className="flex items-end justify-between mt-auto mb-5">
-                                <div>
-                                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Cost</div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Star className="w-4 h-4 text-gray-900" />
-                                        <span className="font-bold text-gray-900">{formatPoints(item.point_cost)} pts</span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Stock</div>
-                                    <span className={`text-sm font-semibold ${item.quantity_available > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                        {item.quantity_available > 0 ? `${item.quantity_available} left` : 'Out of stock'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => handleRedeem(item.id)}
-                                disabled={redeeming === item.id || item.quantity_available <= 0}
-                                className="btn-primary w-full"
-                            >
-                                {redeeming === item.id ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Processing
-                                    </span>
-                                ) : item.quantity_available <= 0 ? (
-                                    'Sold Out'
-                                ) : (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <Check className="w-4 h-4" /> Redeem
-                                    </span>
                                 )}
-                            </button>
+
+                                <h3 className="font-bold text-white text-2xl mb-2 font-[family-name:var(--font-heading)] tracking-tight line-clamp-2 leading-tight">
+                                    {item.name}
+                                </h3>
+                                <p className="text-sm text-white/60 mb-6 line-clamp-2 min-h-[40px] leading-relaxed font-light">
+                                    {item.description}
+                                </p>
+
+                                <div className="flex items-end justify-between mt-auto mb-6">
+                                    <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3 px-4 shadow-xl">
+                                        <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Cost</div>
+                                        <div className="flex items-center gap-2">
+                                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                            <span className="font-bold text-white text-lg">{formatPoints(item.point_cost)} pt</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Status</div>
+                                        <span className={`text-sm font-bold tracking-wide ${item.quantity_available > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                            {item.quantity_available > 0 ? `${item.quantity_available} left` : 'Sold out'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => handleRedeem(item.id)}
+                                    disabled={redeeming === item.id || item.quantity_available <= 0}
+                                    className="w-full bg-white text-black font-bold text-sm py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:bg-gray-100 disabled:opacity-50 disabled:bg-white/20 disabled:text-white disabled:cursor-not-allowed group/btn hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                                >
+                                    {redeeming === item.id ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                            Processing
+                                        </span>
+                                    ) : item.quantity_available <= 0 ? (
+                                        'Sold Out'
+                                    ) : (
+                                        <span className="flex items-center justify-center gap-2 group-hover/btn:scale-105 transition-transform">
+                                            <ShoppingBag className="w-4 h-4" /> Redeem Reward
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

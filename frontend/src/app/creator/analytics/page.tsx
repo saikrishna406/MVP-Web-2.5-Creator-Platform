@@ -70,9 +70,14 @@ export default async function AnalyticsPage() {
 
     return (
         <div className="space-y-12 animate-fade-in max-w-7xl mx-auto">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 mt-4 tracking-tight">Analytics</h1>
-                <p className="text-gray-500">Track your performance and audience engagement</p>
+            {/* Welcome Header - Magazine Typography */}
+            <div className="animate-fade-in-up mt-4 mb-8">
+                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 pb-2">
+                    Analytics
+                </h1>
+                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-2xl">
+                    Track your performance and audience engagement
+                </p>
             </div>
 
             {/* Overview Stats */}

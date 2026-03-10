@@ -124,10 +124,14 @@ export default function FeedPage() {
     if (loading) return <PageLoader />;
 
     return (
-        <div className="space-y-8 animate-fade-in max-w-2xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Content Feed</h1>
-                <p className="text-gray-500">Discover and unlock exclusive creator content</p>
+        <div className="space-y-8 pb-24 animate-fade-in-up max-w-2xl mx-auto">
+            <div className="mb-12 mt-4 text-center sm:text-left">
+                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
+                    Content Feed
+                </h1>
+                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-sm sm:max-w-2xl mx-auto sm:mx-0">
+                    Discover and unlock exclusive creator content.
+                </p>
             </div>
 
             {posts.length === 0 ? (
@@ -137,150 +141,200 @@ export default function FeedPage() {
                     <p className="text-gray-500">Check back soon for new creator content!</p>
                 </div>
             ) : (
-                <div className="space-y-6">
-                    {posts.map((post) => (
-                        <div key={post.id} className="card p-6 overflow-hidden">
-                            {/* Post Header */}
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-900 font-bold text-sm shrink-0 overflow-hidden">
-                                    {post.creator?.avatar_url ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={post.creator.avatar_url} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        getInitials(post.creator?.display_name || 'C')
-                                    )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="font-semibold text-gray-900 text-sm tracking-tight">{post.creator?.display_name}</div>
-                                    <div className="text-xs text-gray-500">@{post.creator?.username} · {formatRelativeTime(post.created_at)}</div>
-                                </div>
-                                {/* Access badge */}
-                                {post.access_type !== 'public' && (
-                                    <div className={`badge ${post.is_unlocked ? 'badge-success' : 'badge-primary'}`}>
-                                        {post.is_unlocked ? (
-                                            <><Unlock className="w-3 h-3 mr-1" /> Unlocked</>
-                                        ) : post.access_type === 'token_gated' ? (
-                                            <><Lock className="w-3 h-3 mr-1" /> {post.token_cost} tokens</>
-                                        ) : (
-                                            <><Lock className="w-3 h-3 mr-1" /> Hold {post.threshold_amount}+</>
+                <div className="space-y-12 pb-12">
+                    {posts.map((post, index) => (
+                        <div key={post.id}
+                            className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 ease-out border border-gray-100"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                            {/* IF HAS IMAGE & VISIBLE: Edge-to-Edge Hero Image */}
+                            {post.image_url && isContentVisible(post) ? (
+                                <div className="relative w-full h-[400px] sm:h-[500px] bg-gray-900 overflow-hidden">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={post.image_url} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105" />
+                                    {/* Gradient Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent opacity-90 transition-opacity duration-500" />
+
+                                    {/* Header (Over Image) */}
+                                    <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+                                        <div className="flex items-center gap-3 backdrop-blur-md bg-white/10 rounded-full pr-4 p-1 border border-white/10 shadow-lg">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 font-bold text-xs shrink-0 overflow-hidden">
+                                                {post.creator?.avatar_url ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={post.creator.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    getInitials(post.creator?.display_name || 'C')
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-white text-xs tracking-wide">{post.creator?.display_name}</span>
+                                                <span className="text-[10px] text-white/60 uppercase">{formatRelativeTime(post.created_at)}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Access badge */}
+                                        {post.access_type !== 'public' && (
+                                            <div className={`backdrop-blur-md border border-white/20 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg ${post.is_unlocked ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-white/10'}`}>
+                                                {post.is_unlocked ? (
+                                                    <><Unlock className="w-3 h-3" /> Unlocked</>
+                                                ) : post.access_type === 'token_gated' ? (
+                                                    <><Lock className="w-3 h-3" /> {post.token_cost} tokens</>
+                                                ) : (
+                                                    <><Lock className="w-3 h-3" /> Hold {post.threshold_amount}+</>
+                                                )}
+                                            </div>
                                         )}
+                                    </div>
+
+                                    {/* Title (Over Image) */}
+                                    <div className="absolute bottom-6 left-6 right-6 z-10">
+                                        <h3 className="text-3xl sm:text-4xl font-bold font-[family-name:var(--font-heading)] text-white mb-2 tracking-tight leading-tight drop-shadow-lg transform transition-transform duration-500 group-hover:translate-x-1">
+                                            {post.title}
+                                        </h3>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* IF NO IMAGE OR LOCKED: Standard Header */
+                                <div className="p-6 md:p-8 pb-4">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-900 font-bold text-sm shrink-0 overflow-hidden shadow-sm">
+                                            {post.creator?.avatar_url ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={post.creator.avatar_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                getInitials(post.creator?.display_name || 'C')
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-bold text-gray-900 text-base tracking-tight">{post.creator?.display_name}</div>
+                                            <div className="text-sm text-gray-500 font-medium">@{post.creator?.username} · <span className="text-gray-400 font-normal">{formatRelativeTime(post.created_at)}</span></div>
+                                        </div>
+                                        {/* Access badge */}
+                                        {post.access_type !== 'public' && (
+                                            <div className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 ${post.is_unlocked ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                {post.is_unlocked ? (
+                                                    <><Unlock className="w-3 h-3" /> Unlocked</>
+                                                ) : post.access_type === 'token_gated' ? (
+                                                    <><Lock className="w-3 h-3" /> {post.token_cost} tokens</>
+                                                ) : (
+                                                    <><Lock className="w-3 h-3" /> Hold {post.threshold_amount}+</>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3 className="text-3xl font-bold font-[family-name:var(--font-heading)] text-gray-900 mb-2 tracking-tight leading-tight">
+                                        {post.title}
+                                    </h3>
+                                </div>
+                            )}
+
+                            {/* Content Body */}
+                            <div className="p-6 md:p-8 pt-4">
+                                {isContentVisible(post) ? (
+                                    <div className="text-gray-600 text-lg font-light leading-relaxed mb-6 whitespace-pre-wrap">
+                                        {post.content}
+                                    </div>
+                                ) : (
+                                    <div className="relative mb-8 mt-4 rounded-2xl overflow-hidden bg-gray-50 p-6 md:p-10 border border-gray-100">
+                                        <div className="text-gray-400 text-lg font-light leading-relaxed blur-md select-none opacity-40">
+                                            {truncateText(post.content || "This is exclusive premium content that must be unlocked. Once unlocked, you will get access to all the juicy details and hidden media inside. Don't miss out on what this creator has to share behind the scenes.", 300)}
+                                        </div>
+                                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/40 backdrop-blur-[2px]">
+                                            <div className="transform transition-transform hover:scale-105 duration-300">
+                                                <button
+                                                    onClick={() => handleUnlock(post.id)}
+                                                    disabled={unlocking === post.id}
+                                                    className="bg-gray-900 text-white border-0 shadow-2xl hover:bg-gray-800 rounded-full px-8 py-4 font-bold tracking-wide text-sm"
+                                                >
+                                                    {unlocking === post.id ? (
+                                                        <span className="flex items-center gap-2">
+                                                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                            Unlocking...
+                                                        </span>
+                                                    ) : post.access_type === 'token_gated' ? (
+                                                        <span className="flex items-center gap-2">
+                                                            <Coins className="w-5 h-5" />
+                                                            Unlock for {post.token_cost} Tokens
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-2">
+                                                            <Lock className="w-5 h-5" />
+                                                            Requires {post.threshold_amount}+ Tokens
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Actions / Footer */}
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-2">
+                                    <div className="flex items-center gap-6">
+                                        <button
+                                            onClick={() => handleLike(post.id)}
+                                            className={`group/like flex items-center gap-2 text-sm font-bold tracking-wide transition-all ${post.is_liked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                                                }`}
+                                        >
+                                            <div className={`p-2 rounded-full transition-colors ${post.is_liked ? 'bg-red-50' : 'bg-gray-50 group-hover/like:bg-red-50'}`}>
+                                                <Heart className={`w-5 h-5 transition-transform group-hover/like:scale-110 ${post.is_liked ? 'fill-current' : ''}`} />
+                                            </div>
+                                            {post.likes_count || 0}
+                                        </button>
+                                        <button
+                                            onClick={() => toggleComments(post.id)}
+                                            className="group/comment flex items-center gap-2 text-sm font-bold tracking-wide text-gray-400 hover:text-gray-900 transition-all"
+                                        >
+                                            <div className="p-2 rounded-full bg-gray-50 group-hover/comment:bg-gray-100 transition-colors">
+                                                <MessageCircle className="w-5 h-5 transition-transform group-hover/comment:scale-110" />
+                                            </div>
+                                            {post.comments_count || 0}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Comments Section */}
+                                {expandedComments.has(post.id) && (
+                                    <div className="mt-6 pt-6 border-t border-gray-100 bg-gray-50/50 -mx-6 md:-mx-8 px-6 md:px-8 pb-6 md:pb-8">
+                                        {/* New comment input */}
+                                        <div className="flex relative items-center mb-8">
+                                            <input
+                                                type="text"
+                                                value={newComment[post.id] || ''}
+                                                onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                                placeholder="Write a comment..."
+                                                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-full focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 block px-6 py-4 pr-16 shadow-sm font-medium transition-all"
+                                                onKeyDown={(e) => e.key === 'Enter' && handleComment(post.id)}
+                                            />
+                                            <button
+                                                onClick={() => handleComment(post.id)}
+                                                disabled={!newComment[post.id]?.trim()}
+                                                className="absolute right-2 p-2.5 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white rounded-full transition-colors"
+                                            >
+                                                <Send className="w-4 h-4 ml-0.5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Comments list */}
+                                        <div className="space-y-6">
+                                            {comments[post.id]?.map((comment) => (
+                                                <div key={comment.id} className="flex gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-sm font-bold text-gray-600 shrink-0 shadow-sm">
+                                                        {getInitials(comment.profile?.display_name || 'U')}
+                                                    </div>
+                                                    <div className="flex-1 bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100">
+                                                        <div className="flex items-baseline gap-2 mb-1">
+                                                            <span className="text-sm font-bold text-gray-900 tracking-tight">{comment.profile?.display_name}</span>
+                                                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{formatRelativeTime(comment.created_at)}</span>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 font-light leading-relaxed">{comment.content}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
-
-                            {/* Post Title */}
-                            <h3 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">{post.title}</h3>
-
-                            {/* Post Content */}
-                            {isContentVisible(post) ? (
-                                <div className="text-gray-700 leading-relaxed mb-6 whitespace-pre-wrap">
-                                    {post.content}
-                                </div>
-                            ) : (
-                                <div className="relative mb-6">
-                                    <div className="text-gray-400 leading-relaxed blur-[4px] select-none opacity-50">
-                                        {truncateText(post.content || "This is restricted content that must be unlocked. This content requires specific conditions to be met before you can view it.", 300)}
-                                    </div>
-                                    <div className="absolute inset-0 flex items-center justify-center z-10 transition-transform hover:scale-[1.02]">
-                                        <button
-                                            onClick={() => handleUnlock(post.id)}
-                                            disabled={unlocking === post.id}
-                                            className="btn-primary"
-                                        >
-                                            {unlocking === post.id ? (
-                                                <span className="flex items-center gap-2">
-                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    Unlocking...
-                                                </span>
-                                            ) : post.access_type === 'token_gated' ? (
-                                                <span className="flex items-center gap-2">
-                                                    <Coins className="w-4 h-4" />
-                                                    Unlock for {post.token_cost} tokens
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-2">
-                                                    <Lock className="w-4 h-4" />
-                                                    Requires {post.threshold_amount}+ tokens
-                                                </span>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Post Image */}
-                            {post.image_url && isContentVisible(post) && (
-                                <div className="rounded-xl overflow-hidden mb-6 border border-gray-100 bg-gray-50 flex justify-center">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={post.image_url} alt="" className="max-w-full max-h-[500px] object-contain" />
-                                </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
-                                <button
-                                    onClick={() => handleLike(post.id)}
-                                    className={`flex items-center gap-1.5 text-sm font-medium transition-all ${post.is_liked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-                                        }`}
-                                >
-                                    <Heart className={`w-5 h-5 ${post.is_liked ? 'fill-current' : ''}`} />
-                                    {post.likes_count || 0}
-                                </button>
-                                <button
-                                    onClick={() => toggleComments(post.id)}
-                                    className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-all"
-                                >
-                                    <MessageCircle className="w-5 h-5" />
-                                    {post.comments_count || 0}
-                                    {expandedComments.has(post.id) ? (
-                                        <ChevronUp className="w-4 h-4 ml-0.5" />
-                                    ) : (
-                                        <ChevronDown className="w-4 h-4 ml-0.5" />
-                                    )}
-                                </button>
-                            </div>
-
-                            {/* Comments Section */}
-                            {expandedComments.has(post.id) && (
-                                <div className="mt-5 pt-5 border-t border-gray-100 space-y-4">
-                                    {/* New comment input */}
-                                    <div className="flex gap-3 mb-6">
-                                        <input
-                                            type="text"
-                                            value={newComment[post.id] || ''}
-                                            onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                            placeholder="Write a comment..."
-                                            className="input flex-1 text-sm bg-gray-50"
-                                            onKeyDown={(e) => e.key === 'Enter' && handleComment(post.id)}
-                                        />
-                                        <button
-                                            onClick={() => handleComment(post.id)}
-                                            disabled={!newComment[post.id]?.trim()}
-                                            className="btn-primary !px-4"
-                                        >
-                                            <Send className="w-4 h-4" />
-                                        </button>
-                                    </div>
-
-                                    {/* Comments list */}
-                                    <div className="space-y-4">
-                                        {comments[post.id]?.map((comment, idx) => (
-                                            <div key={comment.id} className={`flex gap-3 ${idx > 0 && 'pt-4 border-t border-gray-50'}`}>
-                                                <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
-                                                    {getInitials(comment.profile?.display_name || 'U')}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex items-baseline gap-2 mb-1">
-                                                        <span className="text-sm font-semibold text-gray-900 tracking-tight">{comment.profile?.display_name}</span>
-                                                        <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at)}</span>
-                                                    </div>
-                                                    <p className="text-sm text-gray-600 leading-relaxed">{comment.content}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     ))}
                 </div>

@@ -84,41 +84,51 @@ export default function WalletPage() {
     if (!data) return <div className="text-center text-gray-500 py-10">Failed to load wallet</div>;
 
     return (
-        <div className="space-y-12 animate-fade-in max-w-5xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Wallet</h1>
-                <p className="text-gray-500">Manage your tokens and points</p>
+        <div className="space-y-12 pb-24 animate-fade-in-up max-w-5xl mx-auto">
+            <div className="mb-12 mt-4 text-center sm:text-left">
+                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
+                    Your Wallet
+                </h1>
+                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide">
+                    Manage your tokens and points.
+                </p>
             </div>
 
             {/* Balance Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="card bg-gray-50 border border-gray-200">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 rounded-full bg-white border border-gray-200 shadow-sm">
-                            <Coins className="w-6 h-6 text-gray-900" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="card bg-gray-900 border-none text-white p-8 sm:p-10 rounded-[2rem] shadow-2xl relative overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 transform scale-[2] group-hover:scale-[2.2] transition-transform duration-700">
+                        <Coins className="w-48 h-48" />
+                    </div>
+                    <div className="relative z-10 flex items-center gap-4 mb-10">
+                        <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md shadow-sm border border-white/20">
+                            <Coins className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Creator Tokens</div>
-                            <div className="text-4xl font-bold tracking-tight text-gray-900">{formatTokens(data.wallet.token_balance)}</div>
+                            <div className="text-xs font-bold text-white/50 uppercase tracking-widest mb-1">Creator Tokens</div>
+                            <div className="text-6xl font-black font-[family-name:var(--font-heading)] tracking-tighter text-white drop-shadow-lg">{formatTokens(data.wallet.token_balance)}</div>
                         </div>
                     </div>
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" /> Use tokens to unlock exclusive content
+                    <div className="relative z-10 text-sm font-medium text-white/50 flex items-center gap-2 mt-auto">
+                        <Sparkles className="w-5 h-5 text-white/70" /> Use tokens to unlock exclusive content
                     </div>
                 </div>
 
-                <div className="card bg-gray-50 border border-gray-200">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 rounded-full bg-white border border-gray-200 shadow-sm">
-                            <Star className="w-6 h-6 text-gray-900" />
+                <div className="card bg-white border border-gray-100 p-8 sm:p-10 rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform scale-[2] group-hover:scale-[2.2] transition-transform duration-700">
+                        <Star className="w-48 h-48" />
+                    </div>
+                    <div className="relative z-10 flex items-center gap-4 mb-10">
+                        <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 shadow-sm">
+                            <Star className="w-8 h-8 text-gray-900" />
                         </div>
                         <div>
-                            <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Points Balance</div>
-                            <div className="text-4xl font-bold tracking-tight text-gray-900">{formatPoints(data.wallet.points_balance)}</div>
+                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Points Balance</div>
+                            <div className="text-6xl font-black font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 drop-shadow-sm">{formatPoints(data.wallet.points_balance)}</div>
                         </div>
                     </div>
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" /> Earn points via engagement, redeem in store
+                    <div className="relative z-10 text-sm font-medium text-gray-500 flex items-center gap-2 mt-auto border-t border-gray-50 pt-6">
+                        <Sparkles className="w-5 h-5 text-gray-400" /> Earn points via engagement, redeem rewards
                     </div>
                 </div>
             </div>

@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
-import { Source_Sans_3 } from "next/font/google";
+import { Source_Sans_3, Outfit } from "next/font/google";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
   variable: "--font-source-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  variable: "--font-heading",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
@@ -24,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
-        className={`${sourceSans.variable} font-sans antialiased`}
+        className={`${sourceSans.variable} ${outfit.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         {children}
