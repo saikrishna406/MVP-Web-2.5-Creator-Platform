@@ -10,6 +10,7 @@ import { formatTokens, formatPoints, getInitials } from '@/lib/utils';
 import {
     LayoutDashboard, Newspaper, Wallet as WalletIcon, ShoppingBag,
     FileText, BarChart3, Zap, LogOut, Menu, X, Coins, Star, User,
+    ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import Image from 'next/image';
 
