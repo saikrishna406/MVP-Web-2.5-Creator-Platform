@@ -63,7 +63,6 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                         <Zap className="w-4 h-4 text-white" />
                     </div>
                     <span className="text-lg font-bold text-gray-900 tracking-tight">Rapid MVP</span>
->>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
                 </Link>
                 {/* Desktop collapse toggle */}
                 <button
@@ -95,7 +94,6 @@ export default function Sidebar({ profile, wallet }: SidebarProps) {
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
                                     ? 'bg-gray-100 text-gray-900'
                                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
->>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
