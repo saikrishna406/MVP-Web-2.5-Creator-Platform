@@ -90,21 +90,8 @@ export default function CreatorPostsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this post?')) return;
-
-        const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            setToast({ message: 'Post deleted successfully', type: 'success' });
-            fetchPosts();
-        } else {
-            setToast({ message: 'Failed to delete post', type: 'error' });
-        }
-    };
-
-    const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
 
-        setDeletingId(id);
         const res = await fetch(`/api/posts/${id}`, {
             method: 'DELETE',
         });
@@ -116,7 +103,6 @@ export default function CreatorPostsPage() {
             const data = await res.json();
             setToast({ message: data.error || 'Failed to delete post', type: 'error' });
         }
-        setDeletingId(null);
     };
 
     const getAccessIcon = (type: string) => {
@@ -338,18 +324,6 @@ export default function CreatorPostsPage() {
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <button
-                                        onClick={() => handleDelete(post.id)}
-                                        disabled={deletingId === post.id}
-                                        className="p-1.5 text-foreground-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors ml-2"
-                                        title="Delete Post"
-                                    >
-                                        {deletingId === post.id ? (
-                                            <span className="w-4 h-4 border-2 border-error/30 border-t-error rounded-full animate-spin block" />
-                                        ) : (
-                                            <Trash2 className="w-4 h-4" />
-                                        )}
-                                    </button>
                                 </div>
                             </div>
                         </div>

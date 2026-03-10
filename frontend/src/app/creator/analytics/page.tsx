@@ -124,7 +124,6 @@ export default async function AnalyticsPage() {
                                     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900' :
                                         i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
                                             'bg-white text-gray-500 border-gray-100'
->>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
                                         }`}>
                                         #{i + 1}
                                     </span>
@@ -157,7 +156,6 @@ export default async function AnalyticsPage() {
                                     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900' :
                                         i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
                                             'bg-white text-gray-500 border-gray-100'
->>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
                                         }`}>
                                         {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                                     </span>
@@ -218,7 +216,6 @@ async function LeaderboardSection() {
                             i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
                                 i === 2 ? 'bg-gray-50 text-gray-700 border-gray-200' :
                                     'bg-white text-gray-400 border-gray-100'
->>>>>>> e3804abdee980e881c849dc9f9be9ec750b27c1c
                             }`}>
                             {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                         </span>
