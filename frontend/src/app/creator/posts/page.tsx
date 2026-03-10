@@ -117,17 +117,17 @@ export default function CreatorPostsPage() {
     if (loading) return <PageLoader />;
 
     return (
-        <div className="space-y-12 animate-fade-in max-w-4xl mx-auto">
-            <div className="flex items-center justify-between">
+        <div className="space-y-12 animate-fade-in-up pb-24 max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-12 mt-4 text-center sm:text-left gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Posts</h1>
-                    <p className="text-gray-500">Create and manage your content</p>
+                    <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">Your Posts</h1>
+                    <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide">Create and manage your content.</p>
                 </div>
                 <button
                     onClick={handleOpenCreate}
-                    className="btn-primary"
+                    className="btn-primary shrink-0 text-lg px-6 py-4 rounded-full flex items-center gap-2 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all"
                 >
-                    <Plus className="w-4 h-4" /> New Post
+                    <Plus className="w-6 h-6" /> New Post
                 </button>
             </div>
 
@@ -274,55 +274,108 @@ export default function CreatorPostsPage() {
 
             {/* Posts List */}
             {posts.length === 0 ? (
-                <div className="card flex flex-col items-center justify-center py-20 text-center">
-                    <FileText className="w-12 h-12 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-                    <p className="text-gray-500 mb-6">Start creating content for your fans!</p>
-                    <button onClick={handleOpenCreate} className="btn-primary">
-                        <Plus className="w-4 h-4" /> Create First Post
+                <div className="card flex flex-col items-center justify-center py-32 text-center rounded-3xl border-dashed">
+                    <FileText className="w-16 h-16 text-gray-200 mb-6" />
+                    <h3 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-gray-900 mb-2">No posts yet</h3>
+                    <p className="text-gray-500 text-lg mb-8">Start creating content for your fans!</p>
+                    <button onClick={handleOpenCreate} className="btn-primary shrink-0 text-base px-6 py-4 rounded-full flex items-center gap-2 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all">
+                        <Plus className="w-5 h-5" /> Create First Post
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6">
-                    {posts.map((post) => (
-                        <div key={post.id} className="card p-0 hover:border-gray-300 hover:shadow-md transition-all">
-                            <div className="p-6">
-                                <div className="flex items-start justify-between gap-6">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className={`badge px-2.5 py-1 text-xs font-semibold flex items-center gap-1.5 ${post.access_type === 'public' ? 'bg-green-50 text-green-700' :
-                                                post.access_type === 'token_gated' ? 'bg-gray-100 text-gray-900' :
-                                                    'bg-gray-100 text-gray-900'
-                                                }`}>
+                <div className="space-y-12 pb-12">
+                    {posts.map((post, index) => (
+                        <div key={post.id}
+                            className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 ease-out border border-gray-100 relative"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                            {/* IF HAS IMAGE: Edge-to-Edge Hero Image */}
+                            {post.image_url ? (
+                                <div className="relative w-full h-[400px] sm:h-[500px] bg-gray-900 overflow-hidden">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={post.image_url} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105" />
+                                    {/* Gradient Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-90 transition-opacity duration-500" />
+
+                                    {/* Header (Over Image) */}
+                                    <div className="absolute top-6 left-6 right-6 flex items-start justify-between z-10">
+                                        <div className="flex flex-col gap-2">
+                                            <span className={`backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg border w-fit ${post.access_type === 'public' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-white/10 text-white border-white/20'}`}>
                                                 {getAccessIcon(post.access_type)}
                                                 {post.access_type === 'public' ? 'Public' :
                                                     post.access_type === 'token_gated' ? `${post.token_cost} tokens` :
                                                         `Hold ${post.threshold_amount}+`}
                                             </span>
-                                            <span className="text-xs font-medium text-gray-400 ml-2">{formatRelativeTime(post.created_at)}</span>
+                                            <span className="text-xs text-white/70 uppercase tracking-widest ml-1">{formatRelativeTime(post.created_at)}</span>
                                         </div>
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{post.title}</h3>
-                                        <p className="text-sm text-gray-600 mb-4 leading-relaxed">{truncateText(post.content, 200)}</p>
 
-                                        {post.image_url && (
-                                            <div className="relative w-full h-48 mb-4 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={post.image_url} alt={post.title} className="object-cover w-full h-full" />
-                                            </div>
-                                        )}
-
-                                        <div className="flex items-center gap-6 text-sm font-medium text-gray-500 pt-2">
-                                            <span className="flex items-center gap-1.5 hover:text-red-500 cursor-pointer transition-colors"><Heart className="w-4 h-4" />{post.likes_count || 0}</span>
-                                            <span className="flex items-center gap-1.5 hover:text-gray-900 cursor-pointer transition-colors"><MessageCircle className="w-4 h-4" />{post.comments_count || 0}</span>
+                                        <div className="flex gap-2 backdrop-blur-md bg-white/10 rounded-full p-1 border border-white/20 shadow-lg">
+                                            <button onClick={() => handleOpenEdit(post)} className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all">
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(post.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-red-300 hover:text-red-100 hover:bg-red-500/30 transition-all">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 shrink-0">
-                                        <button onClick={() => handleOpenEdit(post)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors rounded-lg">
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(post.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors rounded-lg">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+
+                                    {/* Title (Over Image) */}
+                                    <div className="absolute bottom-6 left-6 right-6 z-10">
+                                        <h3 className="text-3xl sm:text-4xl font-bold font-[family-name:var(--font-heading)] text-white mb-2 tracking-tight leading-tight drop-shadow-lg transform transition-transform duration-500 group-hover:translate-x-1">
+                                            {post.title}
+                                        </h3>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* IF NO IMAGE: Standard Header */
+                                <div className="relative p-6 md:p-8 pb-4">
+                                    <div className="flex items-start justify-between gap-4 mb-6">
+                                        <div className="flex flex-col gap-2">
+                                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 w-fit ${post.access_type === 'public' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                {getAccessIcon(post.access_type)}
+                                                {post.access_type === 'public' ? 'Public' :
+                                                    post.access_type === 'token_gated' ? `${post.token_cost} tokens` :
+                                                        `Hold ${post.threshold_amount}+`}
+                                            </span>
+                                            <span className="text-xs text-gray-500 uppercase tracking-widest ml-1">{formatRelativeTime(post.created_at)}</span>
+                                        </div>
+
+                                        <div className="flex gap-2 rounded-full p-1 bg-gray-50 border border-gray-100">
+                                            <button onClick={() => handleOpenEdit(post)} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-white transition-all shadow-sm">
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(post.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-all shadow-sm">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold font-[family-name:var(--font-heading)] text-gray-900 mb-2 tracking-tight leading-tight">
+                                        {post.title}
+                                    </h3>
+                                </div>
+                            )}
+
+                            {/* Content Body */}
+                            <div className="p-6 md:p-8 pt-4">
+                                <div className="text-gray-600 text-lg font-light leading-relaxed mb-8 whitespace-pre-wrap line-clamp-4">
+                                    {post.content}
+                                </div>
+
+                                {/* Metrics Footer */}
+                                <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+                                    <div className="flex items-center gap-6">
+                                        <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-gray-400">
+                                            <div className="p-2 rounded-full bg-gray-50">
+                                                <Heart className="w-5 h-5 text-red-400" />
+                                            </div>
+                                            {post.likes_count || 0}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-gray-400">
+                                            <div className="p-2 rounded-full bg-gray-50">
+                                                <MessageCircle className="w-5 h-5 text-gray-400" />
+                                            </div>
+                                            {post.comments_count || 0}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

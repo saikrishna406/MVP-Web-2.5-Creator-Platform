@@ -91,7 +91,39 @@
   --color-primary: var(--coral);
   --color-border: var(--gray-200);
   --font-sans: 'Inter', system-ui, sans-serif;
+  --font-heading: var(--font-heading), 'Inter', sans-serif;
 }
+
+@keyframes scroll-fast {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-marquee {
+  animation: scroll-fast 20s linear infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 
 /* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ RESET ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 *,

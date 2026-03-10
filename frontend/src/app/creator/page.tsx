@@ -57,13 +57,34 @@ export default async function CreatorDashboardPage() {
     const pendingOrders = orders?.filter(o => o.item?.creator_id === user.id) || [];
 
     return (
-        <div className="space-y-12 animate-fade-in">
-            {/* Welcome Header */}
-            <div>
-                <h1 className="text-4xl font-semibold mb-2 tracking-tight">
-                    Creator Studio <span className="text-gray-900">✨</span>
+        <div className="space-y-12 pb-24">
+            {/* Kinetic Marquee Banner */}
+            <div className="w-full overflow-hidden bg-gray-900 border-y border-gray-800 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 sm:rounded-2xl sm:border mb-8">
+                <div className="whitespace-nowrap flex items-center animate-marquee">
+                    <span className="text-white/80 text-sm font-semibold tracking-widest uppercase flex items-center gap-8 px-4">
+                        <span>• {formatTokens(totalTokensEarned)} Tokens Earned</span>
+                        <span>• {uniqueFans} Active Fans</span>
+                        <span>• {posts?.length || 0} Total Posts</span>
+                        <span>• {pendingOrders.length} Pending Orders</span>
+                        <span>• Creator Studio</span>
+                        <span>• Build Your Empire</span>
+                        <span>• {formatTokens(totalTokensEarned)} Tokens Earned</span>
+                        <span>• {uniqueFans} Active Fans</span>
+                        <span>• {posts?.length || 0} Total Posts</span>
+                        <span>• {pendingOrders.length} Pending Orders</span>
+                    </span>
+                </div>
+            </div>
+
+            {/* Welcome Header - Magazine Typography */}
+            <div className="animate-fade-in-up">
+                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
+                    Creator Studio <span className="text-gray-900">✨</span><br />
+                    <span className="text-gray-400 font-medium italic">Welcome, {profile?.display_name}</span>
                 </h1>
-                <p className="text-gray-500 text-lg">Welcome back, {profile?.display_name}</p>
+                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-2xl">
+                    Manage your content, track earnings, and engage with your community in one place.
+                </p>
             </div>
 
             {/* Stat Cards */}
