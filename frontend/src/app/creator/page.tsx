@@ -57,11 +57,7 @@ export default async function CreatorDashboardPage() {
     const pendingOrders = orders?.filter(o => o.item?.creator_id === user.id) || [];
 
     return (
-<<<<<<< HEAD
-        <div className="space-y-10 animate-fade-in">
-=======
         <div className="space-y-12 animate-fade-in">
->>>>>>> hasif_branch
             {/* Welcome Header */}
             <div>
                 <h1 className="text-4xl font-semibold mb-2 tracking-tight">
@@ -174,14 +170,7 @@ export default async function CreatorDashboardPage() {
                                         <div className="text-sm font-medium text-gray-900 truncate">{post.title}</div>
                                         <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
                                             <span>{formatRelativeTime(post.created_at)}</span>
-<<<<<<< HEAD
-                                            <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' :
-                                                post.access_type === 'token_gated' ? 'badge-accent' :
-                                                    'badge-primary'
-                                                }`}>
-=======
                                             <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' : 'badge-primary'}`}>
->>>>>>> hasif_branch
                                                 {post.access_type.replace('_', ' ')}
                                             </span>
                                         </div>

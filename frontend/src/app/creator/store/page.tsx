@@ -108,19 +108,11 @@ export default function CreatorStorePage() {
 
             {/* Create / Edit Item Modal */}
             {showCreate && (
-<<<<<<< HEAD
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="card w-full max-w-lg">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold">Create Store Item</h2>
-                            <button onClick={() => setShowCreate(false)} className="text-foreground-muted hover:text-foreground">
-=======
                 <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="card w-full max-w-lg shadow-xl ring-1 ring-gray-900/5">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-xl font-bold text-gray-900">{editingId ? 'Edit Store Item' : 'Create Store Item'}</h2>
                             <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100">
->>>>>>> hasif_branch
                                 <X className="w-5 h-5" />
                             </button>
                         </div>

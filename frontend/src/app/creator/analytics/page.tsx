@@ -120,12 +120,6 @@ export default async function AnalyticsPage() {
                     {topPosts.length > 0 ? (
                         <div className="space-y-4">
                             {topPosts.map((post, i) => (
-<<<<<<< HEAD
-                                <div key={post.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                        i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
-                                            'bg-background text-foreground-muted'
-=======
                                 <div key={post.id} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 last:pb-0">
                                     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900' :
                                         i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
@@ -159,12 +153,6 @@ export default async function AnalyticsPage() {
                     {topFans.length > 0 ? (
                         <div className="space-y-4">
                             {topFans.map((fan, i) => (
-<<<<<<< HEAD
-                                <div key={fan.username} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                                        i === 1 ? 'bg-foreground-muted/20 text-foreground-muted' :
-                                            'bg-background text-foreground-muted'
-=======
                                 <div key={fan.username} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 last:pb-0">
                                     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900' :
                                         i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
@@ -225,13 +213,6 @@ async function LeaderboardSection() {
             {topWallets.map((wallet, i) => {
                 const profile = profiles?.find(p => p.user_id === wallet.user_id);
                 return (
-<<<<<<< HEAD
-                    <div key={wallet.user_id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-accent/20 text-accent' :
-                            i === 1 ? 'bg-foreground-muted/30 text-foreground' :
-                                i === 2 ? 'bg-accent/10 text-accent-light' :
-                                    'bg-background text-foreground-muted'
-=======
                     <div key={wallet.user_id} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 last:pb-0">
                         <span className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold border ${i === 0 ? 'bg-gray-900 text-white border-gray-900 shadow-sm' :
                             i === 1 ? 'bg-gray-100 text-gray-900 border-gray-200' :
