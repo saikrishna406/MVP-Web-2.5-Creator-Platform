@@ -254,7 +254,7 @@ export default function LandingPage() {
             </FadeUp>
 
             {/* ── CARDS GRID ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', width: '100%' }}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
               <StaggerItem>
                 <div className="group hover:-translate-y-2 hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.1)] transition-all duration-500 border border-white/[0.07] hover:border-white/20" style={{
                   position: 'relative', height: '100%',
