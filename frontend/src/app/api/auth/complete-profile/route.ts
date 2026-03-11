@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { username, display_name, role } = body;
+        const { username, display_name, role, avatar_url, bio, interests } = body;
 
         // Validate inputs
         if (!username || username.length < 3) {
@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
                 username: cleanUsername,
                 display_name: display_name || cleanUsername,
                 role,
-                avatar_url: user.user_metadata?.avatar_url || null,
+                avatar_url: avatar_url || user.user_metadata?.avatar_url || null,
+                bio: bio || null,
+                interests: Array.isArray(interests) ? interests : []
             });
 
         if (profileError) {

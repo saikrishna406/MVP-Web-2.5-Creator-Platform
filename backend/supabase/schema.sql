@@ -18,6 +18,7 @@ CREATE TABLE profiles (
   avatar_url TEXT,
   role VARCHAR(10) NOT NULL CHECK (role IN ('fan', 'creator', 'admin')),
   bio TEXT,
+  interests TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
