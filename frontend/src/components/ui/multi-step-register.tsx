@@ -1,0 +1,626 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, Check, Twitter, Plus, Image as ImageIcon } from "lucide-react";
+
+const GoogleIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+);
+
+const INTERESTS = [
+    "Advice", "Animation", "Art", "Blogging", "Comedy",
+    "Comics", "Commissions", "Community", "Cosplay", "Crafts",
+    "Dance & Theatre", "Design", "Drawing & Painting",
+    "Education", "Food & Drink", "Fundraising",
+    "Game Development", "Gaming", "Health & Fitness",
+    "Lifestyle", "Money", "Music", "News", "Nsfw", "Other",
+    "Photography", "Podcast", "Science & Tech", "Social",
+    "Software", "Spirituality", "Streaming", "Video and Film",
+    "Writing"
+];
+
+export const MultiStepRegister = () => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const supabase = createClient();
+
+    // Steps: 1 = Signup, 2 = Role, 3 = About You, 4 = Username, 5 = Avatar, 6 = Interests
+    const [step, setStep] = useState(1);
+    
+    // Form data
+    const [displayName, setDisplayName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    
+    const [role, setRole] = useState<'creator' | 'fan'>('creator');
+    
+    const [bio, setBio] = useState("");
+    const [username, setUsername] = useState("");
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+
+    // Automatically generate username suggestion from email if empty
+    useEffect(() => {
+        if (step === 4 && username === "" && email) {
+            const emailPrefix = email.split('@')[0];
+            setUsername(emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g, '') + Math.floor(Math.random() * 10000));
+        }
+    }, [step, email, username]);
+
+    const handleNextStep = () => {
+        setError("");
+        
+        if (step === 1) {
+            if (!displayName || !email || !password) {
+                setError("Please fill in all fields.");
+                return;
+            }
+            if (!termsAccepted) {
+                setError("You must accept the terms entirely.");
+                return;
+            }
+            setStep(2);
+        } else if (step === 2) {
+            setStep(3);
+        } else if (step === 3) {
+            if (!displayName) {
+                setError("Display name is required.");
+                return;
+            }
+            setStep(4);
+        } else if (step === 4) {
+            if (username.length < 3) {
+                setError("Username must be at least 3 characters.");
+                return;
+            }
+            setStep(5);
+        } else if (step === 5) {
+            setStep(6);
+        } else if (step === 6) {
+            handleFinalSubmit();
+        }
+    };
+
+    const handleRoleSelection = (selectedRole: 'creator' | 'fan') => {
+        setRole(selectedRole);
+        setStep(3);
+    };
+
+    const handleGoogleSignIn = async () => {
+        setIsGoogleLoading(true);
+        setError("");
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?complete=true`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                },
+            });
+            if (error) {
+                setError(error.message);
+                setIsGoogleLoading(false);
+            }
+        } catch (err: any) {
+            setError(err.message || "Failed to initiate Google sign-in");
+            setIsGoogleLoading(false);
+        }
+    };
+
+    const handleFinalSubmit = async () => {
+        setIsLoading(true);
+        setError("");
+        
+        try {
+            const cleanUsername = username.toLowerCase().replace(/[^a-zA-Z0-9_]/g, "");
+            
+            // 1. Sign up user
+            const { data, error: authError } = await supabase.auth.signUp({
+                email, 
+                password,
+                options: {
+                    data: { 
+                        username: cleanUsername, 
+                        full_name: displayName, 
+                        role: role,
+                        bio,
+                        interests: selectedInterests
+                    },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+            
+            if (authError) {
+                throw new Error(authError.message);
+            }
+            
+            // 2. Upload avatar if selected
+            let avatarUrl = "";
+            if (avatarFile && data.user) {
+                const fileExt = avatarFile.name.split('.').pop();
+                const fileName = `${data.user.id}-${Math.random()}.${fileExt}`;
+                const { error: uploadError, data: uploadData } = await supabase.storage
+                    .from('avatars')
+                    .upload(fileName, avatarFile);
+                    
+                if (!uploadError && uploadData) {
+                    const { data: publicUrlData } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(fileName);
+                    avatarUrl = publicUrlData.publicUrl;
+                }
+            }
+            
+            // Profile is created via backend triggers or we explicitly call the API
+            if (data.session) {
+                try {
+                    const res = await fetch('/api/auth/complete-profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: cleanUsername,
+                            display_name: displayName,
+                            role: role,
+                            bio,
+                            interests: selectedInterests,
+                            avatar_url: avatarUrl
+                        }),
+                    });
+                    
+                    if (!res.ok && res.status !== 409) {
+                        console.error('Failed to create profile via API');
+                    }
+                } catch (err) {
+                    console.error('Profile creation error:', err);
+                }
+                
+                router.push(role === 'creator' ? "/creator" : "/");
+            } else {
+                setSuccess("Account created! Check your email to verify your account.");
+            }
+            
+        } catch (err: any) {
+            setError(err.message || "An unexpected error occurred");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setAvatarFile(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (typeof e.target?.result === 'string') {
+                    setAvatarPreview(e.target.result);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const toggleInterest = (interest: string) => {
+        if (selectedInterests.includes(interest)) {
+            setSelectedInterests(selectedInterests.filter(i => i !== interest));
+        } else {
+            setSelectedInterests([...selectedInterests, interest]);
+        }
+    };
+
+    const renderInputStyle = {
+        width: "100%", boxSizing: "border-box" as const,
+        background: "#1A1A1A", border: "1.5px solid transparent",
+        borderRadius: "12px", padding: "14px 16px",
+        fontSize: "0.95rem", color: "#FFFFFF",
+        outline: "none", transition: "all 0.2s ease",
+        fontFamily: "inherit"
+    };
+
+    // Card style based on screenshots
+    const cardStyle = {
+        background: "#0A0A0A",
+        borderRadius: "16px",
+        border: "1px solid #222222",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+        padding: "32px",
+        width: "100%",
+        maxWidth: "460px",
+        position: "relative" as const,
+        zIndex: 10
+    };
+    
+    const buttonStyle = {
+        width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+        background: "#FFFFFF", color: "#000000",
+        border: "none", borderRadius: "24px",
+        padding: "16px", fontSize: "1rem", fontWeight: 700,
+        cursor: isLoading ? "not-allowed" : "pointer",
+        opacity: isLoading ? 0.8 : 1, transition: "all 0.2s",
+        marginTop: "16px"
+    };
+
+    if (success) {
+        return (
+            <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+                <div style={cardStyle}>
+                    <div style={{ textAlign: "center", padding: "2rem 0" }}>
+                        <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(16,185,129,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem" }}>
+                            <Check size={32} color="#10B981" />
+                        </div>
+                        <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "0.5rem" }}>Check your email</h2>
+                        <p style={{ color: "#A0A0A0" }}>{success}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{
+            minHeight: "100vh",
+            background: "#000000",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "2rem",
+            fontFamily: "var(--font-sans, Inter, sans-serif)",
+            flexDirection: "column"
+        }}>
+            
+            <Link href="/" style={{
+                position: "absolute", top: "2rem", left: "2rem",
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 600,
+                textDecoration: "none",
+            }}>
+                <ArrowLeft size={16} /> Back to Home
+            </Link>
+
+            <div style={cardStyle}>
+                
+                {error && (
+                    <div style={{
+                        marginBottom: "16px", padding: "12px", borderRadius: "8px",
+                        background: "rgba(239,68,68,0.1)", color: "#FF6B6B", fontSize: "0.875rem",
+                        display: "flex", alignItems: "flex-start", gap: "8px", border: "1px solid rgba(239,68,68,0.2)"
+                    }}>
+                        <span>⚠</span> {error}
+                    </div>
+                )}
+
+                {/* STEP 1: SIGNUP */}
+                {step === 1 && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                            <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF" }}>Sign up - it's free!</h1>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                            <input
+                                type="text"
+                                placeholder="Display name"
+                                value={displayName}
+                                onChange={e => setDisplayName(e.target.value)}
+                                style={renderInputStyle}
+                                onFocus={e => e.target.style.borderColor = "#444"}
+                                onBlur={e => e.target.style.borderColor = "transparent"}
+                            />
+                            
+                            <input
+                                type="email"
+                                placeholder="Email address"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                style={renderInputStyle}
+                                onFocus={e => e.target.style.borderColor = "#444"}
+                                onBlur={e => e.target.style.borderColor = "transparent"}
+                            />
+                            
+                            <input
+                                type="password"
+                                placeholder="Choose a password"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                style={renderInputStyle}
+                                onFocus={e => e.target.style.borderColor = "#444"}
+                                onBlur={e => e.target.style.borderColor = "transparent"}
+                            />
+                            
+                            <label style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginTop: "8px", cursor: "pointer" }}>
+                                <input 
+                                    type="checkbox" 
+                                    checked={termsAccepted}
+                                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                                    style={{ 
+                                        width: "18px", height: "18px", 
+                                        borderRadius: "4px", marginTop: "2px",
+                                        accentColor: "#FFFFFF"
+                                    }} 
+                                />
+                                <span style={{ fontSize: "0.85rem", color: "#A0A0A0", lineHeight: "1.4" }}>
+                                    App is a safe, friendly place. You must be 18 or over to use App. Pages that break our terms will be unpublished.<br/><br/>
+                                    <strong>I accept the <a href="#" style={{color:"#FFFFFF"}}>terms</a> and have read the <a href="#" style={{color:"#FFFFFF"}}>privacy policy</a></strong>
+                                </span>
+                            </label>
+
+                            <button onClick={handleNextStep} style={buttonStyle}>
+                                Create my account
+                            </button>
+                            
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "12px 0", justifyContent: "center" }}>
+                                <span style={{ fontSize: "0.85rem", color: "#A0A0A0" }}>or sign up with</span>
+                            </div>
+
+                            <button
+                                onClick={handleGoogleSignIn}
+                                disabled={isGoogleLoading}
+                                style={{
+                                    width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                                    padding: "14px", borderRadius: "24px",
+                                    border: "1.5px solid #222", background: "#1A1A1A",
+                                    color: "#FFFFFF", fontSize: "0.95rem", fontWeight: 700,
+                                    cursor: isGoogleLoading ? "not-allowed" : "pointer",
+                                    transition: "all 0.2s",
+                                }}
+                            >
+                                <GoogleIcon /> Google
+                            </button>
+                            
+                            <div style={{ textAlign: "center", marginTop: "16px" }}>
+                                <p style={{ fontSize: "0.9rem", color: "#A0A0A0" }}>
+                                    Already have an account? <Link href="/login" style={{ color: "#FFFFFF", fontWeight: 700 }}>Log in</Link>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 2: ROLE SELECTION */}
+                {step === 2 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>I'm a...</h1>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                            <button
+                                onClick={() => handleRoleSelection('creator')}
+                                style={{
+                                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                                    padding: "20px", background: "#1A1A1A", border: "1px solid #222",
+                                    borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease"
+                                }}
+                            >
+                                <div style={{ textAlign: "left" }}>
+                                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>Creator</div>
+                                    <div style={{ fontSize: "0.9rem", color: "#A0A0A0" }}>I'm looking to make money from my passion</div>
+                                </div>
+                                <ArrowLeft style={{ transform: "rotate(180deg)", color: "#FFFFFF" }} size={20} />
+                            </button>
+
+                            <button
+                                onClick={() => handleRoleSelection('fan')}
+                                style={{
+                                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                                    padding: "20px", background: "#1A1A1A", border: "1px solid #222",
+                                    borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease"
+                                }}
+                            >
+                                <div style={{ textAlign: "left" }}>
+                                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>Supporter</div>
+                                    <div style={{ fontSize: "0.9rem", color: "#A0A0A0" }}>I'm here to help creators do what they love</div>
+                                </div>
+                                <ArrowLeft style={{ transform: "rotate(180deg)", color: "#FFFFFF" }} size={20} />
+                            </button>
+                            
+                            <div style={{ 
+                                background: "#1A1A1A", borderRadius: "8px", padding: "16px", 
+                                display: "flex", alignItems: "center", gap: "12px", 
+                                color: "#A0A0A0", fontSize: "0.9rem", border: "1px solid #222",
+                                marginTop: "8px"
+                            }}>
+                                <span style={{ fontSize: "1.2rem" }}>💡</span>
+                                <div style={{ width: "1px", height: "20px", background: "#333" }}></div>
+                                Everyone can give support!
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 3: ABOUT YOU */}
+                {step === 3 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>About you</h1>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                            <div>
+                                <label style={{ display: "block", fontSize: "0.95rem", fontWeight: 700, marginBottom: "8px", color: "#FFFFFF" }}>Display name</label>
+                                <input
+                                    type="text"
+                                    value={displayName}
+                                    onChange={e => setDisplayName(e.target.value)}
+                                    style={renderInputStyle}
+                                    onFocus={e => e.target.style.borderColor = "#444"}
+                                    onBlur={e => e.target.style.borderColor = "transparent"}
+                                />
+                            </div>
+                            
+                            <div>
+                                <label style={{ display: "block", fontSize: "0.95rem", fontWeight: 700, marginBottom: "8px", color: "#FFFFFF" }}>Bio</label>
+                                <textarea
+                                    placeholder="Introduce yourself so others can get to know you..."
+                                    value={bio}
+                                    onChange={e => setBio(e.target.value)}
+                                    style={{
+                                        ...renderInputStyle,
+                                        minHeight: "120px",
+                                        resize: "vertical"
+                                    }}
+                                    onFocus={e => e.target.style.borderColor = "#444"}
+                                    onBlur={e => e.target.style.borderColor = "transparent"}
+                                />
+                            </div>
+
+                            <button onClick={handleNextStep} style={buttonStyle}>
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 4: USERNAME */}
+                {step === 4 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>Pick a username</h1>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                            <p style={{ color: "#D0D0D0", fontSize: "0.95rem" }}>What would you like your link to be?</p>
+                            
+                            <div style={{ ...renderInputStyle, display: "flex", alignItems: "center", padding: "14px 16px" }}>
+                                <span style={{ fontWeight: 700, color: "#FFFFFF", marginRight: "4px" }}>mvpcreator.com/</span>
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+                                    style={{
+                                        border: "none", background: "transparent", outline: "none", 
+                                        width: "100%", fontSize: "0.95rem", color: "#A0A0A0"
+                                    }}
+                                />
+                            </div>
+                            
+                            <div style={{ 
+                                background: "#1A1A1A", borderRadius: "8px", padding: "16px", 
+                                display: "flex", alignItems: "center", gap: "12px", 
+                                color: "#A0A0A0", fontSize: "0.9rem", border: "1px solid #222"
+                            }}>
+                                <span style={{ fontSize: "1.2rem" }}>💡</span>
+                                <div style={{ width: "1px", height: "20px", background: "#333" }}></div>
+                                You can change it anytime!
+                            </div>
+
+                            <button onClick={handleNextStep} style={buttonStyle}>
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 5: AVATAR */}
+                {step === 5 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>Choose your profile picture</h1>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" }}>
+                            
+                            <label style={{
+                                width: "100%", padding: "12px", background: "#1A1A1A",
+                                borderRadius: "24px", textAlign: "center", cursor: "pointer",
+                                fontWeight: 600, color: "#FFFFFF", fontSize: "0.95rem",
+                                display: "flex", justifyContent: "center", alignItems: "center", gap: "8px",
+                                border: "1px solid #222"
+                            }}>
+                                <ImageIcon size={18} /> Choose image
+                                <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
+                            </label>
+
+                            <div style={{
+                                width: "160px", height: "160px", borderRadius: "50%",
+                                background: avatarPreview ? `url(${avatarPreview}) center/cover` : "#1A1A1A",
+                                display: "flex", justifyContent: "center", alignItems: "center",
+                                border: "4px solid #222", overflow: "hidden"
+                            }}>
+                                {!avatarPreview && (
+                                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#4AD2BB" }}></div>
+                                        <div style={{ color: "#4AD2BB", fontSize: "2rem", fontWeight: "900", transform: "rotate(90deg)" }}>3</div>
+                                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#4AD2BB" }}></div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div style={{ 
+                                width: "100%", background: "#1A1A1A", borderRadius: "8px", padding: "16px", 
+                                display: "flex", alignItems: "center", gap: "12px", 
+                                color: "#A0A0A0", fontSize: "0.9rem", border: "1px solid #222"
+                            }}>
+                                <span style={{ fontSize: "1.2rem" }}>💡</span>
+                                <div style={{ width: "1px", height: "20px", background: "#333" }}></div>
+                                You can change this anytime!
+                            </div>
+
+                            <button onClick={handleNextStep} style={{...buttonStyle, marginTop: "0"}}>
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 6: INTERESTS */}
+                {step === 6 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>Choose your interests</h1>
+                        <p style={{ color: "#D0D0D0", fontSize: "0.95rem", marginBottom: "24px", lineHeight: "1.4" }}>
+                            Pick the categories that best match what you do. You can update them at anytime!
+                        </p>
+                        
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "32px", maxHeight: "300px", overflowY: "auto", paddingRight: "8px" }}>
+                            {INTERESTS.map(interest => (
+                                <button
+                                    key={interest}
+                                    onClick={() => toggleInterest(interest)}
+                                    style={{
+                                        padding: "8px 16px",
+                                        borderRadius: "24px",
+                                        border: selectedInterests.includes(interest) ? "2px solid #FFFFFF" : "1.5px solid #444",
+                                        background: selectedInterests.includes(interest) ? "#FFFFFF" : "transparent",
+                                        color: selectedInterests.includes(interest) ? "#000000" : "#A0A0A0",
+                                        fontSize: "0.95rem",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                        transition: "all 0.15s ease",
+                                    }}
+                                >
+                                    {interest}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button onClick={handleNextStep} style={buttonStyle}>
+                            {isLoading ? (
+                                <span style={{ width: "20px", height: "20px", border: "2px solid rgba(0,0,0,0.3)", borderTopColor: "#000", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                            ) : "Submit and create account"}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {step === 2 && email && (
+                <div className="animate-in fade-in duration-300" style={{ textAlign: "center", marginTop: "24px", color: "#A0A0A0", fontSize: "0.95rem" }}>
+                    Signing up as <span style={{ color: "#FFFFFF", fontWeight: 700 }}>{email}</span>
+                </div>
+            )}
+            
+            <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
+        </div>
+    );
+};

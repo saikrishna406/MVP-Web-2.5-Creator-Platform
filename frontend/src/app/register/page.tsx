@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { SignInFlo } from '@/components/ui/sign-in-flo';
+import { MultiStepRegister } from '@/components/ui/multi-step-register';
 
 function RegisterFallback() {
     return (
@@ -8,12 +8,12 @@ function RegisterFallback() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fff0f0 100%)',
+            background: '#000000',
         }}>
             <div style={{
                 width: '40px', height: '40px',
-                border: '3px solid #E8E8E8',
-                borderTopColor: '#FF424D',
+                border: '3px solid #333333',
+                borderTopColor: '#FFFFFF',
                 borderRadius: '50%',
                 animation: 'spin 0.7s linear infinite',
             }} />
@@ -25,7 +25,7 @@ function RegisterFallback() {
 export default function RegisterPage() {
     return (
         <Suspense fallback={<RegisterFallback />}>
-            <SignInFlo initialMode="signup" />
+            <MultiStepRegister />
         </Suspense>
     );
 }
