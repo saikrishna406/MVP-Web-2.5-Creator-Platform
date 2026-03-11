@@ -57,187 +57,164 @@ export default async function CreatorDashboardPage() {
     const pendingOrders = orders?.filter(o => o.item?.creator_id === user.id) || [];
 
     return (
-        <div className="space-y-12 pb-24">
-            {/* Kinetic Marquee Banner */}
-            <div className="w-full overflow-hidden bg-gray-900 border-y border-gray-800 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 sm:rounded-2xl sm:border mb-8">
-                <div className="whitespace-nowrap flex items-center animate-marquee">
-                    <span className="text-white/80 text-sm font-semibold tracking-widest uppercase flex items-center gap-8 px-4">
-                        <span>• {formatTokens(totalTokensEarned)} Tokens Earned</span>
-                        <span>• {uniqueFans} Active Fans</span>
-                        <span>• {posts?.length || 0} Total Posts</span>
-                        <span>• {pendingOrders.length} Pending Orders</span>
-                        <span>• Creator Studio</span>
-                        <span>• Build Your Empire</span>
-                        <span>• {formatTokens(totalTokensEarned)} Tokens Earned</span>
-                        <span>• {uniqueFans} Active Fans</span>
-                        <span>• {posts?.length || 0} Total Posts</span>
-                        <span>• {pendingOrders.length} Pending Orders</span>
-                    </span>
-                </div>
-            </div>
-
-            {/* Welcome Header - Magazine Typography */}
-            <div className="animate-fade-in-up">
-                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
-                    Creator Studio <span className="text-gray-900">✨</span><br />
-                    <span className="text-gray-400 font-medium italic">Welcome, {profile?.display_name}</span>
+        <div className="space-y-10 pb-24 font-sans text-zinc-100">
+            {/* Header / Greeting */}
+            <div className="animate-fade-in-up mt-4">
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white mb-2">
+                    Welcome back, {profile?.display_name}
                 </h1>
-                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-2xl">
-                    Manage your content, track earnings, and engage with your community in one place.
+                <p className="text-zinc-400 text-base md:text-lg font-normal max-w-2xl">
+                    Here's what's happening in your creator studio today.
                 </p>
             </div>
 
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="stat-card">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
-                            <Coins className="w-5 h-5" />
-                        </div>
+            {/* Stat Cards - Vercel Style */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-sm transition-colors hover:bg-[#111] hover:border-white/20">
+                    <div className="flex items-center justify-between mb-3 text-zinc-400">
+                        <div className="text-sm font-medium tracking-wide">Tokens Earned</div>
+                        <Coins className="w-4 h-4 text-zinc-500" />
                     </div>
-                    <div className="text-3xl font-semibold mb-1 tracking-tight">{formatTokens(totalTokensEarned)}</div>
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Tokens Earned</div>
+                    <div className="text-3xl font-semibold text-white tracking-tight">{formatTokens(totalTokensEarned)}</div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
-                            <Users className="w-5 h-5" />
-                        </div>
+                <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-sm transition-colors hover:bg-[#111] hover:border-white/20">
+                    <div className="flex items-center justify-between mb-3 text-zinc-400">
+                        <div className="text-sm font-medium tracking-wide">Active Fans</div>
+                        <Users className="w-4 h-4 text-zinc-500" />
                     </div>
-                    <div className="text-3xl font-semibold mb-1 tracking-tight">{uniqueFans}</div>
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Active Fans</div>
+                    <div className="text-3xl font-semibold text-white tracking-tight">{uniqueFans}</div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
-                            <FileText className="w-5 h-5" />
-                        </div>
+                <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-sm transition-colors hover:bg-[#111] hover:border-white/20">
+                    <div className="flex items-center justify-between mb-3 text-zinc-400">
+                        <div className="text-sm font-medium tracking-wide">Total Posts</div>
+                        <FileText className="w-4 h-4 text-zinc-500" />
                     </div>
-                    <div className="text-3xl font-semibold mb-1 tracking-tight">{posts?.length || 0}</div>
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Posts</div>
+                    <div className="text-3xl font-semibold text-white tracking-tight">{posts?.length || 0}</div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-full bg-gray-100 text-gray-900">
-                            <ShoppingBag className="w-5 h-5" />
-                        </div>
+                <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-sm transition-colors hover:bg-[#111] hover:border-white/20">
+                    <div className="flex items-center justify-between mb-3 text-zinc-400">
+                        <div className="text-sm font-medium tracking-wide">Pending Orders</div>
+                        <ShoppingBag className="w-4 h-4 text-zinc-500" />
                     </div>
-                    <div className="text-3xl font-semibold mb-1 tracking-tight">{pendingOrders.length}</div>
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Pending Orders</div>
+                    <div className="text-3xl font-semibold text-white tracking-tight">{pendingOrders.length}</div>
                 </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/creator/profile" className="card group hover:border-gray-400">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link href="/creator/profile" className="group bg-transparent border border-white/10 hover:border-white/20 rounded-xl p-5 transition-all">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors border border-gray-200">
-                            <Users className="w-6 h-6 text-gray-900" />
+                        <div className="p-2.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/10">
+                            <Users className="w-5 h-5 text-zinc-300" />
                         </div>
                         <div className="flex-1">
-                            <div className="font-semibold text-gray-900">Manage Profile</div>
-                            <div className="text-sm text-gray-500">Edit bio, packages &amp; links</div>
+                            <div className="font-medium tracking-tight text-white mb-0.5">Manage Profile</div>
+                            <div className="text-sm text-zinc-400">Edit bio, packages &amp; links</div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
                     </div>
                 </Link>
 
-                <Link href="/creator/posts" className="card group hover:border-gray-400">
+                <Link href="/creator/posts" className="group bg-transparent border border-white/10 hover:border-white/20 rounded-xl p-5 transition-all">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors border border-gray-200">
-                            <FileText className="w-6 h-6 text-gray-900" />
+                        <div className="p-2.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/10">
+                            <FileText className="w-5 h-5 text-zinc-300" />
                         </div>
                         <div className="flex-1">
-                            <div className="font-semibold text-gray-900">Create New Post</div>
-                            <div className="text-sm text-gray-500">Share content with your fans</div>
+                            <div className="font-medium tracking-tight text-white mb-0.5">Create New Post</div>
+                            <div className="text-sm text-zinc-400">Share content with your fans</div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
                     </div>
                 </Link>
 
-                <Link href="/creator/store" className="card group hover:border-gray-400">
+                <Link href="/creator/store" className="group bg-transparent border border-white/10 hover:border-white/20 rounded-xl p-5 transition-all">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors border border-gray-200">
-                            <ShoppingBag className="w-6 h-6 text-gray-900" />
+                        <div className="p-2.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/10">
+                            <ShoppingBag className="w-5 h-5 text-zinc-300" />
                         </div>
                         <div className="flex-1">
-                            <div className="font-semibold text-gray-900">Manage Store</div>
-                            <div className="text-sm text-gray-500">Create &amp; manage redemption items</div>
+                            <div className="font-medium tracking-tight text-white mb-0.5">Manage Store</div>
+                            <div className="text-sm text-zinc-400">Create &amp; manage items</div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
                     </div>
                 </Link>
             </div>
 
             {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Posts */}
-                <div className="card">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-gray-900" />
+                <div className="bg-[#0a0a0a] border border-white/10 rounded-xl flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.02]">
+                        <h3 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
                             Recent Posts
                         </h3>
-                        <Link href="/creator/posts" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">View all</Link>
+                        <Link href="/creator/posts" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">View all</Link>
                     </div>
-                    {posts && posts.length > 0 ? (
-                        <div className="space-y-4">
-                            {posts.slice(0, 5).map((post) => (
-                                <div key={post.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 last:pb-0">
-                                    <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-medium text-gray-900 truncate">{post.title}</div>
-                                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
-                                            <span>{formatRelativeTime(post.created_at)}</span>
-                                            <span className={`badge text-[10px] ${post.access_type === 'public' ? 'badge-success' : 'badge-primary'}`}>
-                                                {post.access_type.replace('_', ' ')}
-                                            </span>
+                    <div className="p-0">
+                        {posts && posts.length > 0 ? (
+                            <div className="divide-y divide-white/10">
+                                {posts.slice(0, 5).map((post) => (
+                                    <div key={post.id} className="flex items-center justify-between p-5 hover:bg-white/[0.02] transition-colors">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-[15px] font-medium text-zinc-200 truncate">{post.title}</div>
+                                            <div className="text-sm text-zinc-500 flex items-center gap-2 mt-1">
+                                                <span>{formatRelativeTime(post.created_at)}</span>
+                                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${post.access_type === 'public' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
+                                                    {post.access_type.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-md">
+                                            <Eye className="w-3.5 h-3.5 opacity-70" />
+                                            {post.likes_count}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                                        <Eye className="w-3.5 h-3.5" />
-                                        {post.likes_count}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-100">
-                            No posts yet. Create your first one!
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-12 text-center text-zinc-500 text-sm">
+                                No posts yet. Create your first one!
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Pending Orders */}
-                <div className="card">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                            <ShoppingBag className="w-5 h-5 text-gray-900" />
+                <div className="bg-[#0a0a0a] border border-white/10 rounded-xl flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.02]">
+                        <h3 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
                             Pending Redemptions
                         </h3>
-                        <Link href="/creator/store" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">View all</Link>
+                        <Link href="/creator/store" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">View all</Link>
                     </div>
-                    {pendingOrders.length > 0 ? (
-                        <div className="space-y-4">
-                            {pendingOrders.slice(0, 5).map((order) => (
-                                <div key={order.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 last:pb-0">
-                                    <div>
-                                        <div className="text-sm font-medium text-gray-900">{order.item?.name}</div>
-                                        <div className="text-xs text-gray-500 mt-0.5">
-                                            by @{order.profile?.username} · {formatRelativeTime(order.created_at)}
+                    <div className="p-0">
+                        {pendingOrders.length > 0 ? (
+                            <div className="divide-y divide-white/10">
+                                {pendingOrders.slice(0, 5).map((order) => (
+                                    <div key={order.id} className="flex items-center justify-between p-5 hover:bg-white/[0.02] transition-colors">
+                                        <div>
+                                            <div className="text-[15px] font-medium text-zinc-200">{order.item?.name}</div>
+                                            <div className="text-sm text-zinc-500 mt-1">
+                                                by @{order.profile?.username} &middot; {formatRelativeTime(order.created_at)}
+                                            </div>
+                                        </div>
+                                        <div className="px-3 py-1 bg-white/5 border border-white/10 text-white text-sm font-medium rounded-md">
+                                            {order.points_spent} pts
                                         </div>
                                     </div>
-                                    <div className="badge badge-primary font-semibold">{order.points_spent} pts</div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-100">
-                            No pending orders
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-12 text-center text-zinc-500 text-sm">
+                                No pending orders
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
