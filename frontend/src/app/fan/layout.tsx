@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import Sidebar from '@/components/dashboard/Sidebar';
+import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/dashboard/app-sidebar';
 
 export default async function FanLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
@@ -23,13 +24,17 @@ export default async function FanLayout({ children }: { children: React.ReactNod
         .single();
 
     return (
-        <div className="dashboard-layout">
-            <Sidebar profile={profile} wallet={wallet} />
-            <main className="lg:ml-64 min-h-screen">
-                <div className="page-container pt-20 lg:pt-12">
+        <SidebarProvider>
+            <AppSidebar profile={profile} wallet={wallet} />
+            <SidebarInset className="bg-[#000000] overflow-x-hidden w-full flex-1">
+                <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center gap-2 border-b border-white/10 bg-[#000000]/80 backdrop-blur-md px-4 shadow-sm">
+                    <SidebarTrigger className="-ml-2 text-zinc-400 hover:text-white" />
+                    <span className="font-semibold text-sm tracking-wide text-zinc-200">Fan Dashboard</span>
+                </header>
+                <div className="flex-1 p-6 lg:p-10 w-full relative">
                     {children}
                 </div>
-            </main>
-        </div>
+            </SidebarInset>
+        </SidebarProvider>
     );
 }
