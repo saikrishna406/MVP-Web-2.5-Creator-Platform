@@ -21,7 +21,6 @@ import {
   ChevronsUpDown,
   Home,
   LogOut,
-  HelpCircle,
   Settings,
   Puzzle,
   LayoutGrid,
@@ -138,14 +137,6 @@ export function AppSidebar({ profile }: { profile: any; wallet?: any }) {
         <SidebarGroup className="mt-auto px-6 pb-8">
            <SidebarGroupContent>
              <SidebarMenu>
-                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/help">
-                      <HelpCircle />
-                      <span>Help</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href={`/${profile?.role}/settings`}>
