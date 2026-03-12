@@ -1,6 +1,53 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @source "../components";
+@source "../app";
+
+/* ─── Dashboard Theme Variables ─── */
+:root,
+html[data-theme="light"] {
+  --dash-bg: #F8FAFC;
+  --dash-card: #FFFFFF;
+  --dash-border: #E2E8F0;
+  --dash-border-hover: #CBD5E1;
+  --dash-text-primary: #0F172A;
+  --dash-text-secondary: #64748B;
+  --dash-text-muted: #94A3B8;
+  --dash-accent: #7C3AED;
+  --dash-accent-hover: #6D28D9;
+  --dash-accent-soft: #F3E8FF;
+  --dash-accent-border: #E9D5FF;
+  --dash-btn-text: #FFFFFF;
+  --dash-shadow-sm: 0 1px 3px rgba(15,23,42,0.04);
+  --dash-shadow-md: 0 4px 12px rgba(15,23,42,0.06);
+  --dash-shadow-lg: 0 8px 24px rgba(15,23,42,0.08);
+  --dash-header-bg: rgba(248, 250, 252, 0.85);
+  --dash-success-bg: #ECFDF5;
+  --dash-success-text: #059669;
+  --dash-input-bg: #FFFFFF;
+}
+
+html[data-theme="dark"] {
+  --dash-bg: #0B1120;
+  --dash-card: #162032;
+  --dash-border: #2D3F56;
+  --dash-border-hover: #3E5573;
+  --dash-text-primary: #F1F5F9;
+  --dash-text-secondary: #94A3B8;
+  --dash-text-muted: #64748B;
+  --dash-accent: #8B5CF6;
+  --dash-accent-hover: #7C3AED;
+  --dash-accent-soft: rgba(139, 92, 246, 0.15);
+  --dash-accent-border: rgba(139, 92, 246, 0.3);
+  --dash-btn-text: #FFFFFF;
+  --dash-shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --dash-shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+  --dash-shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+  --dash-header-bg: rgba(11, 17, 32, 0.90);
+  --dash-success-bg: rgba(5, 150, 105, 0.15);
+  --dash-success-text: #34D399;
+  --dash-input-bg: #162032;
+}
 
 /* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
    DESIGN TOKENS ΓÇö Patreon-inspired professional
@@ -168,8 +215,8 @@ html {
 }
 
 body {
-  background: #080b10;
-  color: #f0f4ff;
+  background: var(--dash-bg, #F8FAFC);
+  color: var(--dash-text-primary, #0F172A);
   font-family: var(--font-sans);
   min-height: 100vh;
   overflow-x: clip;

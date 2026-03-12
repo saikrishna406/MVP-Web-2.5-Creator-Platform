@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/app-sidebar';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default async function FanLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
@@ -26,12 +27,44 @@ export default async function FanLayout({ children }: { children: React.ReactNod
     return (
         <SidebarProvider>
             <AppSidebar profile={profile} wallet={wallet} />
-            <SidebarInset className="bg-[#000000] overflow-x-hidden w-full flex-1">
-                <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center gap-2 border-b border-white/10 bg-[#000000]/80 backdrop-blur-md px-4 shadow-sm">
-                    <SidebarTrigger className="-ml-2 text-zinc-400 hover:text-white" />
-                    <span className="font-semibold text-sm tracking-wide text-zinc-200">Fan Dashboard</span>
+            <SidebarInset
+                className="overflow-x-hidden w-full flex-1"
+                style={{ background: 'var(--dash-bg)' }}
+            >
+                <header
+                    className="sticky top-0 z-30 flex w-full shrink-0 items-center px-8"
+                    style={{
+                        height: '56px',
+                        background: 'var(--dash-header-bg)',
+                        backdropFilter: 'blur(12px)',
+                        borderBottom: '1px solid var(--dash-border)',
+                    }}
+                >
+                    <SidebarTrigger className="-ml-2" style={{ color: 'var(--dash-text-secondary)' }} />
+                    <span style={{
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        color: 'var(--dash-text-primary)',
+                        letterSpacing: '0.01em',
+                        marginLeft: '8px',
+                    }}>
+                        Fan Dashboard
+                    </span>
+                    <div style={{ marginLeft: 'auto' }}>
+                        <ThemeToggle />
+                    </div>
                 </header>
-                <div className="flex-1 p-6 lg:p-10 w-full relative">
+                <div
+                    className="flex-1 w-full relative"
+                    style={{
+                        maxWidth: '1400px',
+                        margin: '0 auto',
+                        paddingLeft: '32px',
+                        paddingRight: '32px',
+                        paddingTop: '24px',
+                        paddingBottom: '40px',
+                    }}
+                >
                     {children}
                 </div>
             </SidebarInset>

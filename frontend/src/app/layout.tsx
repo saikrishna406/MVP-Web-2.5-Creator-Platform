@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Source_Sans_3, Outfit } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -34,8 +35,9 @@ export default function RootLayout({
         className={`${sourceSans.variable} ${outfit.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
 }
+
