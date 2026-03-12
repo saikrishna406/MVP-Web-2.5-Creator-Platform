@@ -111,9 +111,7 @@ export function PlatformFeatures() {
                 </div>
 
                 {/* ── bento grid ── */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
+                <div className="grid grid-cols-1 md:grid-cols-2" style={{
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '2rem',
                     overflow: 'hidden',
@@ -122,7 +120,7 @@ export function PlatformFeatures() {
                 }}>
 
                     {/* Cell 1 – Global Monetization map */}
-                    <div style={{ borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div className="border-b md:border-b-0 md:border-r border-white/10">
                         {/* text */}
                         <div style={{ padding: '2.5rem 2rem 1.5rem' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '1.25rem' }}>

@@ -25,7 +25,7 @@ function LoginFallback() {
 export default function LoginPage() {
     return (
         <Suspense fallback={<LoginFallback />}>
-            <SignInFlo initialMode="signin" />
+            <SignInFlo />
         </Suspense>
     );
 }
