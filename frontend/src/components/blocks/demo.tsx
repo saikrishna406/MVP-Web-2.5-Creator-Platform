@@ -9,7 +9,7 @@ import Floating, {
 } from "@/components/ui/parallax-floating"
 import { FloatingNav } from "@/components/ui/floating-navbar"
 import { ShinyButton } from "@/components/ui/shiny-button"
-import { Home, MessageSquare, User } from "lucide-react"
+import { Home, MessageSquare, Zap } from "lucide-react"
 
 const exampleImages = [
     // Force tailwind compile
@@ -76,8 +76,8 @@ export default function Preview() {
             {/* ── FLOATING NAVBAR ── */}
             <FloatingNav navItems={[
                 { name: "Home", link: "/", icon: <Home className="h-4 w-4 text-white" /> },
-                { name: "About", link: "#about", icon: <User className="h-4 w-4 text-white" /> },
-                { name: "Contact", link: "#contact", icon: <MessageSquare className="h-4 w-4 text-white" /> },
+                { name: "Features", link: "#features", icon: <Zap className="h-4 w-4 text-white" /> },
+                { name: "FAQ", link: "#faq", icon: <MessageSquare className="h-4 w-4 text-white" /> },
             ]} />
 
             {/* ── PARALLAX HERO ── */}

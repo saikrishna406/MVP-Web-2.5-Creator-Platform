@@ -73,10 +73,10 @@ export const FloatingNav = ({
                         <span className="hidden sm:block text-sm">{navItem.name}</span>
                     </Link>
                 ))}
-                <button className="custom-floating-nav-btn">
+                <Link href="/login" className="custom-floating-nav-btn">
                     <span>Login</span>
                     <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-blue-500 to-transparent  h-px" />
-                </button>
+                </Link>
             </motion.div>
         </AnimatePresence>
     );
