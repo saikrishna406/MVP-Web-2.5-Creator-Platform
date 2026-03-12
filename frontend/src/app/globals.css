@@ -4001,3 +4001,7 @@ body {
 .custom-floating-nav-btn:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+html[data-scroll-behavior="smooth"] {
+  scroll-behavior: smooth;
+}
