@@ -16,11 +16,7 @@ const GoogleIcon = () => (
     </svg>
 );
 
-interface SignInFloProps {
-    initialMode?: "signin" | "signup";
-}
-
-export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) => {
+export const SignInFlo: React.FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
@@ -31,7 +27,6 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
     const [username, setUsername] = useState("");
     const [role, setRole] = useState<"fan" | "creator">("fan");
     const [showPassword, setShowPassword] = useState(false);
-    const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [error, setError] = useState("");
@@ -160,53 +155,14 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
         }
     };
 
-    const handleSignUp = async () => {
-        if (username.length < 3) { setError("Username must be at least 3 characters"); return; }
-        const cleanUsername = username.toLowerCase().replace(/[^a-zA-Z0-9_]/g, "");
-        const { data, error: authError } = await supabase.auth.signUp({
-            email, password,
-            options: {
-                data: { username: cleanUsername, full_name: name || username, role },
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
-        if (authError) { setError(authError.message); return; }
-        if (data.session) {
-            // User got immediate session — create profile + wallet via API
-            try {
-                const res = await fetch('/api/auth/complete-profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: cleanUsername,
-                        display_name: name || cleanUsername,
-                        role,
-                    }),
-                });
-                if (!res.ok) {
-                    const errData = await res.json();
-                    // If profile already exists (409), that's fine — just proceed
-                    if (res.status !== 409) {
-                        setError(errData.error || 'Failed to create profile');
-                        return;
-                    }
-                }
-            } catch (err) {
-                console.error('Profile creation error:', err);
-            }
-            router.push(role === "creator" ? "/creator" : "/fan");
-        } else {
-            setSuccess("Account created! Check your email to verify your account.");
-        }
-    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(""); setSuccess("");
         try {
-            if (isSignUp) await handleSignUp();
-            else await handleSignIn();
+            await handleSignIn();
         } catch (err: any) {
             setError(err.message || "An unexpected error occurred");
         } finally {
@@ -214,11 +170,7 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
         }
     };
 
-    const toggleMode = () => {
-        setIsSignUp(!isSignUp);
-        setEmail(""); setPassword(""); setName(""); setUsername("");
-        setShowPassword(false); setError(""); setSuccess("");
-    };
+
 
     // ── Profile Completion Screen ──
     if (needsProfile) {
@@ -421,10 +373,10 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                         <User size={28} color="#FF424D" strokeWidth={1.8} />
                     </div>
                     <h1 style={{ fontSize: "1.875rem", fontWeight: 800, color: "#0D0D0D", marginBottom: "0.375rem", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
-                        {isSignUp ? "Create Account" : "Welcome Back"}
+                        Welcome Back
                     </h1>
                     <p style={{ fontSize: "0.9rem", color: "#6E6E6E", lineHeight: 1.5 }}>
-                        {isSignUp ? "Join the creator economy revolution" : "Sign in to the creator economy"}
+                        Sign in to the creator economy
                     </p>
                 </div>
 
@@ -442,7 +394,7 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                             </div>
                             <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0D0D0D", marginBottom: "0.75rem" }}>Check your email</h2>
                             <p style={{ fontSize: "0.875rem", color: "#6E6E6E", marginBottom: "2rem", lineHeight: 1.6 }}>{success}</p>
-                            <button onClick={toggleMode} style={{ color: "#FF424D", fontWeight: 600, fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                            <button onClick={() => { setEmail(""); setPassword(""); setShowPassword(false); setError(""); setSuccess(""); }} style={{ color: "#FF424D", fontWeight: 600, fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                                 Back to login
                             </button>
                         </div>
@@ -487,15 +439,14 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                             {/* Divider */}
                             <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "0 0 1.25rem" }}>
                                 <div style={{ flex: 1, height: "1px", background: "#E8E8E8" }} />
-                                <span style={{ fontSize: "0.75rem", color: "#A8A8A8", fontWeight: 500, whiteSpace: "nowrap" }}>or {isSignUp ? "sign up" : "sign in"} with email</span>
+                                <span style={{ fontSize: "0.75rem", color: "#A8A8A8", fontWeight: 500, whiteSpace: "nowrap" }}>or sign in with email</span>
                                 <div style={{ flex: 1, height: "1px", background: "#E8E8E8" }} />
                             </div>
 
                             <form onSubmit={handleSubmit}>
 
-                                {/* Auth tab toggle — sign in only */}
-                                {!isSignUp && (
-                                    <div style={{ display: "flex", background: "#F2F2F2", borderRadius: "14px", padding: "4px", marginBottom: "1.5rem" }}>
+                                {/* Auth tab toggle */}
+                                <div style={{ display: "flex", background: "#F2F2F2", borderRadius: "14px", padding: "4px", marginBottom: "1.5rem" }}>
                                         {["password", "magic"].map(tab => (
                                             <button
                                                 key={tab}
@@ -519,73 +470,6 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                                             </button>
                                         ))}
                                     </div>
-                                )}
-
-                                {/* Role selector — sign up only */}
-                                {isSignUp && (
-                                    <div style={{ marginBottom: "1.25rem" }}>
-                                        <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#4A4A4A", marginBottom: "0.625rem" }}>I am a...</p>
-                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                                            {[
-                                                { val: "fan" as const, label: "Fan", Icon: Heart },
-                                                { val: "creator" as const, label: "Creator", Icon: Palette },
-                                            ].map(({ val, label, Icon }) => (
-                                                <button
-                                                    key={val}
-                                                    type="button"
-                                                    onClick={() => setRole(val)}
-                                                    style={{
-                                                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                                                        gap: "8px", padding: "18px 12px",
-                                                        borderRadius: "14px",
-                                                        border: role === val ? "2px solid #FF424D" : "2px solid #E8E8E8",
-                                                        background: role === val ? "rgba(255,66,77,0.06)" : "#FAFAFA",
-                                                        color: role === val ? "#FF424D" : "#6E6E6E",
-                                                        fontWeight: 600, fontSize: "0.875rem",
-                                                        cursor: "pointer", transition: "all 0.2s",
-                                                        boxShadow: role === val ? "0 2px 12px rgba(255,66,77,0.12)" : "none",
-                                                    }}
-                                                >
-                                                    <Icon size={20} />
-                                                    {label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Name + Username — sign up only */}
-                                {isSignUp && (
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                                        {[
-                                            { placeholder: "Full Name", value: name, onChange: (v: string) => setName(v), type: "text" },
-                                            { placeholder: "Username", value: username, onChange: (v: string) => setUsername(v), type: "text", required: true },
-                                        ].map(field => (
-                                            <div key={field.placeholder} style={{ position: "relative" }}>
-                                                <User size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#A8A8A8", pointerEvents: "none" }} />
-                                                <input
-                                                    type={field.type}
-                                                    placeholder={field.placeholder}
-                                                    value={field.value}
-                                                    onChange={e => field.onChange(e.target.value)}
-                                                    required={field.required}
-                                                    style={{
-                                                        width: "100%", boxSizing: "border-box",
-                                                        background: "#F9F9F9",
-                                                        border: "1.5px solid #E8E8E8",
-                                                        borderRadius: "12px",
-                                                        padding: "13px 14px 13px 36px",
-                                                        fontSize: "0.875rem", color: "#0D0D0D",
-                                                        outline: "none",
-                                                        transition: "border-color 0.2s",
-                                                    }}
-                                                    onFocus={e => (e.target.style.borderColor = "#FF424D")}
-                                                    onBlur={e => (e.target.style.borderColor = "#E8E8E8")}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
 
                                 {/* Email */}
                                 <div style={{ position: "relative", marginBottom: "10px" }}>
@@ -612,7 +496,7 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                                 </div>
 
                                 {/* Password */}
-                                {(isSignUp || authTab === "password") && (
+                                {authTab === "password" && (
                                     <div style={{ position: "relative", marginBottom: "10px" }}>
                                         <Lock size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#A8A8A8", pointerEvents: "none" }} />
                                         <input
@@ -645,7 +529,7 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                                 )}
 
                                 {/* Forgot password */}
-                                {!isSignUp && authTab === "password" && (
+                                {authTab === "password" && (
                                     <div style={{ textAlign: "right", marginBottom: "6px" }}>
                                         <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "#A8A8A8", textDecoration: "none", fontWeight: 500 }}
                                             onMouseOver={e => (e.currentTarget.style.color = "#FF424D")}
@@ -695,9 +579,9 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                                 >
                                     {isSubmitting ? (
                                         <><span style={{ width: "16px", height: "16px", border: "2.5px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
-                                            {isSignUp ? "Creating account..." : "Signing in..."}</>
+                                            Signing in...</>
                                     ) : (
-                                        <>{isSignUp ? "Create Account" : authTab === "magic" ? "Send Magic Link" : "Sign In"} <ArrowRight size={16} /></>
+                                        <>{authTab === "magic" ? "Send Magic Link" : "Sign In"} <ArrowRight size={16} /></>
                                     )}
                                 </button>
                             </form>
@@ -708,14 +592,13 @@ export const SignInFlo: React.FC<SignInFloProps> = ({ initialMode = "signin" }) 
                 {/* Switch mode — below card */}
                 <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
                     <p style={{ fontSize: "0.875rem", color: "#6E6E6E" }}>
-                        {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                        <button
-                            type="button"
-                            onClick={toggleMode}
-                            style={{ color: "#FF424D", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontSize: "0.875rem" }}
+                        Don't have an account?{" "}
+                        <Link
+                            href="/register"
+                            style={{ color: "#FF424D", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontSize: "0.875rem", textDecoration: "none" }}
                         >
-                            {isSignUp ? "Sign in" : "Sign up"}
-                        </button>
+                            Sign up
+                        </Link>
                     </p>
                 </div>
             </div>
