@@ -28,25 +28,30 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
-  --dash-bg: #0B1120;
-  --dash-card: #162032;
-  --dash-border: #2D3F56;
-  --dash-border-hover: #3E5573;
-  --dash-text-primary: #F1F5F9;
-  --dash-text-secondary: #94A3B8;
-  --dash-text-muted: #64748B;
-  --dash-accent: #8B5CF6;
-  --dash-accent-hover: #7C3AED;
-  --dash-accent-soft: rgba(139, 92, 246, 0.15);
-  --dash-accent-border: rgba(139, 92, 246, 0.3);
-  --dash-btn-text: #FFFFFF;
-  --dash-shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
-  --dash-shadow-md: 0 4px 12px rgba(0,0,0,0.35);
-  --dash-shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
-  --dash-header-bg: rgba(11, 17, 32, 0.90);
+  --dash-bg: #000000;
+  --dash-card: #111111;
+  --dash-border: #222222;
+  --dash-border-hover: #333333;
+  --dash-text-primary: #F5F5F5;
+  --dash-text-secondary: #A0A0A0;
+  --dash-text-muted: #606060;
+  --dash-accent: #ffffff;
+  --dash-accent-hover: #e0e0e0;
+  --dash-accent-soft: rgba(255, 255, 255, 0.08);
+  --dash-accent-border: rgba(255, 255, 255, 0.15);
+  --dash-btn-text: #000000;
+  --dash-shadow-sm: 0 1px 4px rgba(0,0,0,0.5);
+  --dash-shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+  --dash-shadow-lg: 0 8px 24px rgba(0,0,0,0.7);
+  --dash-header-bg: rgba(0, 0, 0, 0.95);
   --dash-success-bg: rgba(5, 150, 105, 0.15);
   --dash-success-text: #34D399;
-  --dash-input-bg: #162032;
+  --dash-input-bg: #111111;
+
+  /* Override shadcn/Tailwind background tokens to match dark theme */
+  --background: #000000;
+  --foreground: #F5F5F5;
+  color-scheme: dark;
 }
 
 /* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
@@ -128,25 +133,25 @@ html[data-theme="dark"] {
   --secondary: #CCCCCC;
   --border-light: var(--gray-200);
 
-  /* Sidebar */
-  --sidebar-background: #080b10;
-  --sidebar-foreground: #f0f4ff;
+  /* Sidebar — Instagram-style pure black */
+  --sidebar-background: #000000;
+  --sidebar-foreground: #f5f5f5;
   --sidebar-primary: #ffffff;
   --sidebar-primary-foreground: #000000;
-  --sidebar-accent: rgba(255, 255, 255, 0.05);
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-ring: #ffffff;
 }
 
 .dark {
-  --sidebar-background: #080b10;
-  --sidebar-foreground: #f0f4ff;
+  --sidebar-background: #000000;
+  --sidebar-foreground: #f5f5f5;
   --sidebar-primary: #ffffff;
   --sidebar-primary-foreground: #000000;
-  --sidebar-accent: rgba(255, 255, 255, 0.05);
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-ring: #ffffff;
 }
 

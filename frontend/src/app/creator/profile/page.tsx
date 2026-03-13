@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     User, Camera, MapPin, Link2, Edit, Plus, Trash2, X,
     FileText, Users, Coins, Crown, Shield, Award, ExternalLink,
-    Twitter, Instagram, Youtube, Globe, Package,
+    Twitter, Instagram, Youtube, Globe, Package, Settings, Grid, LayoutGrid, Bookmark, Film
 } from 'lucide-react';
 import { formatTokens, getInitials } from '@/lib/utils';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
+import { Button } from '@/components/ui/button';
 import type { Profile, CreatorPackage } from '@/types';
 
 const CATEGORIES = [
@@ -49,24 +50,39 @@ export default function CreatorProfilePage() {
     const [savingPkg, setSavingPkg] = useState(false);
 
     const fetchProfile = useCallback(async () => {
-        const res = await fetch('/api/profile');
-        if (res.ok) {
+        try {
+            const res = await fetch('/api/profile');
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Failed to fetch profile (${res.status})`);
+            }
             const data = await res.json();
             setProfile(data.profile);
-            setStats(data.stats);
+            setStats(data.stats ?? { post_count: 0, fan_count: 0 });
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Could not load profile';
+            setToast({ message: msg, type: 'error' });
         }
     }, []);
 
     const fetchPackages = useCallback(async () => {
-        const res = await fetch('/api/creator-packages');
-        if (res.ok) {
+        try {
+            const res = await fetch('/api/creator-packages');
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Failed to fetch packages (${res.status})`);
+            }
             const data = await res.json();
-            setPackages(data.packages);
+            setPackages(data.packages ?? []);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Could not load packages';
+            setToast({ message: msg, type: 'error' });
         }
     }, []);
 
     useEffect(() => {
-        Promise.all([fetchProfile(), fetchPackages()]).then(() => setLoading(false));
+        setLoading(true);
+        Promise.all([fetchProfile(), fetchPackages()]).finally(() => setLoading(false));
     }, [fetchProfile, fetchPackages]);
 
     // ─── Profile Edit ───
@@ -86,22 +102,23 @@ export default function CreatorProfilePage() {
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setSavingProfile(true);
-
-        const res = await fetch('/api/profile', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(editForm),
-        });
-
-        if (res.ok) {
+        try {
+            const res = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editForm),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to update profile');
             setToast({ message: 'Profile updated!', type: 'success' });
             setShowEditProfile(false);
             fetchProfile();
-        } else {
-            const data = await res.json();
-            setToast({ message: data.error || 'Failed to update', type: 'error' });
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Failed to update profile';
+            setToast({ message: msg, type: 'error' });
+        } finally {
+            setSavingProfile(false);
         }
-        setSavingProfile(false);
     };
 
     // ─── Package CRUD ───
@@ -126,26 +143,27 @@ export default function CreatorProfilePage() {
     const handleSavePkg = async (e: React.FormEvent) => {
         e.preventDefault();
         setSavingPkg(true);
+        try {
+            const url = '/api/creator-packages';
+            const method = editingPkg ? 'PUT' : 'POST';
+            const body = editingPkg ? { id: editingPkg.id, ...pkgForm } : pkgForm;
 
-        const url = '/api/creator-packages';
-        const method = editingPkg ? 'PUT' : 'POST';
-        const body = editingPkg ? { id: editingPkg.id, ...pkgForm } : pkgForm;
-
-        const res = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-
-        if (res.ok) {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to save package');
             setToast({ message: `Package ${editingPkg ? 'updated' : 'created'}!`, type: 'success' });
             setShowPkgModal(false);
             fetchPackages();
-        } else {
-            const data = await res.json();
-            setToast({ message: data.error || 'Failed to save package', type: 'error' });
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Failed to save package';
+            setToast({ message: msg, type: 'error' });
+        } finally {
+            setSavingPkg(false);
         }
-        setSavingPkg(false);
     };
 
     const handleDeletePkg = async (id: string) => {
@@ -163,171 +181,169 @@ export default function CreatorProfilePage() {
     if (!profile) return null;
 
     return (
-        <div className="space-y-12 animate-fade-in max-w-4xl mx-auto">
+        <div className="animate-fade-in max-w-[935px] mx-auto pb-12 mt-8">
 
             {/* ═══════════════ PROFILE HEADER ═══════════════ */}
-            <div className="card p-0 overflow-hidden">
-                {/* Banner */}
-                <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                    {profile.banner_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={profile.banner_url} alt="Banner" className="object-cover w-full h-full" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10 px-4 sm:px-0 mt-6 mb-10">
+
+                {/* Avatar */}
+                <div className="flex justify-center sm:justify-start shrink-0">
+                    <div className="w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                        {profile.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={profile.avatar_url} alt={profile.display_name} className="object-cover w-full h-full" />
+                        ) : (
+                            <span className="text-4xl sm:text-5xl font-bold text-gray-400">{getInitials(profile.display_name)}</span>
+                        )}
+                    </div>
                 </div>
 
-                {/* Profile Info */}
-                <div className="px-8 pb-8 -mt-12 relative">
-                    <div className="flex items-end gap-6">
-                        {/* Avatar */}
-                        <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden shrink-0">
-                            {profile.avatar_url ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={profile.avatar_url} alt={profile.display_name} className="object-cover w-full h-full" />
-                            ) : (
-                                <span className="bg-gray-100 w-full h-full flex items-center justify-center">{getInitials(profile.display_name)}</span>
-                            )}
-                        </div>
+                {/* Info */}
+                <div className="flex-1 flex flex-col gap-3">
 
-                        <div className="flex-1 min-w-0 pt-14">
-                            <div className="flex items-center gap-3 flex-wrap">
-                                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{profile.display_name}</h1>
-                                {profile.category && (
-                                    <span className="badge text-xs">{profile.category}</span>
-                                )}
-                            </div>
-                            <p className="text-sm text-gray-500 mt-0.5">@{profile.username}</p>
-                        </div>
+                    {/* Row 1: Username */}
+                    <h1 className="text-xl font-light tracking-tight leading-none" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>
+                        {profile.username || profile.display_name}
+                    </h1>
 
-                        <button onClick={handleOpenEditProfile} className="btn-secondary shrink-0">
-                            <Edit className="w-4 h-4" /> Edit Profile
-                        </button>
+                    {/* Row 2: Display name + category */}
+                    <div className="font-semibold text-[14px] flex items-center gap-2 flex-wrap" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>
+                        {profile.display_name}
+                        {profile.category && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium border" style={{ background: 'var(--dash-card, #f1f5f9)', color: 'var(--dash-text-secondary, #64748B)', borderColor: 'var(--dash-border, #E2E8F0)' }}>
+                                {profile.category}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Bio */}
+                    {/* Row 3: Stats */}
+                    <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--dash-text-secondary, #64748B)' }}>
+                        <span><span className="font-semibold" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>{stats.post_count}</span> posts</span>
+                        <span><span className="font-semibold" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>{stats.fan_count}</span> followers</span>
+                        <span><span className="font-semibold" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>{packages.length}</span> following</span>
+                    </div>
+
+                    {/* Row 4: Bio */}
                     {profile.bio && (
-                        <p className="text-gray-600 mt-6 leading-relaxed max-w-2xl">{profile.bio}</p>
+                        <div className="whitespace-pre-wrap text-[14px] leading-snug" style={{ color: 'var(--dash-text-secondary, #64748B)' }}>
+                            {profile.bio}
+                        </div>
                     )}
 
-                    {/* Social Links */}
+                    {/* Row 5: Social links */}
                     {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                        <div className="flex items-center gap-3 mt-4 flex-wrap">
+                        <div className="flex flex-col gap-0.5">
                             {Object.entries(profile.social_links).map(([key, url]) => {
                                 if (!url) return null;
-                                const iconMap: Record<string, React.ReactNode> = {
-                                    twitter: <Twitter className="w-4 h-4" />,
-                                    instagram: <Instagram className="w-4 h-4" />,
-                                    youtube: <Youtube className="w-4 h-4" />,
-                                    website: <Globe className="w-4 h-4" />,
-                                };
                                 return (
                                     <a key={key} href={url} target="_blank" rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 hover:border-gray-300">
-                                        {iconMap[key] || <Link2 className="w-4 h-4" />}
-                                        <span className="capitalize">{key}</span>
-                                        <ExternalLink className="w-3 h-3" />
+                                        className="text-[#00376b] dark:text-[#8ac7ff] font-semibold flex items-center gap-1.5 hover:underline text-[13px] truncate max-w-xs">
+                                        <Link2 className="w-3 h-3 shrink-0" />
+                                        <span className="truncate">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
                                     </a>
                                 );
                             })}
                         </div>
                     )}
 
-                    {/* Stats Row */}
-                    <div className="grid grid-cols-3 gap-4 mt-8">
-                        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <div className="text-2xl font-bold text-gray-900 tracking-tight">{stats.post_count}</div>
-                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Posts</div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <div className="text-2xl font-bold text-gray-900 tracking-tight">{stats.fan_count}</div>
-                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Fans</div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <div className="text-2xl font-bold text-gray-900 tracking-tight">{packages.length}</div>
-                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Packages</div>
-                        </div>
+                    {/* Row 6: Wide action buttons at the bottom — matching Instagram layout */}
+                    <div className="flex items-center gap-3 mt-1">
+                        <Button
+                            variant="dark"
+                            size="md"
+                            onClick={handleOpenEditProfile}
+                            className="flex-1 rounded-lg justify-center py-2"
+                        >
+                            Edit profile
+                        </Button>
+                        <Button
+                            variant="dark"
+                            size="md"
+                            className="flex-1 rounded-lg justify-center py-2"
+                        >
+                            View archive
+                        </Button>
+                        <button className="shrink-0 p-[7px] hover:bg-gray-100 dark:hover:bg-[#363636] rounded-lg text-gray-600 dark:text-gray-300 transition-colors">
+                            <Settings className="w-5 h-5" />
+                        </button>
                     </div>
+
                 </div>
             </div>
 
-            {/* ═══════════════ MONETIZATION PACKAGES ═══════════════ */}
-            <div>
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-900 tracking-tight">Monetization Packages</h2>
-                        <p className="text-sm text-gray-500 mt-1">Define up to 3 packages your fans can subscribe to</p>
-                    </div>
-                    <button
-                        onClick={handleOpenCreatePkg}
-                        disabled={packages.length >= 3}
-                        className="btn-primary"
-                    >
-                        <Plus className="w-4 h-4" /> Add Package
-                    </button>
-                </div>
-
-                {packages.length === 0 ? (
-                    <div className="card flex flex-col items-center justify-center py-16 text-center">
-                        <Package className="w-12 h-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No packages yet</h3>
-                        <p className="text-gray-500 mb-6 max-w-sm">Create monetization packages so fans can unlock premium content at different tiers.</p>
-                        <button onClick={handleOpenCreatePkg} className="btn-primary">
-                            <Plus className="w-4 h-4" /> Create First Package
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {packages.map((pkg, i) => (
-                            <div key={pkg.id} className="card p-0 flex flex-col overflow-hidden group hover:border-gray-400 transition-all">
-                                {/* Package Header */}
-                                <div className={`px-6 pt-6 pb-4 ${i === 0 ? 'bg-gray-50' : i === 1 ? 'bg-gray-50' : 'bg-gray-900 text-white'}`}>
-                                    <div className="flex items-center justify-between mb-3">
-                                        {pkg.badge_name ? (
-                                            <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${i === 2 ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
-                                                }`}>{pkg.badge_name}</span>
-                                        ) : (
-                                            <span className={`text-xs font-bold uppercase tracking-wider ${i === 2 ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Tier {i + 1}</span>
-                                        )}
-                                        {/* Edit/Delete Actions */}
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleOpenEditPkg(pkg)}
-                                                className={`p-1.5 rounded-lg transition-colors ${i === 2 ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-400 hover:text-gray-900'}`}>
-                                                <Edit className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button onClick={() => handleDeletePkg(pkg.id)}
-                                                className={`p-1.5 rounded-lg transition-colors ${i === 2 ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-gray-400 hover:text-red-600'}`}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
+            {/* ═══════════════ HIGHLIGHTS (Packages as Stories) ═══════════════ */}
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 pb-2">
+                <div className="flex items-start gap-6 overflow-x-auto hide-scrollbar px-4 sm:px-0 pb-2">
+                    {packages.map((pkg, i) => (
+                        <div key={pkg.id} className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group" onClick={() => handleOpenEditPkg(pkg)}>
+                            <div className="w-16 h-16 sm:w-[77px] sm:h-[77px] rounded-full p-[2px] bg-gradient-to-tr from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 group-hover:from-gray-400 dark:group-hover:from-gray-500 transition-all">
+                                <div className="w-full h-full rounded-full bg-white dark:bg-[#1a1a2e] flex items-center justify-center p-[2px]">
+                                    <div className="w-full h-full rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                        <Package className="w-6 h-6 sm:w-7 sm:h-7 text-gray-500 dark:text-gray-400 stroke-[1.5]" />
                                     </div>
-                                    <h3 className={`text-lg font-bold tracking-tight ${i === 2 ? 'text-white' : 'text-gray-900'}`}>{pkg.name}</h3>
-                                    <div className="flex items-baseline gap-1 mt-2">
-                                        <span className={`text-3xl font-bold tracking-tight ${i === 2 ? 'text-white' : 'text-gray-900'}`}>{formatTokens(pkg.token_price)}</span>
-                                        <span className={`text-sm font-medium ${i === 2 ? 'text-gray-400' : 'text-gray-500'}`}>tokens</span>
-                                    </div>
-                                </div>
-
-                                {/* Package Body */}
-                                <div className="px-6 py-5 flex-1 flex flex-col">
-                                    <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
-                                        <FileText className="w-4 h-4 text-gray-400 shrink-0" />
-                                        <span>Access to <strong>{pkg.post_limit}</strong> premium posts</span>
-                                    </div>
-                                    {pkg.description && (
-                                        <p className="text-sm text-gray-500 leading-relaxed mb-4">{pkg.description}</p>
-                                    )}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
+                            <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300 truncate w-16 sm:w-[74px] text-center">
+                                {pkg.badge_name || pkg.name}
+                            </span>
+                        </div>
+                    ))}
+                    {packages.length < 3 && (
+                        <div className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group" onClick={handleOpenCreatePkg}>
+                            <div className="w-16 h-16 sm:w-[77px] sm:h-[77px] rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 group-hover:border-gray-400 dark:group-hover:border-gray-500 flex items-center justify-center transition-colors">
+                                <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-gray-400 dark:text-gray-500" />
+                            </div>
+                            <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">New</span>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                {packages.length >= 3 && (
-                    <p className="text-center text-sm text-gray-400 mt-4">
-                        Maximum 3 packages reached. Delete one to create a new package.
-                    </p>
-                )}
+            {/* ═══════════════ TABS ═══════════════ */}
+            <div className="border-t border-gray-200 dark:border-gray-700 flex justify-center gap-12 text-[12px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <button className="flex items-center gap-1.5 h-[48px] border-t-2 border-gray-800 dark:border-white text-gray-900 dark:text-white -mt-[2px] px-2">
+                    <Grid className="w-3 h-3" /> PACKAGES
+                </button>
+                <button className="flex items-center gap-1.5 h-[48px] hover:text-gray-700 dark:hover:text-gray-200 transition-colors px-2">
+                    <Film className="w-3 h-3" /> REELS
+                </button>
+                <button className="hidden sm:flex items-center gap-1.5 h-[48px] hover:text-gray-700 dark:hover:text-gray-200 transition-colors px-2">
+                    <Bookmark className="w-3 h-3" /> SAVED
+                </button>
+                <button className="hidden sm:flex items-center gap-1.5 h-[48px] hover:text-gray-700 dark:hover:text-gray-200 transition-colors px-2">
+                    <User className="w-3 h-3" /> TAGGED
+                </button>
+            </div>
+
+            {/* Packages Grid */}
+            <div className="grid grid-cols-3 gap-1 md:gap-4 mt-1">
+                {packages.map((pkg, i) => (
+                    <div key={pkg.id} className="group relative aspect-square bg-gray-100 dark:bg-gray-800/50 overflow-hidden cursor-pointer" onClick={() => handleOpenEditPkg(pkg)}>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-2 md:p-6 text-center">
+                            <Package className="w-8 h-8 md:w-12 md:h-12 text-gray-300 dark:text-gray-600 mb-1 md:mb-3" />
+                            <h3 className="text-xs md:text-lg font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{pkg.name}</h3>
+                            <div className="hidden md:flex text-gray-500 dark:text-gray-400 font-semibold mt-1 items-center gap-1">
+                                {formatTokens(pkg.token_price)} tokens
+                            </div>
+                        </div>
+                        
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 md:gap-4 text-white font-bold">
+                            <div className="flex items-center gap-1 md:gap-2">
+                                <FileText className="w-4 h-4 md:w-6 md:h-6 fill-white text-white" />
+                                <span className="text-sm md:text-lg">{pkg.post_limit} Posts</span>
+                            </div>
+                            <div className="flex gap-2 md:gap-4 mt-1 md:mt-2">
+                                <button onClick={(e) => { e.stopPropagation(); handleOpenEditPkg(pkg); }} className="p-1.5 md:p-2.5 bg-white/20 rounded-full hover:bg-white/40 transition-colors backdrop-blur-sm">
+                                    <Edit className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDeletePkg(pkg.id); }} className="p-1.5 md:p-2.5 bg-red-500/80 rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm">
+                                    <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
 
