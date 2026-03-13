@@ -1,155 +1,188 @@
 "use client";
 
+import "./app-sidebar.css";
+
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { NAV_ITEMS_CREATOR, NAV_ITEMS_FAN } from "@/lib/constants";
-import { 
+import Link from "next/link";
+import { useState, useRef, useEffect } from "react";
+import {
+  LayoutDashboard,
+  User,
+  FileText,
+  ShoppingBag,
+  BarChart3,
+  Settings,
+  Plus,
+  LogOut,
+  Wallet,
+  MoreHorizontal,
+  Zap,
+} from "lucide-react";
+import { getInitials } from "@/lib/utils";
+import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-import { 
-  User,
-  ChevronsUpDown,
-  Home,
-  LogOut,
-  Settings,
-  Puzzle,
-  LayoutGrid,
-  Layers,
-  CreditCard
-} from "lucide-react";
-import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+const CREATOR_NAV = [
+  { href: "/creator",         label: "Dashboard", icon: LayoutDashboard },
+  { href: "/creator/posts",   label: "Posts",     icon: FileText        },
+];
 
-export function AppSidebar({ profile }: { profile: any; wallet?: any }) {
+// "Create" and "Profile" are rendered separately in the component (special styling)
+// "Settings" goes in the footer above More
+
+const FAN_NAV = [
+  { href: "/fan",       label: "Dashboard", icon: LayoutDashboard },
+  { href: "/fan/feed",  label: "Feed",      icon: FileText        },
+];
+
+export function AppSidebar({ profile, wallet }: { profile: any; wallet?: any }) {
   const pathname = usePathname();
   const supabase = createClient();
-  
-  const standardItems = profile?.role === 'fan' ? NAV_ITEMS_FAN : NAV_ITEMS_CREATOR;
-  
-  const navigation = standardItems.slice(0, 4).map(item => ({
-    title: item.label,
-    url: item.href,
-    icon: Home 
-  }));
+  const navItems = profile?.role === "fan" ? FAN_NAV : CREATOR_NAV;
 
-  if (navigation[0]) navigation[0].icon = Home;
-  if (navigation[1]) navigation[1].icon = Puzzle;
-  if (navigation[2]) navigation[2].icon = LayoutGrid;
-  if (navigation[3]) navigation[3].icon = Layers;
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node))
+        setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
-  const avatarSrc = profile?.avatar_url || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop";
-  const [isProfileActive, setIsProfileActive] = useState(false);
-  const profileRef = useRef<HTMLButtonElement | null>(null);
+  const isActive = (href: string) =>
+    href === "/creator" || href === "/fan"
+      ? pathname === href || pathname === href + "/"
+      : pathname.startsWith(href);
 
-  useEffect(() => {
-    const handleProfile = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setIsProfileActive(false);
-      }
-    };
-    document.addEventListener("click", handleProfile);
-    return () => document.removeEventListener("click", handleProfile);
-  }, []);
+  const isProfileActive = isActive(`/${profile?.role}/profile`);
 
   return (
-    <Sidebar variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="pt-12 pb-6 px-6 border-b border-sidebar-border">
-         <div className="flex items-center gap-x-3">
-            <img
-            src={avatarSrc}
-            className="w-10 h-10 rounded-full object-cover"
-            alt="User avatar"
-            />
-            <div className="flex-1 min-w-0">
-            <span className="block text-sidebar-foreground text-[14px] font-semibold tracking-tight truncate">
-                {profile?.display_name || "Guest User"}
-            </span>
-            <span className="block text-sidebar-foreground/60 text-[12px] font-medium tracking-wide truncate mt-0.5">
-                {profile?.role === 'creator' ? 'Creator Account' : 'Fan Account'}
-            </span>
-            </div>
-            
-            <div className="relative text-right">
-                <button
-                  ref={profileRef}
-                  className="p-1 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent active:bg-sidebar-accent/80"
-                  onClick={() => setIsProfileActive((v) => !v)}
-                >
-                  <ChevronsUpDown className="w-4 h-4" />
-                </button>
-                 {isProfileActive && (
-                  <div className="absolute z-10 top-10 right-0 w-64 rounded-lg bg-background shadow-md border text-sm text-foreground overflow-hidden">
-                    <div className="p-2 text-left">
-                      <span className="block text-muted-foreground p-2 truncate">@{profile?.username || "username"}</span>
-                      <button onClick={handleLogout} className="flex items-center gap-2 w-full p-2 mt-1 text-left rounded-md text-red-600 hover:bg-red-50 duration-150">
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-            </div>
-        </div>
+    <Sidebar
+      variant="sidebar"
+      collapsible="offcanvas"
+      className="border-r-0 ig-sidebar"
+    >
+      {/* ── Logo ── */}
+      <SidebarHeader className="ig-sidebar__header">
+        <Link href={`/${profile?.role ?? "creator"}`} className="ig-sidebar__logo">
+          <div className="ig-sidebar__logo-icon">
+            <Zap size={18} className="text-white" />
+          </div>
+          <span className="ig-sidebar__logo-text">Black Bolts</span>
+        </Link>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup className="px-6 pt-4 pb-2">
-          <SidebarGroupLabel className="text-sm px-2 mb-2 text-sidebar-foreground/50 tracking-wider">NAVIGATION</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Billing">
-                    <Link href="#">
-                      <CreditCard />
-                      <span>Billing</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      {/* ── Main Nav: Dashboard → Posts → Create ── */}
+      <SidebarContent className="ig-sidebar__content">
+        <nav className="ig-sidebar__nav">
+          {/* Dashboard + Posts from array */}
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`ig-sidebar__item${active ? " ig-sidebar__item--active" : ""}`}
+              >
+                <item.icon
+                  size={26}
+                  strokeWidth={active ? 2.2 : 1.75}
+                  className="ig-sidebar__icon"
+                />
+                <span className="ig-sidebar__label">{item.label}</span>
+              </Link>
+            );
+          })}
 
-        <SidebarGroup className="mt-auto px-6 pb-8">
-           <SidebarGroupContent>
-             <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href={`/${profile?.role}/settings`}>
-                      <Settings />
-                      <span>Settings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-             </SidebarMenu>
-           </SidebarGroupContent>
-        </SidebarGroup>
+          {/* Create */}
+          {profile?.role === "creator" && (
+            <Link
+              href="/creator/posts/new"
+              className={`ig-sidebar__item${pathname.startsWith("/creator/posts/new") ? " ig-sidebar__item--active" : ""}`}
+            >
+              <span className="ig-sidebar__create-icon">
+                <Plus size={20} strokeWidth={2} />
+              </span>
+              <span className="ig-sidebar__label">Create</span>
+            </Link>
+          )}
+        </nav>
       </SidebarContent>
 
+      {/* ── Footer: Profile → Settings → More ── */}
+      <SidebarFooter className="ig-sidebar__footer">
+
+        {/* Profile */}
+        <Link
+          href={`/${profile?.role}/profile`}
+          className={`ig-sidebar__item${isProfileActive ? " ig-sidebar__item--active" : ""}`}
+        >
+          <div className="ig-sidebar__avatar">
+            {profile?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.avatar_url}
+                alt={profile?.display_name}
+                className="ig-sidebar__avatar-img"
+              />
+            ) : (
+              <span className="ig-sidebar__avatar-initials">
+                {getInitials(profile?.display_name || "U")}
+              </span>
+            )}
+          </div>
+          <span className={`ig-sidebar__label${isProfileActive ? " ig-sidebar__label--bold" : ""}`}>
+            Profile
+          </span>
+        </Link>
+
+        {/* Settings */}
+        <Link
+          href={`/${profile?.role}/settings`}
+          className={`ig-sidebar__item${isActive(`/${profile?.role}/settings`) ? " ig-sidebar__item--active" : ""}`}
+        >
+          <Settings size={26} strokeWidth={isActive(`/${profile?.role}/settings`) ? 2.2 : 1.75} className="ig-sidebar__icon" />
+          <span className="ig-sidebar__label">Settings</span>
+        </Link>
+
+        {/* More (logout dropdown) */}
+        <div ref={moreRef} className="ig-sidebar__more-wrap">
+          <button
+            onClick={() => setMoreOpen((v) => !v)}
+            className="ig-sidebar__item ig-sidebar__item--btn"
+          >
+            <span className="ig-sidebar__more-icon">
+              <MoreHorizontal size={22} strokeWidth={1.75} />
+            </span>
+            <span className="ig-sidebar__label">More</span>
+          </button>
+
+          {moreOpen && (
+            <div className="ig-sidebar__more-dropdown">
+              <p className="ig-sidebar__more-username">@{profile?.username}</p>
+              <button onClick={handleLogout} className="ig-sidebar__logout-btn">
+                <LogOut size={16} />
+                <span>Log out</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+      </SidebarFooter>
     </Sidebar>
   );
 }
+

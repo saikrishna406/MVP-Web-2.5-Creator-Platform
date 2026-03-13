@@ -1,52 +1,145 @@
+"use client";
+
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
-
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  [
+    "group relative inline-flex items-center justify-center outline-none cursor-pointer rounded-full font-semibold",
+    "transition-all duration-100",
+    "disabled:opacity-50 disabled:pointer-events-none",
+    "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-foreground",
+  ],
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        primary:   "bg-foreground text-background hover:bg-foreground/90 active:bg-foreground/80",
+        secondary: "bg-accent text-foreground hover:bg-accent/80 active:bg-accent",
+        tertiary:  "border border-border text-foreground bg-transparent hover:bg-muted active:bg-muted/60",
+        ghost:     "text-muted-foreground bg-transparent hover:bg-muted hover:text-foreground active:bg-muted/60",
+        // solid black (explicit — always black bg, white text regardless of dark mode)
+        dark:      "bg-[#262626] text-white hover:bg-[#363636] active:bg-[#1a1a1a] border border-[#3d3d3d]",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-xs",
-        lg: "h-10 rounded-lg px-8",
-        icon: "h-9 w-9",
+        sm:       "h-8  px-3 text-[12px] gap-1",
+        md:       "h-9  px-4 text-[13px] gap-1.5",
+        lg:       "h-10 px-5 text-[14px] gap-1.5",
+        "icon-sm":"h-8  w-8  p-0 [&_svg]:h-3.5 [&_svg]:w-3.5",
+        "icon":   "h-9  w-9  p-0 [&_svg]:h-4   [&_svg]:w-4",
+        "icon-lg":"h-10 w-10 p-0 [&_svg]:h-5   [&_svg]:w-5",
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: "primary",
+      size: "md",
     },
-  },
+  }
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  leadingIcon?: LucideIcon;
+  trailingIcon?: LucideIcon;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      leadingIcon: LeadingIcon,
+      trailingIcon: TrailingIcon,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
+    const isIconOnly = size === "icon" || size === "icon-sm" || size === "icon-lg";
+    const iconSize = size === "sm" ? 14 : size === "lg" ? 20 : 16;
+
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <>
+        <style>{`
+          @keyframes spinner-move {
+            from { stroke-dashoffset: 100; }
+            to   { stroke-dashoffset: 0; }
+          }
+          @keyframes spinner-dash {
+            0%, 100% { stroke-dasharray: 15 85; }
+            50%       { stroke-dasharray: 50 50; }
+          }
+        `}</style>
+        <Comp
+          ref={ref}
+          className={cn(buttonVariants({ variant, size }), className)}
+          disabled={disabled || loading}
+          {...props}
+        >
+          {loading ? (
+            <>
+              <span className="flex items-center justify-center gap-[inherit] opacity-0">
+                {LeadingIcon && !isIconOnly && <LeadingIcon size={iconSize} strokeWidth={2} />}
+                {children}
+                {TrailingIcon && !isIconOnly && <TrailingIcon size={iconSize} strokeWidth={2} />}
+              </span>
+              <span className="absolute inset-0 flex items-center justify-center">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    pathLength="100"
+                    style={{
+                      strokeDasharray: "15 85",
+                      animation:
+                        "spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite",
+                    }}
+                  />
+                </svg>
+              </span>
+            </>
+          ) : isIconOnly ? (
+            <span className="[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-100 group-hover:[&_svg]:stroke-[2]">
+              {children}
+            </span>
+          ) : (
+            <>
+              {LeadingIcon && (
+                <LeadingIcon
+                  size={iconSize}
+                  strokeWidth={1.5}
+                  className="transition-[stroke-width] duration-100 group-hover:stroke-[2]"
+                />
+              )}
+              <span>{children}</span>
+              {TrailingIcon && (
+                <TrailingIcon
+                  size={iconSize}
+                  strokeWidth={1.5}
+                  className="transition-[stroke-width] duration-100 group-hover:stroke-[2]"
+                />
+              )}
+            </>
+          )}
+        </Comp>
+      </>
     );
-  },
+  }
 );
+
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
+export type { ButtonProps };
