@@ -55,6 +55,35 @@ export default async function FanDashboardPage() {
         .select('id')
         .eq('user_id', user.id);
 
+    // Phase 2: Active memberships
+    const { data: activeSubs } = await supabase
+        .from('subscriptions')
+        .select('id, tier_id, current_period_end, membership_tiers(name, price, creator_id, profiles!membership_tiers_creator_id_fkey(display_name, username, avatar_url))')
+        .eq('fan_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+    // Phase 2: Upcoming event tickets
+    const { data: myTickets } = await supabase
+        .from('event_tickets')
+        .select('id, event_id, purchased_at, events(title, event_date, location, stream_url, creator_id)')
+        .eq('fan_id', user.id)
+        .eq('status', 'valid')
+        .order('purchased_at', { ascending: false })
+        .limit(5);
+
+    const upcomingTickets = (myTickets || []).filter(t => {
+        const ev = t.events as unknown as { event_date: string } | null;
+        return ev && new Date(ev.event_date) > new Date();
+    });
+
+    // Phase 2: Founder pass badges
+    const { data: founderPasses } = await supabase
+        .from('founder_pass_purchases')
+        .select('id, creator_id, purchased_at, profiles!founder_pass_purchases_creator_id_fkey(display_name, username)')
+        .eq('fan_id', user.id)
+        .order('purchased_at', { ascending: false });
+
     // ── Styles ──────────────────────────────────────
     const cardStyle: React.CSSProperties = {
         background: 'var(--dash-card)',
@@ -344,6 +373,95 @@ export default async function FanDashboardPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Phase 2: Active Memberships */}
+            {activeSubs && activeSubs.length > 0 && (
+                <div style={{ marginTop: '24px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--dash-text-primary)', marginBottom: '12px' }}>
+                        Active Memberships
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {activeSubs.map((sub: any) => {
+                            const tier = sub.membership_tiers as any;
+                            const creator = tier?.profiles as any;
+                            return (
+                                <div key={sub.id} style={{ ...cardStyle, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--dash-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: 'var(--dash-text-secondary)', flexShrink: 0, overflow: 'hidden' }}>
+                                        {creator?.avatar_url
+                                            ? <img src={creator.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            : (creator?.display_name?.[0] || '?')}
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--dash-text-primary)' }}>{tier?.name}</div>
+                                        <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--dash-text-muted)', marginTop: '2px' }}>
+                                            @{creator?.username} · Renews {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : '—'}
+                                        </div>
+                                    </div>
+                                    <Link href={`/fan/${creator?.username}`} style={{ fontSize: '13px', fontWeight: 600, color: 'var(--dash-accent)', textDecoration: 'none', flexShrink: 0 }}>
+                                        View Hub →
+                                    </Link>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Phase 2: Upcoming Event Tickets */}
+            {upcomingTickets.length > 0 && (
+                <div style={{ marginTop: '24px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--dash-text-primary)', marginBottom: '12px' }}>
+                        Upcoming Events
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {upcomingTickets.map((t: any) => {
+                            const ev = t.events as any;
+                            return (
+                                <div key={t.id} style={{ ...cardStyle, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                    <div style={{ ...iconWrapStyle, width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }}>
+                                        <Clock style={{ width: '18px', height: '18px', color: 'var(--dash-text-secondary)' }} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--dash-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev?.title}</div>
+                                        <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--dash-text-muted)', marginTop: '2px' }}>
+                                            {ev?.event_date ? new Date(ev.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
+                                            {ev?.location ? ` · ${ev.location}` : ev?.stream_url ? ' · Virtual' : ''}
+                                        </div>
+                                    </div>
+                                    {ev?.stream_url && (
+                                        <Link href={ev.stream_url} target="_blank" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--dash-accent)', textDecoration: 'none', flexShrink: 0 }}>
+                                            Join →
+                                        </Link>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Phase 2: Founder Badges */}
+            {founderPasses && founderPasses.length > 0 && (
+                <div style={{ marginTop: '24px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--dash-text-primary)', marginBottom: '12px' }}>
+                        Founder Passes
+                    </h2>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {founderPasses.map((fp: any) => {
+                            const creator = fp.profiles as any;
+                            return (
+                                <div key={fp.id} style={{ ...cardStyle, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ fontSize: '18px' }}>🔥</div>
+                                    <div>
+                                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--dash-text-primary)' }}>@{creator?.username} Founder</div>
+                                        <div style={{ fontSize: '11px', color: 'var(--dash-text-muted)', marginTop: '2px' }}>Since {fp.purchased_at ? new Date(fp.purchased_at).toLocaleDateString() : '—'}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Responsive overrides */}
             <style>{`

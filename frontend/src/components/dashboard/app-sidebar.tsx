@@ -18,6 +18,9 @@ import {
   Wallet,
   MoreHorizontal,
   Zap,
+  Crown,
+  CalendarDays,
+  Flame,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import {
@@ -28,16 +31,22 @@ import {
 } from "@/components/ui/sidebar";
 
 const CREATOR_NAV = [
-  { href: "/creator",         label: "Dashboard", icon: LayoutDashboard },
-  { href: "/creator/posts",   label: "Posts",     icon: FileText        },
+  { href: "/creator",              label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/creator/memberships",  label: "Memberships",  icon: Crown           },
+  { href: "/creator/events",       label: "Events",       icon: CalendarDays    },
+  { href: "/creator/founder-pass", label: "Founder Pass", icon: Flame           },
+  { href: "/creator/revenue",      label: "Revenue",      icon: BarChart3       },
+  { href: "/creator/posts",        label: "Posts",        icon: FileText        },
 ];
 
 // "Create" and "Profile" are rendered separately in the component (special styling)
 // "Settings" goes in the footer above More
 
 const FAN_NAV = [
-  { href: "/fan",       label: "Dashboard", icon: LayoutDashboard },
-  { href: "/fan/feed",  label: "Feed",      icon: FileText        },
+  { href: "/fan",        label: "Dashboard", icon: LayoutDashboard },
+  { href: "/fan/feed",   label: "Feed",      icon: FileText        },
+  { href: "/fan/wallet", label: "Wallet",    icon: Wallet          },
+  { href: "/fan/store",  label: "Store",     icon: ShoppingBag     },
 ];
 
 export function AppSidebar({ profile, wallet }: { profile: any; wallet?: any }) {
