@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { formatTokens, formatPoints, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
+import { DiscordScoreCard } from '@/components/dashboard/DiscordScoreCard';
 
 export const metadata = {
     title: 'Fan Dashboard | Black Bolts',
@@ -163,7 +164,7 @@ export default async function FanDashboardPage() {
             {/* Stats Grid */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
                 gap: '20px',
                 marginBottom: '24px',
             }}
@@ -194,6 +195,8 @@ export default async function FanDashboardPage() {
                         </div>
                     </div>
                 ))}
+                {/* Discord Activity — 5th card, client-side fetch */}
+                <DiscordScoreCard />
             </div>
 
             {/* Quick Actions */}
@@ -465,6 +468,9 @@ export default async function FanDashboardPage() {
 
             {/* Responsive overrides */}
             <style>{`
+                @media (max-width: 1280px) {
+                    .fan-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+                }
                 @media (max-width: 1024px) {
                     .fan-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
                     .fan-actions-grid { grid-template-columns: 1fr !important; }
