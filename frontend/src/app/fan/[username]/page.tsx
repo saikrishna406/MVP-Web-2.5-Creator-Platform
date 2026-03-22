@@ -2,11 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import {
     Crown, Calendar, Flame, Users, Clock,
-    CheckCircle, MapPin, Video, Shield
+    CheckCircle, MapPin, Video, Shield, FileText
 } from "lucide-react";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CreatorPostsFeed } from "@/components/dashboard/CreatorPostsFeed";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -302,13 +303,42 @@ export default async function CreatorPublicPage({ params }: Props) {
             )}
 
             {tiers.length === 0 && events.length === 0 && !pass && (
-                <div style={{ textAlign: "center", padding: "60px 20px", background: "var(--dash-card)", border: "1px dashed var(--dash-border)", borderRadius: "16px" }}>
+                <div style={{ textAlign: "center", padding: "60px 20px", background: "var(--dash-card)", border: "1px dashed var(--dash-border)", borderRadius: "16px", marginBottom: "24px" }}>
                     <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--dash-text-primary)", margin: "0 0 8px" }}>
                         @{creator.username} hasn&apos;t set up offerings yet.
                     </p>
                     <p style={{ fontSize: "14px", color: "var(--dash-text-secondary)", margin: 0 }}>Check back soon!</p>
                 </div>
             )}
+
+            {/* Creator Posts — visible to fans with like/comment/unlock interactions */}
+            <div style={{ marginTop: "24px" }}>
+                <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    marginBottom: "16px",
+                }}>
+                    <h2 style={{
+                        fontSize: "16px", fontWeight: 700,
+                        color: "var(--dash-text-primary)", margin: 0,
+                        display: "flex", alignItems: "center", gap: "8px",
+                    }}>
+                        <FileText style={{ width: "18px", height: "18px", color: "var(--dash-text-secondary)" }} />
+                        Posts
+                    </h2>
+                    <Link
+                        href="/fan/feed"
+                        style={{ fontSize: "13px", fontWeight: 600, color: "var(--dash-accent)", textDecoration: "none" }}
+                    >
+                        View all posts →
+                    </Link>
+                </div>
+                {/* CreatorPostsFeed is a client component — filters posts by this creator */}
+                <CreatorPostsFeed
+                    creatorId={creator.user_id}
+                    limit={5}
+                    hideCreatorInfo={true}
+                />
+            </div>
         </div>
     );
 }

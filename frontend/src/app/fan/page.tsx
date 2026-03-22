@@ -7,6 +7,7 @@ import {
 import { formatTokens, formatPoints, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 import { DiscordScoreCard } from '@/components/dashboard/DiscordScoreCard';
+import { CreatorPostsFeed } from '@/components/dashboard/CreatorPostsFeed';
 
 export const metadata = {
     title: 'Fan Dashboard | Black Bolts',
@@ -243,6 +244,31 @@ export default async function FanDashboardPage() {
                         </Link>
                     ))}
                 </div>
+            </div>
+
+            {/* ── Latest Posts from Creators ── */}
+            <div style={{ marginBottom: '24px' }}>
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    marginBottom: '12px',
+                }}>
+                    <h2 style={{
+                        fontSize: '16px', fontWeight: 700,
+                        color: 'var(--dash-text-primary)', margin: 0,
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                    }}>
+                        <Newspaper style={{ width: '16px', height: '16px', color: 'var(--dash-text-secondary)' }} />
+                        Latest Posts
+                    </h2>
+                    <Link
+                        href="/fan/feed"
+                        style={{ fontSize: '13px', fontWeight: 600, color: 'var(--dash-accent)', textDecoration: 'none' }}
+                    >
+                        See all →
+                    </Link>
+                </div>
+                {/* Client component — fetches + renders latest 3 posts with like/comment/unlock */}
+                <CreatorPostsFeed limit={3} />
             </div>
 
             {/* Recent Activity */}

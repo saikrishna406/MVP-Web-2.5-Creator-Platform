@@ -1,35 +1,99 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Heart, MessageCircle, Lock, Unlock, Eye, Coins, Send, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatTokens, formatRelativeTime, getInitials, truncateText } from '@/lib/utils';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+    Heart, MessageCircle, Lock, Unlock, Coins,
+    Send, Globe, Shield, Sparkles, Search, SlidersHorizontal, X
+} from 'lucide-react';
+import { formatRelativeTime, getInitials, truncateText } from '@/lib/utils';
 import Toast from '@/components/ui/Toast';
 import type { Post, PostComment } from '@/types';
+
+// ─── Skeleton card ──────────────────────────────────────────────────
+function FeedSkeleton() {
+    return (
+        <div className="ff-card ff-skeleton" aria-hidden="true">
+            <div className="ff-sk-header">
+                <div className="ff-sk-avatar" />
+                <div style={{ flex: 1 }}>
+                    <div className="ff-sk-line" style={{ width: '40%', height: 13, marginBottom: 6 }} />
+                    <div className="ff-sk-line" style={{ width: '25%', height: 10 }} />
+                </div>
+            </div>
+            <div className="ff-sk-img" />
+            <div className="ff-sk-body">
+                <div className="ff-sk-line" style={{ width: '80%', height: 16, marginBottom: 10 }} />
+                <div className="ff-sk-line" style={{ width: '60%', height: 13, marginBottom: 6 }} />
+                <div className="ff-sk-line" style={{ width: '70%', height: 13 }} />
+            </div>
+        </div>
+    );
+}
+
+// ─── Double-tap heart burst ─────────────────────────────────────────
+function HeartBurst({ x, y, onDone }: { x: number; y: number; onDone: () => void }) {
+    useEffect(() => { const t = setTimeout(onDone, 900); return () => clearTimeout(t); }, [onDone]);
+    return (
+        <div className="ff-heart-burst" style={{ left: x - 40, top: y - 40 }}>
+            <Heart size={80} style={{ fill: '#ef4444', color: '#ef4444' }} />
+        </div>
+    );
+}
 
 export default function FeedPage() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
     const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+    const [expandedCaptions, setExpandedCaptions] = useState<Set<string>>(new Set());
     const [comments, setComments] = useState<Record<string, PostComment[]>>({});
     const [newComment, setNewComment] = useState<Record<string, string>>({});
     const [unlocking, setUnlocking] = useState<string | null>(null);
+    const [filter, setFilter] = useState<'all' | 'public' | 'gated'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [heartBurst, setHeartBurst] = useState<{ id: string; x: number; y: number } | null>(null);
+
+    // Double-tap tracking
+    const lastTapRef = useRef<Record<string, number>>({});
+    const submitLockRef = useRef<Set<string>>(new Set());
 
     const fetchPosts = useCallback(async () => {
-        const res = await fetch('/api/posts');
+        const res = await fetch('/api/posts?limit=30');
         if (res.ok) {
             const data = await res.json();
-            setPosts(data.posts);
+            setPosts(data.posts || []);
         }
         setLoading(false);
     }, []);
 
-    useEffect(() => {
-        fetchPosts();
-    }, [fetchPosts]);
+    useEffect(() => { fetchPosts(); }, [fetchPosts]);
+
+    // Filtered + searched posts
+    const visiblePosts = posts.filter(p => {
+        const matchesFilter =
+            filter === 'all' ? true :
+            filter === 'public' ? p.access_type === 'public' :
+            p.access_type !== 'public';
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !q ||
+            p.title.toLowerCase().includes(q) ||
+            p.content.toLowerCase().includes(q) ||
+            (p.creator?.display_name || '').toLowerCase().includes(q);
+        return matchesFilter && matchesSearch;
+    });
 
     const handleLike = async (postId: string) => {
+        if (submitLockRef.current.has(postId)) return;
+        submitLockRef.current.add(postId);
+
+        // Optimistic update
+        setPosts(prev => prev.map(p => {
+            if (p.id !== postId) return p;
+            const liked = !p.is_liked;
+            return { ...p, is_liked: liked, likes_count: liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1) };
+        }));
+
         const res = await fetch('/api/posts/interact', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -39,19 +103,31 @@ export default function FeedPage() {
         if (res.ok) {
             const data = await res.json();
             setPosts(prev => prev.map(p => {
-                if (p.id === postId) {
-                    return {
-                        ...p,
-                        is_liked: data.liked,
-                        likes_count: data.liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1),
-                    };
-                }
-                return p;
+                if (p.id !== postId) return p;
+                return { ...p, is_liked: data.liked, likes_count: data.liked ? (p.likes_count || 0) : Math.max(0, (p.likes_count || 0)) };
             }));
-            if (data.pointsEarned) {
-                setToast({ message: `+${data.pointsEarned} points for liking!`, type: 'success' });
-            }
+            if (data.pointsEarned) setToast({ message: `+${data.pointsEarned} points earned!`, type: 'success' });
+        } else {
+            // Revert
+            setPosts(prev => prev.map(p => {
+                if (p.id !== postId) return p;
+                const liked = p.is_liked;
+                return { ...p, is_liked: !liked, likes_count: !liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1) };
+            }));
         }
+        submitLockRef.current.delete(postId);
+    };
+
+    // Double-tap to like
+    const handleTap = (postId: string, e: React.MouseEvent) => {
+        const now = Date.now();
+        const last = lastTapRef.current[postId] || 0;
+        if (now - last < 350) {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setHeartBurst({ id: postId, x: e.clientX - rect.left, y: e.clientY - rect.top });
+            if (!posts.find(p => p.id === postId)?.is_liked) handleLike(postId);
+        }
+        lastTapRef.current[postId] = now;
     };
 
     const handleUnlock = async (postId: string) => {
@@ -61,10 +137,9 @@ export default function FeedPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ postId }),
         });
-
         const data = await res.json();
         if (res.ok) {
-            setToast({ message: `Content unlocked! ${data.tokensSpent ? `-${data.tokensSpent} tokens` : ''}`, type: 'success' });
+            setToast({ message: `Unlocked! ${data.tokensSpent ? `-${data.tokensSpent} tokens` : ''}`, type: 'success' });
             setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_unlocked: true } : p));
         } else {
             setToast({ message: data.error || 'Failed to unlock', type: 'error' });
@@ -73,12 +148,11 @@ export default function FeedPage() {
     };
 
     const toggleComments = async (postId: string) => {
-        const newExpanded = new Set(expandedComments);
-        if (newExpanded.has(postId)) {
-            newExpanded.delete(postId);
+        const next = new Set(expandedComments);
+        if (next.has(postId)) {
+            next.delete(postId);
         } else {
-            newExpanded.add(postId);
-            // Fetch comments if not loaded
+            next.add(postId);
             if (!comments[postId]) {
                 const res = await fetch(`/api/posts/comments?post_id=${postId}`);
                 if (res.ok) {
@@ -87,260 +161,476 @@ export default function FeedPage() {
                 }
             }
         }
-        setExpandedComments(newExpanded);
+        setExpandedComments(next);
     };
 
     const handleComment = async (postId: string) => {
         const content = newComment[postId]?.trim();
         if (!content) return;
-
         const res = await fetch('/api/posts/comments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ postId, content }),
         });
-
         if (res.ok) {
             const data = await res.json();
-            setComments(prev => ({
-                ...prev,
-                [postId]: [...(prev[postId] || []), data.comment],
-            }));
+            setComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), data.comment] }));
             setNewComment(prev => ({ ...prev, [postId]: '' }));
-            setPosts(prev => prev.map(p =>
-                p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p
-            ));
-            if (data.pointsEarned) {
-                setToast({ message: `+${data.pointsEarned} points for commenting!`, type: 'success' });
-            }
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p));
+            if (data.pointsEarned) setToast({ message: `+${data.pointsEarned} pts for commenting!`, type: 'success' });
         }
     };
 
-    const isContentVisible = (post: Post) => {
-        if (post.access_type === 'public') return true;
-        return post.is_unlocked;
-    };
-
-    if (loading) return <PageLoader />;
+    const isVisible = (post: Post) => post.access_type === 'public' || !!post.is_unlocked;
 
     return (
-        <div className="space-y-8 pb-24 animate-fade-in-up max-w-2xl mx-auto">
-            <div className="mb-12 mt-4 text-center sm:text-left">
-                <h1 className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] tracking-tighter text-gray-900 mb-4 pb-2">
-                    Content Feed
-                </h1>
-                <p className="text-gray-500 text-xl md:text-2xl font-light tracking-wide max-w-sm sm:max-w-2xl mx-auto sm:mx-0">
-                    Discover and unlock exclusive creator content.
-                </p>
-            </div>
+        <>
+            <div className="ff-page">
 
-            {posts.length === 0 ? (
-                <div className="card flex flex-col items-center justify-center py-20 text-center">
-                    <Eye className="w-12 h-12 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-                    <p className="text-gray-500">Check back soon for new creator content!</p>
-                </div>
-            ) : (
-                <div className="space-y-12 pb-12">
-                    {posts.map((post, index) => (
-                        <div key={post.id}
-                            className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 ease-out border border-gray-100"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                        >
-                            {/* IF HAS IMAGE & VISIBLE: Edge-to-Edge Hero Image */}
-                            {post.image_url && isContentVisible(post) ? (
-                                <div className="relative w-full h-[400px] sm:h-[500px] bg-gray-900 overflow-hidden">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={post.image_url} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105" />
-                                    {/* Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent opacity-90 transition-opacity duration-500" />
+                {/* ── Page header ── */}
+                <div className="ff-header">
+                    <div>
+                        <h1 className="ff-h1">Feed</h1>
+                        <p className="ff-sub">Discover exclusive creator content</p>
+                    </div>
 
-                                    {/* Header (Over Image) */}
-                                    <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
-                                        <div className="flex items-center gap-3 backdrop-blur-md bg-white/10 rounded-full pr-4 p-1 border border-white/10 shadow-lg">
-                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 font-bold text-xs shrink-0 overflow-hidden">
-                                                {post.creator?.avatar_url ? (
-                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                    <img src={post.creator.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    getInitials(post.creator?.display_name || 'C')
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-white text-xs tracking-wide">{post.creator?.display_name}</span>
-                                                <span className="text-[10px] text-white/60 uppercase">{formatRelativeTime(post.created_at)}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Access badge */}
-                                        {post.access_type !== 'public' && (
-                                            <div className={`backdrop-blur-md border border-white/20 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg ${post.is_unlocked ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-white/10'}`}>
-                                                {post.is_unlocked ? (
-                                                    <><Unlock className="w-3 h-3" /> Unlocked</>
-                                                ) : post.access_type === 'token_gated' ? (
-                                                    <><Lock className="w-3 h-3" /> {post.token_cost} tokens</>
-                                                ) : (
-                                                    <><Lock className="w-3 h-3" /> Hold {post.threshold_amount}+</>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Title (Over Image) */}
-                                    <div className="absolute bottom-6 left-6 right-6 z-10">
-                                        <h3 className="text-3xl sm:text-4xl font-bold font-[family-name:var(--font-heading)] text-white mb-2 tracking-tight leading-tight drop-shadow-lg transform transition-transform duration-500 group-hover:translate-x-1">
-                                            {post.title}
-                                        </h3>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* IF NO IMAGE OR LOCKED: Standard Header */
-                                <div className="p-6 md:p-8 pb-4">
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-900 font-bold text-sm shrink-0 overflow-hidden shadow-sm">
-                                            {post.creator?.avatar_url ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={post.creator.avatar_url} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                getInitials(post.creator?.display_name || 'C')
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="font-bold text-gray-900 text-base tracking-tight">{post.creator?.display_name}</div>
-                                            <div className="text-sm text-gray-500 font-medium">@{post.creator?.username} · <span className="text-gray-400 font-normal">{formatRelativeTime(post.created_at)}</span></div>
-                                        </div>
-                                        {/* Access badge */}
-                                        {post.access_type !== 'public' && (
-                                            <div className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 ${post.is_unlocked ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
-                                                {post.is_unlocked ? (
-                                                    <><Unlock className="w-3 h-3" /> Unlocked</>
-                                                ) : post.access_type === 'token_gated' ? (
-                                                    <><Lock className="w-3 h-3" /> {post.token_cost} tokens</>
-                                                ) : (
-                                                    <><Lock className="w-3 h-3" /> Hold {post.threshold_amount}+</>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <h3 className="text-3xl font-bold font-[family-name:var(--font-heading)] text-gray-900 mb-2 tracking-tight leading-tight">
-                                        {post.title}
-                                    </h3>
+                    {/* Search + filter */}
+                    <div className="ff-toolbar">
+                        <div className="ff-search-wrap">
+                            <Search size={14} className="ff-search-icon" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Search posts..."
+                                className="ff-search"
+                            />
+                            {searchQuery && (
+                                <button className="ff-search-clear" onClick={() => setSearchQuery('')}><X size={13} /></button>
+                            )}
+                        </div>
+                        <div className="ff-filter-wrap">
+                            <button className={`ff-filter-btn${filterOpen ? ' ff-filter-btn--active' : ''}`} onClick={() => setFilterOpen(v => !v)}>
+                                <SlidersHorizontal size={14} /> Filter
+                                {filter !== 'all' && <span className="ff-filter-dot" />}
+                            </button>
+                            {filterOpen && (
+                                <div className="ff-filter-dropdown">
+                                    {(['all', 'public', 'gated'] as const).map(f => (
+                                        <button key={f} className={`ff-filter-opt${filter === f ? ' ff-filter-opt--active' : ''}`} onClick={() => { setFilter(f); setFilterOpen(false); }}>
+                                            {f === 'all' ? <><Globe size={13} /> All Posts</> : f === 'public' ? <><Globe size={13} /> Free Only</> : <><Lock size={13} /> Exclusive</>}
+                                        </button>
+                                    ))}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
 
-                            {/* Content Body */}
-                            <div className="p-6 md:p-8 pt-4">
-                                {isContentVisible(post) ? (
-                                    <div className="text-gray-600 text-lg font-light leading-relaxed mb-6 whitespace-pre-wrap">
-                                        {post.content}
+                {/* Active filter pill */}
+                {filter !== 'all' && (
+                    <div className="ff-active-filter">
+                        Showing: <strong>{filter === 'public' ? 'Free Posts' : 'Exclusive Posts'}</strong>
+                        <button onClick={() => setFilter('all')}><X size={12} /></button>
+                    </div>
+                )}
+
+                {/* Feed */}
+                <div className="ff-feed">
+                    {loading ? (
+                        <>{[1, 2, 3].map(i => <FeedSkeleton key={i} />)}</>
+                    ) : visiblePosts.length === 0 ? (
+                        <div className="ff-empty">
+                            <Sparkles size={32} className="ff-empty-icon" />
+                            <h3 className="ff-empty-h">{searchQuery ? 'No results found' : 'Nothing here yet'}</h3>
+                            <p className="ff-empty-p">{searchQuery ? 'Try a different search or filter.' : 'Check back soon — creators are cooking up content!'}</p>
+                        </div>
+                    ) : visiblePosts.map(post => {
+                        const visible = isVisible(post);
+                        const commentsOpen = expandedComments.has(post.id);
+                        const captionExpanded = expandedCaptions.has(post.id);
+                        const longCaption = post.content.length > 180;
+
+                        return (
+                            <article key={post.id} className="ff-card">
+
+                                {/* Creator header */}
+                                <div className="ff-card-header">
+                                    <div className="ff-avatar">
+                                        {post.creator?.avatar_url
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            ? <img src={post.creator.avatar_url} alt="" className="ff-avatar-img" />
+                                            : <span className="ff-avatar-initials">{getInitials(post.creator?.display_name || 'C')}</span>
+                                        }
                                     </div>
-                                ) : (
-                                    <div className="relative mb-8 mt-4 rounded-2xl overflow-hidden bg-gray-50 p-6 md:p-10 border border-gray-100">
-                                        <div className="text-gray-400 text-lg font-light leading-relaxed blur-md select-none opacity-40">
-                                            {truncateText(post.content || "This is exclusive premium content that must be unlocked. Once unlocked, you will get access to all the juicy details and hidden media inside. Don't miss out on what this creator has to share behind the scenes.", 300)}
-                                        </div>
-                                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/40 backdrop-blur-[2px]">
-                                            <div className="transform transition-transform hover:scale-105 duration-300">
+                                    <div className="ff-creator-info">
+                                        <span className="ff-creator-name">{post.creator?.display_name}</span>
+                                        <span className="ff-creator-meta">@{post.creator?.username} · {formatRelativeTime(post.created_at)}</span>
+                                    </div>
+                                    {/* Access chip */}
+                                    {post.access_type === 'public' ? (
+                                        <span className="ff-chip ff-chip--public"><Globe size={10} /> Free</span>
+                                    ) : post.is_unlocked ? (
+                                        <span className="ff-chip ff-chip--unlocked"><Unlock size={10} /> Unlocked</span>
+                                    ) : (
+                                        <span className="ff-chip ff-chip--gated">
+                                            {post.access_type === 'token_gated' ? <><Coins size={10} /> {post.token_cost} tokens</> : <><Shield size={10} /> Hold {post.threshold_amount}+</>}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Media */}
+                                {post.image_url && (
+                                    <div
+                                        className="ff-media"
+                                        onClick={e => visible && handleTap(post.id, e)}
+                                        style={{ cursor: visible ? 'pointer' : 'default', position: 'relative', overflow: 'hidden' }}
+                                    >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={post.image_url} alt={post.title}
+                                            className={`ff-media-img${!visible ? ' ff-media-img--locked' : ''}`}
+                                            loading="lazy"
+                                        />
+                                        {/* Double-tap heart */}
+                                        {heartBurst?.id === post.id && (
+                                            <HeartBurst
+                                                x={heartBurst.x} y={heartBurst.y}
+                                                onDone={() => setHeartBurst(null)}
+                                            />
+                                        )}
+                                        {/* Locked overlay on image */}
+                                        {!visible && (
+                                            <div className="ff-locked-overlay">
+                                                <div className="ff-locked-pill">
+                                                    <Lock size={14} />
+                                                    {post.access_type === 'token_gated' ? `Unlock for ${post.token_cost} tokens` : `Hold ${post.threshold_amount}+ tokens`}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Body */}
+                                <div className="ff-card-body">
+
+                                    {/* Title */}
+                                    <h3 className="ff-post-title">{post.title}</h3>
+
+                                    {/* Caption / content */}
+                                    {visible ? (
+                                        <div className="ff-caption-wrap">
+                                            <p className={`ff-caption${!captionExpanded && longCaption ? ' ff-caption--clamped' : ''}`}>
+                                                {post.content}
+                                            </p>
+                                            {longCaption && (
                                                 <button
+                                                    className="ff-caption-toggle"
+                                                    onClick={() => setExpandedCaptions(prev => {
+                                                        const s = new Set(prev);
+                                                        s.has(post.id) ? s.delete(post.id) : s.add(post.id);
+                                                        return s;
+                                                    })}
+                                                >
+                                                    {captionExpanded ? 'less' : 'more'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        /* Locked content teaser */
+                                        !post.image_url && (
+                                            <div className="ff-locked-text">
+                                                <p className="ff-locked-teaser">{truncateText(post.content, 120)}</p>
+                                                <button
+                                                    className="ff-unlock-btn"
                                                     onClick={() => handleUnlock(post.id)}
                                                     disabled={unlocking === post.id}
-                                                    className="bg-gray-900 text-white border-0 shadow-2xl hover:bg-gray-800 rounded-full px-8 py-4 font-bold tracking-wide text-sm"
                                                 >
                                                     {unlocking === post.id ? (
-                                                        <span className="flex items-center gap-2">
-                                                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                            Unlocking...
-                                                        </span>
+                                                        <><span className="ff-spinner" /> Unlocking…</>
                                                     ) : post.access_type === 'token_gated' ? (
-                                                        <span className="flex items-center gap-2">
-                                                            <Coins className="w-5 h-5" />
-                                                            Unlock for {post.token_cost} Tokens
-                                                        </span>
+                                                        <><Coins size={15} /> Unlock for {post.token_cost} Tokens</>
                                                     ) : (
-                                                        <span className="flex items-center gap-2">
-                                                            <Lock className="w-5 h-5" />
-                                                            Requires {post.threshold_amount}+ Tokens
-                                                        </span>
+                                                        <><Shield size={15} /> Requires {post.threshold_amount}+ Tokens</>
                                                     )}
                                                 </button>
                                             </div>
-                                        </div>
-                                    </div>
-                                )}
+                                        )
+                                    )}
 
-                                {/* Actions / Footer */}
-                                <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-2">
-                                    <div className="flex items-center gap-6">
+                                    {/* Unlock button below image if locked and has image */}
+                                    {!visible && post.image_url && (
                                         <button
+                                            className="ff-unlock-btn ff-unlock-btn--below"
+                                            onClick={() => handleUnlock(post.id)}
+                                            disabled={unlocking === post.id}
+                                        >
+                                            {unlocking === post.id ? (
+                                                <><span className="ff-spinner" /> Unlocking…</>
+                                            ) : post.access_type === 'token_gated' ? (
+                                                <><Coins size={15} /> Unlock for {post.token_cost} Tokens</>
+                                            ) : (
+                                                <><Shield size={15} /> Requires {post.threshold_amount}+ Tokens</>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Action bar */}
+                                    <div className="ff-actions">
+                                        <button
+                                            className={`ff-action-btn${post.is_liked ? ' ff-action-btn--liked' : ''}`}
                                             onClick={() => handleLike(post.id)}
-                                            className={`group/like flex items-center gap-2 text-sm font-bold tracking-wide transition-all ${post.is_liked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-                                                }`}
+                                            aria-label="Like"
                                         >
-                                            <div className={`p-2 rounded-full transition-colors ${post.is_liked ? 'bg-red-50' : 'bg-gray-50 group-hover/like:bg-red-50'}`}>
-                                                <Heart className={`w-5 h-5 transition-transform group-hover/like:scale-110 ${post.is_liked ? 'fill-current' : ''}`} />
-                                            </div>
-                                            {post.likes_count || 0}
+                                            <Heart size={18} className={post.is_liked ? 'ff-heart-filled' : ''} />
+                                            <span>{post.likes_count || 0}</span>
                                         </button>
                                         <button
+                                            className={`ff-action-btn${commentsOpen ? ' ff-action-btn--active' : ''}`}
                                             onClick={() => toggleComments(post.id)}
-                                            className="group/comment flex items-center gap-2 text-sm font-bold tracking-wide text-gray-400 hover:text-gray-900 transition-all"
+                                            aria-label="Comments"
                                         >
-                                            <div className="p-2 rounded-full bg-gray-50 group-hover/comment:bg-gray-100 transition-colors">
-                                                <MessageCircle className="w-5 h-5 transition-transform group-hover/comment:scale-110" />
-                                            </div>
-                                            {post.comments_count || 0}
+                                            <MessageCircle size={18} />
+                                            <span>{post.comments_count || 0}</span>
                                         </button>
                                     </div>
-                                </div>
 
-                                {/* Comments Section */}
-                                {expandedComments.has(post.id) && (
-                                    <div className="mt-6 pt-6 border-t border-gray-100 bg-gray-50/50 -mx-6 md:-mx-8 px-6 md:px-8 pb-6 md:pb-8">
-                                        {/* New comment input */}
-                                        <div className="flex relative items-center mb-8">
-                                            <input
-                                                type="text"
-                                                value={newComment[post.id] || ''}
-                                                onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                                placeholder="Write a comment..."
-                                                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-full focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 block px-6 py-4 pr-16 shadow-sm font-medium transition-all"
-                                                onKeyDown={(e) => e.key === 'Enter' && handleComment(post.id)}
-                                            />
-                                            <button
-                                                onClick={() => handleComment(post.id)}
-                                                disabled={!newComment[post.id]?.trim()}
-                                                className="absolute right-2 p-2.5 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white rounded-full transition-colors"
-                                            >
-                                                <Send className="w-4 h-4 ml-0.5" />
-                                            </button>
-                                        </div>
+                                    {/* Comments */}
+                                    {commentsOpen && (
+                                        <div className="ff-comments">
+                                            {/* Input */}
+                                            <div className="ff-comment-input-row">
+                                                <input
+                                                    type="text"
+                                                    value={newComment[post.id] || ''}
+                                                    onChange={e => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                                    onKeyDown={e => e.key === 'Enter' && handleComment(post.id)}
+                                                    placeholder="Add a comment…"
+                                                    className="ff-comment-input"
+                                                />
+                                                <button
+                                                    className="ff-comment-send"
+                                                    onClick={() => handleComment(post.id)}
+                                                    disabled={!newComment[post.id]?.trim()}
+                                                >
+                                                    <Send size={14} />
+                                                </button>
+                                            </div>
 
-                                        {/* Comments list */}
-                                        <div className="space-y-6">
-                                            {comments[post.id]?.map((comment) => (
-                                                <div key={comment.id} className="flex gap-4">
-                                                    <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-sm font-bold text-gray-600 shrink-0 shadow-sm">
-                                                        {getInitials(comment.profile?.display_name || 'U')}
-                                                    </div>
-                                                    <div className="flex-1 bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100">
-                                                        <div className="flex items-baseline gap-2 mb-1">
-                                                            <span className="text-sm font-bold text-gray-900 tracking-tight">{comment.profile?.display_name}</span>
-                                                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{formatRelativeTime(comment.created_at)}</span>
+                                            {/* List */}
+                                            <div className="ff-comment-list">
+                                                {!comments[post.id] ? (
+                                                    <p className="ff-comment-loading">Loading…</p>
+                                                ) : comments[post.id].length === 0 ? (
+                                                    <p className="ff-comment-empty">Be the first to comment ✨</p>
+                                                ) : comments[post.id].map(c => (
+                                                    <div key={c.id} className="ff-comment">
+                                                        <div className="ff-comment-avatar">
+                                                            {getInitials(c.profile?.display_name || 'U')}
                                                         </div>
-                                                        <p className="text-sm text-gray-600 font-light leading-relaxed">{comment.content}</p>
+                                                        <div className="ff-comment-bubble">
+                                                            <div className="ff-comment-meta">
+                                                                <span className="ff-comment-name">{c.profile?.display_name}</span>
+                                                                <span className="ff-comment-time">{formatRelativeTime(c.created_at)}</span>
+                                                            </div>
+                                                            <p className="ff-comment-text">{c.content}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                                    )}
+                                </div>
+                            </article>
+                        );
+                    })}
                 </div>
-            )}
+            </div>
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-        </div>
+
+            {/* ── Scoped styles ── */}
+            <style>{`
+                /* Page wrapper */
+                .ff-page { max-width: 680px; margin: 0 auto; padding-bottom: 80px; }
+
+                /* Header */
+                .ff-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+                .ff-h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -0.03em; color: var(--dash-text-primary); margin: 0; line-height: 1; }
+                .ff-sub { font-size: 14px; color: var(--dash-text-muted); margin: 6px 0 0; font-weight: 500; }
+
+                /* Toolbar */
+                .ff-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+                .ff-search-wrap { position: relative; display: flex; align-items: center; }
+                .ff-search-icon { position: absolute; left: 11px; color: var(--dash-text-muted); pointer-events: none; }
+                .ff-search { padding: 8px 32px 8px 32px; border-radius: 10px; border: 1.5px solid var(--dash-border); background: var(--dash-card); color: var(--dash-text-primary); font-size: 13px; font-weight: 500; outline: none; width: 200px; transition: border-color 0.15s, width 0.2s; }
+                .ff-search:focus { border-color: var(--dash-text-primary); width: 240px; }
+                .ff-search-clear { position: absolute; right: 8px; background: none; border: none; color: var(--dash-text-muted); cursor: pointer; padding: 2px; display: flex; }
+
+                .ff-filter-wrap { position: relative; }
+                .ff-filter-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1.5px solid var(--dash-border); background: var(--dash-card); color: var(--dash-text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; position: relative; }
+                .ff-filter-btn--active, .ff-filter-btn:hover { border-color: var(--dash-text-primary); color: var(--dash-text-primary); }
+                .ff-filter-dot { width: 7px; height: 7px; border-radius: 50%; background: #6366f1; position: absolute; top: 5px; right: 5px; }
+                .ff-filter-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--dash-card); border: 1.5px solid var(--dash-border); border-radius: 12px; padding: 6px; z-index: 20; min-width: 160px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); display: flex; flex-direction: column; gap: 2px; }
+                .ff-filter-opt { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px; border: none; background: none; color: var(--dash-text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.1s; }
+                .ff-filter-opt:hover { background: var(--dash-bg); color: var(--dash-text-primary); }
+                .ff-filter-opt--active { background: var(--dash-bg); color: var(--dash-text-primary); }
+
+                /* Active filter pill */
+                .ff-active-filter { display: inline-flex; align-items: center; gap: 8px; background: var(--dash-accent-soft, rgba(99,102,241,0.08)); color: var(--dash-text-secondary); border-radius: 999px; padding: 5px 12px 5px 14px; font-size: 12px; margin-bottom: 16px; border: 1px solid var(--dash-border); }
+                .ff-active-filter button { background: none; border: none; cursor: pointer; color: inherit; display: flex; padding: 0; }
+
+                /* Feed */
+                .ff-feed { display: flex; flex-direction: column; gap: 20px; }
+
+                /* Empty */
+                .ff-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 24px; text-align: center; background: var(--dash-card); border: 1.5px dashed var(--dash-border); border-radius: 20px; }
+                .ff-empty-icon { color: var(--dash-text-secondary); }
+                .ff-empty-h { font-size: 18px; font-weight: 700; color: var(--dash-text-primary); margin: 0; }
+                .ff-empty-p { font-size: 14px; color: var(--dash-text-muted); margin: 0; max-width: 300px; }
+
+                /* ── Post card ── */
+                .ff-card {
+                    background: var(--dash-card); border: 1px solid var(--dash-border);
+                    border-radius: 20px; overflow: hidden;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+                    transition: box-shadow 0.2s ease;
+                }
+                .ff-card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.09); }
+
+                /* Creator header */
+                .ff-card-header { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; }
+                .ff-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--dash-border); display: flex; align-items: center; justify-content: center; border: 2px solid var(--dash-border); }
+                .ff-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+                .ff-avatar-initials { font-size: 14px; font-weight: 800; color: var(--dash-text-secondary); }
+                .ff-creator-info { flex: 1; min-width: 0; }
+                .ff-creator-name { display: block; font-size: 14px; font-weight: 700; color: var(--dash-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .ff-creator-meta { display: block; font-size: 12px; color: var(--dash-text-muted); font-weight: 500; margin-top: 1px; }
+
+                /* Chips */
+                .ff-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0; }
+                .ff-chip--public { background: rgba(34,197,94,0.1); color: #15803d; border: 1px solid rgba(34,197,94,0.2); }
+                .ff-chip--unlocked { background: rgba(34,197,94,0.1); color: #15803d; border: 1px solid rgba(34,197,94,0.2); }
+                .ff-chip--gated { background: rgba(99,102,241,0.08); color: #6366f1; border: 1px solid rgba(99,102,241,0.18); }
+
+                /* Media */
+                .ff-media { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #111; flex-shrink: 0; position: relative; }
+                @media (min-width: 480px) { .ff-media { aspect-ratio: 16/9; } }
+                .ff-media-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+                .ff-card:hover .ff-media-img:not(.ff-media-img--locked) { transform: scale(1.02); }
+                .ff-media-img--locked { filter: blur(16px) brightness(0.6); transform: scale(1.05); }
+
+                /* Locked overlay on image */
+                .ff-locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+                .ff-locked-pill { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); color: #fff; padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 700; border: 1px solid rgba(255,255,255,0.15); }
+
+                /* Body */
+                .ff-card-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+                .ff-post-title { font-size: 17px; font-weight: 800; color: var(--dash-text-primary); margin: 0; letter-spacing: -0.02em; line-height: 1.3; }
+
+                /* Caption */
+                .ff-caption-wrap { position: relative; }
+                .ff-caption { font-size: 14px; color: var(--dash-text-secondary); line-height: 1.65; margin: 0; white-space: pre-wrap; word-break: break-word; }
+                .ff-caption--clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+                .ff-caption-toggle { background: none; border: none; color: var(--dash-text-muted); font-size: 13px; font-weight: 700; cursor: pointer; padding: 0; margin-top: 2px; }
+                .ff-caption-toggle:hover { color: var(--dash-text-primary); }
+
+                /* Locked text teaser */
+                .ff-locked-text { background: var(--dash-bg); border-radius: 12px; padding: 14px; border: 1px solid var(--dash-border); display: flex; flex-direction: column; gap: 12px; }
+                .ff-locked-teaser { font-size: 13px; color: var(--dash-text-muted); margin: 0; filter: blur(3px); user-select: none; line-height: 1.5; }
+
+                /* Unlock button */
+                .ff-unlock-btn {
+                    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+                    padding: 12px 24px; border-radius: 12px; border: none;
+                    background: var(--dash-text-primary); color: var(--dash-bg);
+                    font-size: 14px; font-weight: 700; cursor: pointer;
+                    transition: opacity 0.15s, transform 0.15s;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+                }
+                .ff-unlock-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+                .ff-unlock-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+                .ff-unlock-btn--below { width: 100%; margin-top: 4px; }
+
+                /* Actions */
+                .ff-actions { display: flex; align-items: center; gap: 6px; padding-top: 6px; border-top: 1px solid var(--dash-border); margin-top: 4px; }
+                .ff-action-btn {
+                    display: flex; align-items: center; gap: 6px;
+                    padding: 7px 12px; border-radius: 9px; border: none;
+                    background: var(--dash-bg); color: var(--dash-text-secondary);
+                    font-size: 13px; font-weight: 700; cursor: pointer;
+                    transition: all 0.15s ease;
+                }
+                .ff-action-btn:hover { background: var(--dash-border); color: var(--dash-text-primary); }
+                .ff-action-btn--liked { color: #ef4444; background: rgba(239,68,68,0.08); }
+                .ff-action-btn--liked:hover { background: rgba(239,68,68,0.14); }
+                .ff-action-btn--active { color: var(--dash-text-primary); background: var(--dash-border); }
+                .ff-heart-filled { fill: #ef4444; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+                .ff-action-btn--liked .ff-heart-filled { transform: scale(1.25); }
+
+                /* Double-tap burst */
+                .ff-heart-burst {
+                    position: absolute; pointer-events: none; z-index: 10;
+                    animation: ff-burst 0.9s ease forwards;
+                }
+                @keyframes ff-burst {
+                    0% { transform: scale(0.2); opacity: 1; }
+                    60% { transform: scale(1.1); opacity: 0.9; }
+                    100% { transform: scale(1.4); opacity: 0; }
+                }
+
+                /* Comments */
+                .ff-comments { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dash-border); margin-top: 4px; animation: ff-expand 0.2s ease; }
+                @keyframes ff-expand { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+                .ff-comment-input-row { display: flex; gap: 8px; align-items: center; }
+                .ff-comment-input {
+                    flex: 1; padding: 9px 14px; border-radius: 999px;
+                    border: 1.5px solid var(--dash-border); background: var(--dash-bg);
+                    color: var(--dash-text-primary); font-size: 13px; font-weight: 500;
+                    outline: none; transition: border-color 0.15s;
+                }
+                .ff-comment-input:focus { border-color: var(--dash-text-primary); }
+                .ff-comment-send {
+                    width: 34px; height: 34px; border-radius: 50%; border: none;
+                    background: var(--dash-text-primary); color: var(--dash-bg);
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; flex-shrink: 0; transition: opacity 0.15s;
+                }
+                .ff-comment-send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+                .ff-comment-list { display: flex; flex-direction: column; gap: 10px; }
+                .ff-comment-loading, .ff-comment-empty { font-size: 12px; color: var(--dash-text-muted); text-align: center; margin: 0; padding: 8px; }
+                .ff-comment { display: flex; gap: 10px; align-items: flex-start; }
+                .ff-comment-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--dash-border); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: var(--dash-text-secondary); flex-shrink: 0; }
+                .ff-comment-bubble { flex: 1; background: var(--dash-bg); border-radius: 12px; border-bottom-left-radius: 4px; padding: 9px 12px; border: 1px solid var(--dash-border); }
+                .ff-comment-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+                .ff-comment-name { font-size: 12px; font-weight: 700; color: var(--dash-text-primary); }
+                .ff-comment-time { font-size: 10px; color: var(--dash-text-muted); font-weight: 500; }
+                .ff-comment-text { font-size: 13px; color: var(--dash-text-secondary); margin: 0; line-height: 1.5; }
+
+                /* Spinner */
+                .ff-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: ff-spin 0.7s linear infinite; flex-shrink: 0; }
+                @keyframes ff-spin { to { transform: rotate(360deg); } }
+
+                /* Skeleton */
+                .ff-skeleton { pointer-events: none; }
+                .ff-sk-header { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; }
+                .ff-sk-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--dash-border); flex-shrink: 0; }
+                .ff-sk-img { height: 240px; background: var(--dash-border); }
+                .ff-sk-body { padding: 16px 18px; }
+                .ff-sk-line { background: var(--dash-border); border-radius: 6px; animation: ff-pulse 1.6s ease-in-out infinite; }
+                @keyframes ff-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+                /* Responsive */
+                @media (max-width: 640px) {
+                    .ff-header { flex-direction: column; gap: 12px; }
+                    .ff-toolbar { width: 100%; }
+                    .ff-search { width: 100%; flex: 1; }
+                    .ff-search:focus { width: 100%; }
+                    .ff-search-wrap { flex: 1; }
+                }
+            `}</style>
+        </>
     );
 }
