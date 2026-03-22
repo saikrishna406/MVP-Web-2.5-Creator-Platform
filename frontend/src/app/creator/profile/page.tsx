@@ -2,616 +2,561 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-    User, Camera, MapPin, Link2, Edit, Plus, Trash2, X,
-    FileText, Users, Coins, Crown, Shield, Award, ExternalLink,
-    Twitter, Instagram, Youtube, Globe, Package, Settings, Grid, LayoutGrid, Bookmark, Film
+    X, Edit, Plus, Trash2, Camera,
+    Globe, Grid3X3, Package, Settings, Link2,
+    Twitter, Instagram, Youtube, Coins, FileText, Crown, ChevronRight,
+    CheckCircle, AlertCircle
 } from 'lucide-react';
 import { formatTokens, getInitials } from '@/lib/utils';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Toast from '@/components/ui/Toast';
-import { Button } from '@/components/ui/button';
-import type { Profile, CreatorPackage } from '@/types';
+import type { Profile, CreatorPackage, Post } from '@/types';
 
 const CATEGORIES = [
-    'Music', 'Art', 'Gaming', 'Fitness', 'Education',
-    'Photography', 'Writing', 'Comedy', 'Cooking', 'Tech',
-    'Film', 'Podcast', 'Other',
+    'Music','Art','Gaming','Fitness','Education',
+    'Photography','Writing','Comedy','Cooking','Tech','Film','Podcast','Other',
 ];
+const SOCIAL_ICONS: Record<string, React.ReactNode> = {
+    twitter: <Twitter size={13}/>, instagram: <Instagram size={13}/>,
+    youtube: <Youtube size={13}/>, website: <Globe size={13}/>,
+};
 
 export default function CreatorProfilePage() {
-    const [profile, setProfile] = useState<Profile | null>(null);
+    const [profile, setProfile]   = useState<(Profile & { banner_url?: string; category?: string; social_links?: Record<string,string> }) | null>(null);
     const [packages, setPackages] = useState<CreatorPackage[]>([]);
-    const [stats, setStats] = useState({ post_count: 0, fan_count: 0 });
-    const [loading, setLoading] = useState(true);
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const [posts, setPosts]       = useState<Post[]>([]);
+    const [stats, setStats]       = useState({ post_count: 0, fan_count: 0 });
+    const [loading, setLoading]   = useState(true);
+    const [toast, setToast]       = useState<{message:string;type:'success'|'error'|'info'}|null>(null);
+    const [activeTab, setActiveTab] = useState<'posts'|'packages'>('posts');
 
-    // Edit Profile Modal
-    const [showEditProfile, setShowEditProfile] = useState(false);
-    const [editForm, setEditForm] = useState({
-        display_name: '',
-        bio: '',
-        avatar_url: '',
-        banner_url: '',
-        category: '',
-        social_links: {} as Record<string, string>,
-    });
-    const [savingProfile, setSavingProfile] = useState(false);
+    // Edit Profile panel
+    const [editOpen, setEditOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ display_name:'', bio:'', avatar_url:'', banner_url:'', category:'', social_links:{} as Record<string,string> });
+    const [saving, setSaving]     = useState(false);
+    const [saved, setSaved]       = useState(false);
 
-    // Package Modal
-    const [showPkgModal, setShowPkgModal] = useState(false);
-    const [editingPkg, setEditingPkg] = useState<CreatorPackage | null>(null);
-    const [pkgForm, setPkgForm] = useState({
-        name: '',
-        token_price: 50,
-        post_limit: 10,
-        description: '',
-        badge_name: '',
-    });
-    const [savingPkg, setSavingPkg] = useState(false);
+    // Package modal
+    const [pkgOpen, setPkgOpen]       = useState(false);
+    const [editingPkg, setEditingPkg] = useState<CreatorPackage|null>(null);
+    const [pkgForm, setPkgForm]       = useState({ name:'', token_price:50, post_limit:10, description:'', badge_name:'' });
+    const [savingPkg, setSavingPkg]   = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<string|null>(null);
+
+    // Post detail modal
+    const [viewPost, setViewPost] = useState<Post|null>(null);
 
     const fetchProfile = useCallback(async () => {
-        try {
-            const res = await fetch('/api/profile');
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || `Failed to fetch profile (${res.status})`);
-            }
-            const data = await res.json();
-            setProfile(data.profile);
-            setStats(data.stats ?? { post_count: 0, fan_count: 0 });
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Could not load profile';
-            setToast({ message: msg, type: 'error' });
-        }
+        const res = await fetch('/api/profile');
+        if (res.ok) { const d = await res.json(); setProfile(d.profile); setStats(d.stats ?? {post_count:0,fan_count:0}); }
     }, []);
-
     const fetchPackages = useCallback(async () => {
-        try {
-            const res = await fetch('/api/creator-packages');
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || `Failed to fetch packages (${res.status})`);
-            }
-            const data = await res.json();
-            setPackages(data.packages ?? []);
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Could not load packages';
-            setToast({ message: msg, type: 'error' });
-        }
+        const res = await fetch('/api/creator-packages');
+        if (res.ok) { const d = await res.json(); setPackages(d.packages ?? []); }
+    }, []);
+    const fetchPosts = useCallback(async () => {
+        const res = await fetch('/api/posts');
+        if (res.ok) { const d = await res.json(); setPosts(d.posts ?? []); }
     }, []);
 
     useEffect(() => {
-        setLoading(true);
-        Promise.all([fetchProfile(), fetchPackages()]).finally(() => setLoading(false));
-    }, [fetchProfile, fetchPackages]);
+        Promise.all([fetchProfile(), fetchPackages(), fetchPosts()]).finally(() => setLoading(false));
+    }, [fetchProfile, fetchPackages, fetchPosts]);
 
-    // ─── Profile Edit ───
-    const handleOpenEditProfile = () => {
+    const openEdit = () => {
         if (!profile) return;
-        setEditForm({
-            display_name: profile.display_name || '',
-            bio: profile.bio || '',
-            avatar_url: profile.avatar_url || '',
-            banner_url: profile.banner_url || '',
-            category: profile.category || '',
-            social_links: profile.social_links || {},
-        });
-        setShowEditProfile(true);
+        setEditForm({ display_name:profile.display_name||'', bio:profile.bio||'', avatar_url:profile.avatar_url||'', banner_url:profile.banner_url||'', category:profile.category||'', social_links:profile.social_links||{} });
+        setSaved(false); setEditOpen(true);
+    };
+    const saveProfile = async (e: React.FormEvent) => {
+        e.preventDefault(); setSaving(true);
+        const res = await fetch('/api/profile', { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(editForm) });
+        if (res.ok) { setSaved(true); await fetchProfile(); setTimeout(() => setEditOpen(false), 900); }
+        else { const d = await res.json(); setToast({ message: d.error||'Failed', type:'error' }); }
+        setSaving(false);
     };
 
-    const handleSaveProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSavingProfile(true);
-        try {
-            const res = await fetch('/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editForm),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to update profile');
-            setToast({ message: 'Profile updated!', type: 'success' });
-            setShowEditProfile(false);
-            fetchProfile();
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Failed to update profile';
-            setToast({ message: msg, type: 'error' });
-        } finally {
-            setSavingProfile(false);
-        }
+    const openCreatePkg = () => { setEditingPkg(null); setPkgForm({ name:'', token_price:50, post_limit:10, description:'', badge_name:'' }); setPkgOpen(true); };
+    const openEditPkg = (pkg: CreatorPackage) => { setEditingPkg(pkg); setPkgForm({ name:pkg.name, token_price:pkg.token_price, post_limit:pkg.post_limit, description:pkg.description||'', badge_name:pkg.badge_name||'' }); setPkgOpen(true); };
+    const savePkg = async (e: React.FormEvent) => {
+        e.preventDefault(); setSavingPkg(true);
+        const res = await fetch('/api/creator-packages', { method:editingPkg?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(editingPkg?{id:editingPkg.id,...pkgForm}:pkgForm) });
+        if (res.ok) { setToast({ message:`Package ${editingPkg?'updated':'created'}!`, type:'success' }); setPkgOpen(false); fetchPackages(); }
+        else { const d = await res.json(); setToast({ message:d.error||'Failed', type:'error' }); }
+        setSavingPkg(false);
     };
-
-    // ─── Package CRUD ───
-    const handleOpenCreatePkg = () => {
-        setEditingPkg(null);
-        setPkgForm({ name: '', token_price: 50, post_limit: 10, description: '', badge_name: '' });
-        setShowPkgModal(true);
-    };
-
-    const handleOpenEditPkg = (pkg: CreatorPackage) => {
-        setEditingPkg(pkg);
-        setPkgForm({
-            name: pkg.name,
-            token_price: pkg.token_price,
-            post_limit: pkg.post_limit,
-            description: pkg.description || '',
-            badge_name: pkg.badge_name || '',
-        });
-        setShowPkgModal(true);
-    };
-
-    const handleSavePkg = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSavingPkg(true);
-        try {
-            const url = '/api/creator-packages';
-            const method = editingPkg ? 'PUT' : 'POST';
-            const body = editingPkg ? { id: editingPkg.id, ...pkgForm } : pkgForm;
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to save package');
-            setToast({ message: `Package ${editingPkg ? 'updated' : 'created'}!`, type: 'success' });
-            setShowPkgModal(false);
-            fetchPackages();
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Failed to save package';
-            setToast({ message: msg, type: 'error' });
-        } finally {
-            setSavingPkg(false);
-        }
-    };
-
-    const handleDeletePkg = async (id: string) => {
-        if (!confirm('Delete this package?')) return;
-        const res = await fetch(`/api/creator-packages?id=${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            setToast({ message: 'Package deleted', type: 'success' });
-            fetchPackages();
-        } else {
-            setToast({ message: 'Failed to delete', type: 'error' });
-        }
+    const deletePkg = async (id: string) => {
+        setDeleteTarget(id);
+        const res = await fetch(`/api/creator-packages?id=${id}`, { method:'DELETE' });
+        if (res.ok) { setToast({ message:'Package deleted', type:'info' }); fetchPackages(); }
+        else setToast({ message:'Failed to delete', type:'error' });
+        setDeleteTarget(null);
     };
 
     if (loading) return <PageLoader />;
     if (!profile) return null;
 
+    const primaryLink = profile.social_links ? Object.values(profile.social_links).find(Boolean) : null;
+    const primaryKey  = profile.social_links ? Object.entries(profile.social_links).find(([,v]) => !!v)?.[0] : null;
+
     return (
-        <div className="animate-fade-in max-w-[935px] mx-auto pb-12 mt-8">
+        <>
+        <div className="ig-page">
 
-            {/* ═══════════════ PROFILE HEADER ═══════════════ */}
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10 px-4 sm:px-0 mt-6 mb-10">
+            {/* ════════════ HEADER — Instagram style ════════════ */}
+            <div className="ig-header">
 
-                {/* Avatar */}
-                <div className="flex justify-center sm:justify-start shrink-0">
-                    <div className="w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700">
-                        {profile.avatar_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={profile.avatar_url} alt={profile.display_name} className="object-cover w-full h-full" />
-                        ) : (
-                            <span className="text-4xl sm:text-5xl font-bold text-gray-400">{getInitials(profile.display_name)}</span>
-                        )}
+                {/* Left: Avatar */}
+                <div className="ig-avatar-col">
+                    <div className="ig-avatar-ring">
+                        <div className="ig-avatar">
+                            {profile.avatar_url
+                                // eslint-disable-next-line @next/next/no-img-element
+                                ? <img src={profile.avatar_url} alt={profile.display_name} className="ig-avatar-img"/>
+                                : <span className="ig-avatar-init">{getInitials(profile.display_name)}</span>
+                            }
+                        </div>
                     </div>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 flex flex-col gap-3">
+                {/* Right: Info */}
+                <div className="ig-info-col">
 
-                    {/* Row 1: Username */}
-                    <h1 className="text-xl font-light tracking-tight leading-none" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>
-                        {profile.username || profile.display_name}
-                    </h1>
-
-                    {/* Row 2: Display name + category */}
-                    <div className="font-semibold text-[14px] flex items-center gap-2 flex-wrap" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>
-                        {profile.display_name}
-                        {profile.category && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium border" style={{ background: 'var(--dash-card, #f1f5f9)', color: 'var(--dash-text-secondary, #64748B)', borderColor: 'var(--dash-border, #E2E8F0)' }}>
-                                {profile.category}
-                            </span>
-                        )}
+                    {/* Row 1: username + buttons */}
+                    <div className="ig-row-1">
+                        <h1 className="ig-username">{profile.username || profile.display_name}</h1>
+                        <button className="ig-btn-outline" onClick={openEdit}><Edit size={14}/> Edit profile</button>
+                        <button className="ig-btn-icon" title="Settings" onClick={openEdit}><Settings size={18}/></button>
                     </div>
 
-                    {/* Row 3: Stats */}
-                    <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--dash-text-secondary, #64748B)' }}>
-                        <span><span className="font-semibold" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>{stats.post_count}</span> posts</span>
-                        <span><span className="font-semibold" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>{stats.fan_count}</span> followers</span>
-                        <span><span className="font-semibold" style={{ color: 'var(--dash-text-primary, #0F172A)' }}>{packages.length}</span> following</span>
+                    {/* Row 2: stats */}
+                    <div className="ig-row-2">
+                        <span className="ig-stat"><strong>{stats.post_count}</strong> posts</span>
+                        <span className="ig-stat"><strong>{stats.fan_count}</strong> fans</span>
+                        <span className="ig-stat"><strong>{packages.length}</strong> packages</span>
                     </div>
 
-                    {/* Row 4: Bio */}
-                    {profile.bio && (
-                        <div className="whitespace-pre-wrap text-[14px] leading-snug" style={{ color: 'var(--dash-text-secondary, #64748B)' }}>
-                            {profile.bio}
-                        </div>
+                    {/* Row 3: display name */}
+                    {profile.display_name && <div className="ig-display-name">{profile.display_name}</div>}
+
+                    {/* Row 4: category badge */}
+                    {profile.category && <div className="ig-category">{profile.category}</div>}
+
+                    {/* Row 5: bio */}
+                    {profile.bio && <p className="ig-bio">{profile.bio}</p>}
+
+                    {/* Row 6: link */}
+                    {primaryLink && (
+                        <a href={primaryLink} target="_blank" rel="noopener noreferrer" className="ig-link">
+                            {SOCIAL_ICONS[primaryKey!] ?? <Link2 size={13}/>}
+                            {primaryLink.replace(/^https?:\/\/(www\.)?/,'')}
+                        </a>
                     )}
-
-                    {/* Row 5: Social links */}
-                    {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-                        <div className="flex flex-col gap-0.5">
-                            {Object.entries(profile.social_links).map(([key, url]) => {
-                                if (!url) return null;
-                                return (
-                                    <a key={key} href={url} target="_blank" rel="noopener noreferrer"
-                                        className="text-[#00376b] dark:text-[#8ac7ff] font-semibold flex items-center gap-1.5 hover:underline text-[13px] truncate max-w-xs">
-                                        <Link2 className="w-3 h-3 shrink-0" />
-                                        <span className="truncate">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                                    </a>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* Row 6: Wide action buttons at the bottom — matching Instagram layout */}
-                    <div className="flex items-center gap-3 mt-1">
-                        <Button
-                            variant="dark"
-                            size="md"
-                            onClick={handleOpenEditProfile}
-                            className="flex-1 rounded-lg justify-center py-2"
-                        >
-                            Edit profile
-                        </Button>
-                        <Button
-                            variant="dark"
-                            size="md"
-                            className="flex-1 rounded-lg justify-center py-2"
-                        >
-                            View archive
-                        </Button>
-                        <button className="shrink-0 p-[7px] hover:bg-gray-100 dark:hover:bg-[#363636] rounded-lg text-gray-600 dark:text-gray-300 transition-colors">
-                            <Settings className="w-5 h-5" />
-                        </button>
-                    </div>
-
                 </div>
             </div>
 
-            {/* ═══════════════ HIGHLIGHTS (Packages as Stories) ═══════════════ */}
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 pb-2">
-                <div className="flex items-start gap-6 overflow-x-auto hide-scrollbar px-4 sm:px-0 pb-2">
-                    {packages.map((pkg, i) => (
-                        <div key={pkg.id} className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group" onClick={() => handleOpenEditPkg(pkg)}>
-                            <div className="w-16 h-16 sm:w-[77px] sm:h-[77px] rounded-full p-[2px] bg-gradient-to-tr from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 group-hover:from-gray-400 dark:group-hover:from-gray-500 transition-all">
-                                <div className="w-full h-full rounded-full bg-white dark:bg-[#1a1a2e] flex items-center justify-center p-[2px]">
-                                    <div className="w-full h-full rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                                        <Package className="w-6 h-6 sm:w-7 sm:h-7 text-gray-500 dark:text-gray-400 stroke-[1.5]" />
-                                    </div>
+            {/* Mobile stats (shown below avatar on small screens) */}
+            <div className="ig-mobile-stats">
+                <span className="ig-stat"><strong>{stats.post_count}</strong> posts</span>
+                <span className="ig-stat"><strong>{stats.fan_count}</strong> fans</span>
+                <span className="ig-stat"><strong>{packages.length}</strong> packages</span>
+            </div>
+
+            {/* ════════════ HIGHLIGHTS (packages as story circles) ════════════ */}
+            <div className="ig-highlights">
+                {packages.map(pkg => (
+                    <button key={pkg.id} className="ig-highlight" onClick={() => openEditPkg(pkg)}>
+                        <div className="ig-hl-ring">
+                            <div className="ig-hl-inner"><Crown size={22} className="ig-hl-icon"/></div>
+                        </div>
+                        <span className="ig-hl-label">{pkg.badge_name || pkg.name}</span>
+                    </button>
+                ))}
+                <button className="ig-highlight" onClick={openCreatePkg}>
+                    <div className="ig-hl-ring ig-hl-ring--new">
+                        <div className="ig-hl-inner"><Plus size={22} className="ig-hl-icon"/></div>
+                    </div>
+                    <span className="ig-hl-label">New</span>
+                </button>
+            </div>
+
+            {/* ════════════ TABS ════════════ */}
+            <div className="ig-tabs">
+                <button className={`ig-tab${activeTab==='posts'?' ig-tab--active':''}`} onClick={() => setActiveTab('posts')}>
+                    <Grid3X3 size={16}/> <span>Posts</span>
+                </button>
+                <button className={`ig-tab${activeTab==='packages'?' ig-tab--active':''}`} onClick={() => setActiveTab('packages')}>
+                    <Package size={16}/> <span>Packages</span>
+                </button>
+            </div>
+
+            {/* ════════════ POST GRID ════════════ */}
+            {activeTab === 'posts' && (
+                posts.length === 0 ? (
+                    <div className="ig-empty">
+                        <div className="ig-empty-circle"><FileText size={32}/></div>
+                        <h3 className="ig-empty-h">Share your first post</h3>
+                        <p className="ig-empty-p">When you share posts, they'll appear here.</p>
+                        <a href="/creator/posts" className="ig-btn-outline">Create Post <ChevronRight size={13}/></a>
+                    </div>
+                ) : (
+                    <div className="ig-grid">
+                        {posts.map(post => (
+                            <div key={post.id} className="ig-cell" onClick={() => setViewPost(post)}>
+                                {post.image_url
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    ? <img src={post.image_url} alt={post.title} className="ig-cell-img" loading="lazy"/>
+                                    : <div className="ig-cell-noimg"><FileText size={24}/></div>
+                                }
+                                <div className="ig-cell-overlay">
+                                    <span className="ig-cell-stat">♥ {post.likes_count||0}</span>
+                                    <span className="ig-cell-stat">💬 {post.comments_count||0}</span>
                                 </div>
                             </div>
-                            <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300 truncate w-16 sm:w-[74px] text-center">
-                                {pkg.badge_name || pkg.name}
-                            </span>
+                        ))}
+                    </div>
+                )
+            )}
+
+            {/* ════════════ PACKAGES GRID ════════════ */}
+            {activeTab === 'packages' && (
+                <div className="ig-pkg-grid">
+                    {packages.map(pkg => (
+                        <div key={pkg.id} className="ig-pkg-card">
+                            <div className="ig-pkg-top">
+                                <Crown size={24} className="ig-pkg-crown"/>
+                                {pkg.badge_name && <span className="ig-pkg-badge">{pkg.badge_name}</span>}
+                            </div>
+                            <div className="ig-pkg-body">
+                                <h3 className="ig-pkg-name">{pkg.name}</h3>
+                                {pkg.description && <p className="ig-pkg-desc">{pkg.description}</p>}
+                                <div className="ig-pkg-meta">
+                                    <span><Coins size={12}/> {formatTokens(pkg.token_price)} tokens</span>
+                                    <span><FileText size={12}/> {pkg.post_limit} posts</span>
+                                </div>
+                            </div>
+                            <div className="ig-pkg-footer">
+                                <button className="ig-pkg-btn" onClick={() => openEditPkg(pkg)}><Edit size={13}/> Edit</button>
+                                <button className="ig-pkg-btn ig-pkg-btn--del" onClick={() => deletePkg(pkg.id)} disabled={deleteTarget===pkg.id}>
+                                    {deleteTarget===pkg.id ? <span className="ig-spin"/> : <Trash2 size={13}/>}
+                                </button>
+                            </div>
                         </div>
                     ))}
-                    {packages.length < 3 && (
-                        <div className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group" onClick={handleOpenCreatePkg}>
-                            <div className="w-16 h-16 sm:w-[77px] sm:h-[77px] rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 group-hover:border-gray-400 dark:group-hover:border-gray-500 flex items-center justify-center transition-colors">
-                                <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-gray-400 dark:text-gray-500" />
-                            </div>
-                            <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">New</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* ═══════════════ TABS ═══════════════ */}
-            <div className="border-t border-gray-200 dark:border-gray-700 flex justify-center gap-12 text-[12px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-                <button className="flex items-center gap-1.5 h-[48px] border-t-2 border-gray-800 dark:border-white text-gray-900 dark:text-white -mt-[2px] px-2">
-                    <Grid className="w-3 h-3" /> PACKAGES
-                </button>
-                <button className="flex items-center gap-1.5 h-[48px] hover:text-gray-700 dark:hover:text-gray-200 transition-colors px-2">
-                    <Film className="w-3 h-3" /> REELS
-                </button>
-                <button className="hidden sm:flex items-center gap-1.5 h-[48px] hover:text-gray-700 dark:hover:text-gray-200 transition-colors px-2">
-                    <Bookmark className="w-3 h-3" /> SAVED
-                </button>
-                <button className="hidden sm:flex items-center gap-1.5 h-[48px] hover:text-gray-700 dark:hover:text-gray-200 transition-colors px-2">
-                    <User className="w-3 h-3" /> TAGGED
-                </button>
-            </div>
-
-            {/* Packages Grid */}
-            <div className="grid grid-cols-3 gap-1 md:gap-4 mt-1">
-                {packages.map((pkg, i) => (
-                    <div key={pkg.id} className="group relative aspect-square bg-gray-100 dark:bg-gray-800/50 overflow-hidden cursor-pointer" onClick={() => handleOpenEditPkg(pkg)}>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-2 md:p-6 text-center">
-                            <Package className="w-8 h-8 md:w-12 md:h-12 text-gray-300 dark:text-gray-600 mb-1 md:mb-3" />
-                            <h3 className="text-xs md:text-lg font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{pkg.name}</h3>
-                            <div className="hidden md:flex text-gray-500 dark:text-gray-400 font-semibold mt-1 items-center gap-1">
-                                {formatTokens(pkg.token_price)} tokens
-                            </div>
-                        </div>
-                        
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 md:gap-4 text-white font-bold">
-                            <div className="flex items-center gap-1 md:gap-2">
-                                <FileText className="w-4 h-4 md:w-6 md:h-6 fill-white text-white" />
-                                <span className="text-sm md:text-lg">{pkg.post_limit} Posts</span>
-                            </div>
-                            <div className="flex gap-2 md:gap-4 mt-1 md:mt-2">
-                                <button onClick={(e) => { e.stopPropagation(); handleOpenEditPkg(pkg); }} className="p-1.5 md:p-2.5 bg-white/20 rounded-full hover:bg-white/40 transition-colors backdrop-blur-sm">
-                                    <Edit className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                                </button>
-                                <button onClick={(e) => { e.stopPropagation(); handleDeletePkg(pkg.id); }} className="p-1.5 md:p-2.5 bg-red-500/80 rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm">
-                                    <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-
-            {/* ═══════════════ EDIT PROFILE MODAL ═══════════════ */}
-            {showEditProfile && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl ring-1 ring-gray-900/5">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Edit Profile</h2>
-                            <button onClick={() => setShowEditProfile(false)} className="text-gray-400 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSaveProfile} className="space-y-6">
-                            {/* Images Row */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Profile Image URL</label>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-                                            {editForm.avatar_url ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={editForm.avatar_url} alt="Avatar" className="object-cover w-full h-full" />
-                                            ) : (
-                                                <Camera className="w-5 h-5 text-gray-400" />
-                                            )}
-                                        </div>
-                                        <input
-                                            type="url"
-                                            value={editForm.avatar_url}
-                                            onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })}
-                                            placeholder="https://..."
-                                            className="input flex-1"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Banner Image URL</label>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-                                            {editForm.banner_url ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={editForm.banner_url} alt="Banner" className="object-cover w-full h-full" />
-                                            ) : (
-                                                <Camera className="w-5 h-5 text-gray-400" />
-                                            )}
-                                        </div>
-                                        <input
-                                            type="url"
-                                            value={editForm.banner_url}
-                                            onChange={(e) => setEditForm({ ...editForm, banner_url: e.target.value })}
-                                            placeholder="https://..."
-                                            className="input flex-1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Name + Category */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Display Name</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.display_name}
-                                        onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                                        className="input"
-                                        maxLength={100}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Category</label>
-                                    <select
-                                        value={editForm.category}
-                                        onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                                        className="input"
-                                    >
-                                        <option value="">Select category...</option>
-                                        {CATEGORIES.map(c => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Bio */}
-                            <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-900">
-                                    Bio <span className="text-gray-400 font-normal">({editForm.bio.length}/250)</span>
-                                </label>
-                                <textarea
-                                    value={editForm.bio}
-                                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value.slice(0, 250) })}
-                                    placeholder="Tell fans about yourself..."
-                                    className="textarea min-h-[100px]"
-                                    maxLength={250}
-                                />
-                            </div>
-
-                            {/* Social Links */}
-                            <div>
-                                <label className="block text-sm font-semibold mb-3 text-gray-900">Social Links <span className="text-gray-400 font-normal">(optional)</span></label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {['twitter', 'instagram', 'youtube', 'website'].map(key => (
-                                        <div key={key} className="flex items-center gap-2">
-                                            <span className="text-xs font-semibold text-gray-500 uppercase w-20 shrink-0">{key}</span>
-                                            <input
-                                                type="url"
-                                                value={editForm.social_links[key] || ''}
-                                                onChange={(e) => setEditForm({
-                                                    ...editForm,
-                                                    social_links: { ...editForm.social_links, [key]: e.target.value }
-                                                })}
-                                                placeholder={`https://${key}.com/...`}
-                                                className="input flex-1 text-sm"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Profile Preview */}
-                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Preview</p>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-xl bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-600 overflow-hidden shrink-0">
-                                        {editForm.avatar_url ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={editForm.avatar_url} alt="" className="object-cover w-full h-full" />
-                                        ) : (
-                                            getInitials(editForm.display_name || 'C')
-                                        )}
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-gray-900 tracking-tight">{editForm.display_name || 'Your Name'}</div>
-                                        {editForm.category && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{editForm.category}</span>}
-                                        {editForm.bio && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{editForm.bio}</p>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4 pt-4 border-t border-gray-100">
-                                <button type="button" onClick={() => setShowEditProfile(false)} className="btn-secondary w-full">Cancel</button>
-                                <button type="submit" disabled={savingProfile} className="btn-primary w-full">
-                                    {savingProfile ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Saving...
-                                        </span>
-                                    ) : 'Save Changes'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                    <button className="ig-pkg-card ig-pkg-card--new" onClick={openCreatePkg}>
+                        <Plus size={28} style={{color:'var(--dash-text-muted)'}}/>
+                        <span style={{fontSize:13,fontWeight:700,color:'var(--dash-text-muted)'}}>New Package</span>
+                    </button>
                 </div>
             )}
-
-            {/* ═══════════════ PACKAGE MODAL ═══════════════ */}
-            {showPkgModal && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="card w-full max-w-lg shadow-xl ring-1 ring-gray-900/5">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-xl font-bold text-gray-900 tracking-tight">{editingPkg ? 'Edit Package' : 'Create Package'}</h2>
-                            <button onClick={() => setShowPkgModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSavePkg} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-900">Package Name</label>
-                                <input
-                                    type="text"
-                                    value={pkgForm.name}
-                                    onChange={(e) => setPkgForm({ ...pkgForm, name: e.target.value })}
-                                    placeholder="e.g., Basic Supporter, VIP Fan..."
-                                    className="input"
-                                    required
-                                    maxLength={100}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Token Price</label>
-                                    <input
-                                        type="number"
-                                        value={pkgForm.token_price}
-                                        onChange={(e) => setPkgForm({ ...pkgForm, token_price: Number(e.target.value) })}
-                                        min={1}
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-gray-900">Post Limit</label>
-                                    <input
-                                        type="number"
-                                        value={pkgForm.post_limit}
-                                        onChange={(e) => setPkgForm({ ...pkgForm, post_limit: Number(e.target.value) })}
-                                        min={1}
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-900">Benefits Description</label>
-                                <textarea
-                                    value={pkgForm.description}
-                                    onChange={(e) => setPkgForm({ ...pkgForm, description: e.target.value })}
-                                    placeholder="Describe what fans get with this package..."
-                                    className="textarea min-h-[100px]"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-900">
-                                    Badge Name <span className="text-gray-400 font-normal">(optional)</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={pkgForm.badge_name}
-                                    onChange={(e) => setPkgForm({ ...pkgForm, badge_name: e.target.value })}
-                                    placeholder="e.g., Supporter, VIP, Legend..."
-                                    className="input"
-                                    maxLength={50}
-                                />
-                            </div>
-
-                            {/* Package Preview */}
-                            <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Preview</p>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <div className="font-bold text-gray-900 tracking-tight">{pkgForm.name || 'Package Name'}</div>
-                                        <div className="text-sm text-gray-500 mt-1">Access to {pkgForm.post_limit} premium posts</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-xl font-bold text-gray-900 tracking-tight">{formatTokens(pkgForm.token_price)}</div>
-                                        <div className="text-xs text-gray-500">tokens</div>
-                                    </div>
-                                </div>
-                                {pkgForm.description && (
-                                    <p className="text-sm text-gray-500 mt-3 pt-3 border-t border-gray-200 line-clamp-2">{pkgForm.description}</p>
-                                )}
-                            </div>
-
-                            <div className="flex gap-4 pt-4 border-t border-gray-100">
-                                <button type="button" onClick={() => setShowPkgModal(false)} className="btn-secondary w-full">Cancel</button>
-                                <button type="submit" disabled={savingPkg} className="btn-primary w-full">
-                                    {savingPkg ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            {editingPkg ? 'Saving...' : 'Creating...'}
-                                        </span>
-                                    ) : (editingPkg ? 'Save Changes' : 'Create Package')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
+
+        {/* ════════════ POST DETAIL MODAL ════════════ */}
+        {viewPost && (
+            <div className="ig-modal-overlay" onClick={() => setViewPost(null)}>
+                <div className="ig-post-modal" onClick={e => e.stopPropagation()}>
+                    <button className="ig-modal-close" onClick={() => setViewPost(null)}><X size={20}/></button>
+                    {viewPost.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={viewPost.image_url} alt={viewPost.title} className="ig-post-modal-img"/>
+                    )}
+                    <div className="ig-post-modal-body">
+                        <div className="ig-post-modal-badge">
+                            {viewPost.access_type==='public' ? <span className="ig-badge ig-badge--pub"><Globe size={10}/> Public</span>
+                            : <span className="ig-badge ig-badge--gate">🔒 {viewPost.access_type==='token_gated'?`${viewPost.token_cost} tokens`:`${viewPost.threshold_amount}+ tokens`}</span>}
+                        </div>
+                        <h3 className="ig-post-modal-title">{viewPost.title}</h3>
+                        <p className="ig-post-modal-content">{viewPost.content}</p>
+                        <div className="ig-post-modal-stats">
+                            <span>♥ {viewPost.likes_count||0} likes</span>
+                            <span>💬 {viewPost.comments_count||0} comments</span>
+                        </div>
+                        <div className="ig-post-modal-actions">
+                            <a href="/creator/posts" className="ig-btn-outline" style={{width:'100%',justifyContent:'center'}}>
+                                <Edit size={13}/> Manage in Posts
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* ════════════ EDIT PROFILE PANEL ════════════ */}
+        {editOpen && (
+            <div className="ig-modal-overlay" onClick={e => e.target===e.currentTarget && setEditOpen(false)}>
+                <aside className="ig-side-panel">
+                    <div className="ig-panel-header">
+                        <h2 className="ig-panel-title">Edit Profile</h2>
+                        <button className="ig-close-btn" onClick={() => setEditOpen(false)}><X size={18}/></button>
+                    </div>
+                    <form className="ig-panel-body" onSubmit={saveProfile}>
+
+                        {/* Avatar preview + URL */}
+                        <div className="ig-field">
+                            <label className="ig-label">Profile Picture</label>
+                            <div className="ig-avatar-edit-row">
+                                <div className="ig-avatar-edit-preview">
+                                    {editForm.avatar_url
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        ? <img src={editForm.avatar_url} alt="" className="ig-avatar-img"/>
+                                        : <Camera size={20} style={{color:'var(--dash-text-muted)'}}/>
+                                    }
+                                </div>
+                                <input type="url" value={editForm.avatar_url} onChange={e => setEditForm({...editForm,avatar_url:e.target.value})} placeholder="Paste image URL…" className="ig-input"/>
+                            </div>
+                        </div>
+
+                        {/* Name + category */}
+                        <div className="ig-row-fields">
+                            <div className="ig-field">
+                                <label className="ig-label">Name <span className="ig-req">*</span></label>
+                                <input type="text" value={editForm.display_name} onChange={e => setEditForm({...editForm,display_name:e.target.value})} className="ig-input" required maxLength={100}/>
+                            </div>
+                            <div className="ig-field">
+                                <label className="ig-label">Category</label>
+                                <select value={editForm.category} onChange={e => setEditForm({...editForm,category:e.target.value})} className="ig-input">
+                                    <option value="">Select…</option>
+                                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Bio */}
+                        <div className="ig-field">
+                            <label className="ig-label">Bio <span className="ig-char">{editForm.bio.length}/150</span></label>
+                            <textarea value={editForm.bio} onChange={e => setEditForm({...editForm,bio:e.target.value.slice(0,150)})} className="ig-textarea" rows={3} placeholder="Write a short bio…"/>
+                        </div>
+
+                        {/* Social links */}
+                        <div className="ig-field">
+                            <label className="ig-label">Links</label>
+                            {['website','twitter','instagram','youtube'].map(key => (
+                                <div key={key} className="ig-link-row">
+                                    <div className="ig-link-icon">{SOCIAL_ICONS[key]}</div>
+                                    <input type="url" value={editForm.social_links[key]||''} onChange={e => setEditForm({...editForm,social_links:{...editForm.social_links,[key]:e.target.value}})} placeholder={`https://${key==='website'?'yoursite.com':key+'.com/handle'}`} className="ig-input"/>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Banner */}
+                        <div className="ig-field">
+                            <label className="ig-label">Banner Image URL</label>
+                            <input type="url" value={editForm.banner_url} onChange={e => setEditForm({...editForm,banner_url:e.target.value})} className="ig-input" placeholder="https://…"/>
+                        </div>
+
+                    </form>
+                    <div className="ig-panel-footer">
+                        <button type="button" className="ig-btn-ghost" onClick={() => setEditOpen(false)}>Cancel</button>
+                        <button className={`ig-btn-primary${saved?' ig-btn-primary--saved':''}`} onClick={saveProfile} disabled={saving}>
+                            {saving ? <><span className="ig-spin"/> Saving…</> : saved ? <><CheckCircle size={14}/> Saved!</> : 'Save'}
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        )}
+
+        {/* ════════════ PACKAGE MODAL ════════════ */}
+        {pkgOpen && (
+            <div className="ig-modal-overlay" onClick={e => e.target===e.currentTarget && setPkgOpen(false)}>
+                <div className="ig-modal-box">
+                    <div className="ig-panel-header">
+                        <h2 className="ig-panel-title">{editingPkg?'Edit Package':'New Package'}</h2>
+                        <button className="ig-close-btn" onClick={() => setPkgOpen(false)}><X size={18}/></button>
+                    </div>
+                    <form className="ig-panel-body" onSubmit={savePkg}>
+                        <div className="ig-field">
+                            <label className="ig-label">Name <span className="ig-req">*</span></label>
+                            <input type="text" value={pkgForm.name} onChange={e => setPkgForm({...pkgForm,name:e.target.value})} className="ig-input" required maxLength={100} placeholder="e.g., VIP Fan, Supporter…"/>
+                        </div>
+                        <div className="ig-row-fields">
+                            <div className="ig-field">
+                                <label className="ig-label">Token Price</label>
+                                <input type="number" value={pkgForm.token_price} onChange={e => setPkgForm({...pkgForm,token_price:Number(e.target.value)})} min={1} className="ig-input" required/>
+                            </div>
+                            <div className="ig-field">
+                                <label className="ig-label">Post Limit</label>
+                                <input type="number" value={pkgForm.post_limit} onChange={e => setPkgForm({...pkgForm,post_limit:Number(e.target.value)})} min={1} className="ig-input" required/>
+                            </div>
+                        </div>
+                        <div className="ig-field">
+                            <label className="ig-label">Description</label>
+                            <textarea value={pkgForm.description} onChange={e => setPkgForm({...pkgForm,description:e.target.value})} className="ig-textarea" rows={3} placeholder="What do fans get?"/>
+                        </div>
+                        <div className="ig-field">
+                            <label className="ig-label">Badge Name <span className="ig-char">optional</span></label>
+                            <input type="text" value={pkgForm.badge_name} onChange={e => setPkgForm({...pkgForm,badge_name:e.target.value})} className="ig-input" placeholder="e.g., Legend…" maxLength={50}/>
+                        </div>
+                        <div className="ig-panel-footer" style={{padding:0,marginTop:8,border:'none'}}>
+                            <button type="button" className="ig-btn-ghost" onClick={() => setPkgOpen(false)}>Cancel</button>
+                            <button type="submit" className="ig-btn-primary" disabled={savingPkg}>
+                                {savingPkg ? <><span className="ig-spin"/> Saving…</> : editingPkg?'Save Changes':'Create'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
+
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
+
+        <style>{`
+            /* ── Page ── */
+            .ig-page { max-width: 935px; margin: 0 auto; padding-bottom: 80px; }
+
+            /* ── HEADER ── */
+            .ig-header { display: flex; align-items: flex-start; gap: 40px; padding: 32px 16px 24px; }
+            .ig-avatar-col { flex-shrink: 0; }
+            .ig-avatar-ring { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding: 3px; }
+            .ig-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--dash-card); border: 3px solid var(--dash-bg); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+            .ig-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .ig-avatar-init { font-size: 48px; font-weight: 800; color: var(--dash-text-secondary); }
+
+            .ig-info-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: 8px; }
+            .ig-row-1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+            .ig-username { font-size: 22px; font-weight: 300; color: var(--dash-text-primary); margin: 0; letter-spacing: -0.01em; }
+            .ig-btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border: 1.5px solid var(--dash-border); border-radius: 8px; background: var(--dash-card); color: var(--dash-text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.15s; text-decoration: none; white-space: nowrap; }
+            .ig-btn-outline:hover { background: var(--dash-border); }
+            .ig-btn-icon { width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid var(--dash-border); background: var(--dash-card); color: var(--dash-text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+            .ig-btn-icon:hover { background: var(--dash-bg); }
+
+            .ig-row-2 { display: flex; gap: 28px; }
+            .ig-stat { font-size: 16px; color: var(--dash-text-secondary); }
+            .ig-stat strong { color: var(--dash-text-primary); font-weight: 700; }
+            .ig-display-name { font-size: 14px; font-weight: 700; color: var(--dash-text-primary); }
+            .ig-category { display: inline-block; font-size: 12px; font-weight: 600; color: #3897f0; }
+            .ig-bio { font-size: 14px; color: var(--dash-text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap; }
+            .ig-link { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; color: #00376b; text-decoration: none; }
+            .dark .ig-link { color: #8ac7ff; }
+            .ig-link:hover { text-decoration: underline; }
+
+            /* Mobile stats row (hidden on desktop) */
+            .ig-mobile-stats { display: none; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--dash-border); border-bottom: 1px solid var(--dash-border); margin: 0 0 4px; }
+            .ig-mobile-stats .ig-stat { font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+
+            /* ── HIGHLIGHTS ── */
+            .ig-highlights { display: flex; gap: 20px; overflow-x: auto; padding: 16px; scrollbar-width: none; border-bottom: 1px solid var(--dash-border); }
+            .ig-highlights::-webkit-scrollbar { display: none; }
+            .ig-highlight { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; flex-shrink: 0; }
+            .ig-hl-ring { width: 77px; height: 77px; border-radius: 50%; background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding: 2.5px; }
+            .ig-hl-ring--new { background: none; border: 2px solid var(--dash-border); }
+            .ig-hl-inner { width: 100%; height: 100%; border-radius: 50%; background: var(--dash-card); border: 2.5px solid var(--dash-bg); display: flex; align-items: center; justify-content: center; }
+            .ig-hl-icon { color: var(--dash-text-secondary); }
+            .ig-hl-label { font-size: 12px; font-weight: 400; color: var(--dash-text-primary); max-width: 80px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+            /* ── TABS ── */
+            .ig-tabs { display: flex; justify-content: center; border-bottom: 1px solid var(--dash-border); }
+            .ig-tab { display: flex; align-items: center; gap: 6px; padding: 12px 28px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dash-text-muted); background: none; border: none; border-top: 2px solid transparent; cursor: pointer; transition: 0.15s; margin-top: -1px; }
+            .ig-tab:hover { color: var(--dash-text-primary); }
+            .ig-tab--active { color: var(--dash-text-primary); border-top-color: var(--dash-text-primary); }
+
+            /* ── POST GRID (Instagram 3-col) ── */
+            .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 3px; }
+            .ig-cell { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--dash-border); cursor: pointer; }
+            .ig-cell-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+            .ig-cell:hover .ig-cell-img { transform: scale(1.06); }
+            .ig-cell-noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--dash-text-muted); background: var(--dash-bg); }
+            .ig-cell-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; gap: 20px; opacity: 0; transition: opacity 0.2s; }
+            .ig-cell:hover .ig-cell-overlay { opacity: 1; }
+            .ig-cell-stat { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 5px; }
+
+            /* ── PACKAGES GRID ── */
+            .ig-pkg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; padding: 20px 0; }
+            .ig-pkg-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.2s; }
+            .ig-pkg-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+            .ig-pkg-top { padding: 18px; background: linear-gradient(135deg, rgba(188,24,136,0.08) 0%, rgba(240,148,51,0.08) 100%); border-bottom: 1px solid var(--dash-border); display: flex; align-items: center; justify-content: space-between; }
+            .ig-pkg-crown { color: #bc1888; }
+            .ig-pkg-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(188,24,136,0.1); color: #bc1888; border: 1px solid rgba(188,24,136,0.2); text-transform: uppercase; }
+            .ig-pkg-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+            .ig-pkg-name { font-size: 15px; font-weight: 700; color: var(--dash-text-primary); margin: 0; }
+            .ig-pkg-desc { font-size: 13px; color: var(--dash-text-muted); line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .ig-pkg-meta { display: flex; gap: 10px; margin-top: auto; font-size: 12px; font-weight: 600; color: var(--dash-text-secondary); }
+            .ig-pkg-meta span { display: flex; align-items: center; gap: 4px; }
+            .ig-pkg-footer { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--dash-border); }
+            .ig-pkg-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 6px; border-radius: 8px; border: 1px solid var(--dash-border); background: var(--dash-bg); color: var(--dash-text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.15s; }
+            .ig-pkg-btn:hover { background: var(--dash-border); }
+            .ig-pkg-btn--del { flex: 0 0 34px; color: #ef4444; border-color: rgba(239,68,68,0.2); }
+            .ig-pkg-btn--del:hover { background: rgba(239,68,68,0.1); }
+            .ig-pkg-btn--del:disabled { opacity: 0.5; cursor: not-allowed; }
+            .ig-pkg-card--new { align-items: center; justify-content: center; gap: 8px; min-height: 140px; border: 2px dashed var(--dash-border); background: transparent; cursor: pointer; }
+            .ig-pkg-card--new:hover { border-color: var(--dash-text-muted); }
+
+            /* ── EMPTY STATE ── */
+            .ig-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 24px; text-align: center; }
+            .ig-empty-circle { width: 64px; height: 64px; border-radius: 50%; border: 2.5px solid var(--dash-text-primary); display: flex; align-items: center; justify-content: center; color: var(--dash-text-primary); }
+            .ig-empty-h { font-size: 20px; font-weight: 600; color: var(--dash-text-primary); margin: 0; }
+            .ig-empty-p { font-size: 14px; color: var(--dash-text-muted); margin: 0; }
+
+            /* ── POST DETAIL MODAL ── */
+            .ig-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+            .ig-post-modal { background: var(--dash-card); border-radius: 4px; max-width: 900px; width: 100%; max-height: 90vh; display: flex; overflow: hidden; position: relative; }
+            .ig-modal-close { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+            .ig-post-modal-img { width: 60%; max-height: 90vh; object-fit: cover; display: block; flex-shrink: 0; }
+            .ig-post-modal-body { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+            .ig-post-modal-title { font-size: 18px; font-weight: 700; color: var(--dash-text-primary); margin: 0; }
+            .ig-post-modal-content { font-size: 14px; color: var(--dash-text-secondary); line-height: 1.6; margin: 0; flex: 1; }
+            .ig-post-modal-stats { display: flex; gap: 16px; font-size: 14px; font-weight: 600; color: var(--dash-text-secondary); padding-top: 12px; border-top: 1px solid var(--dash-border); }
+            .ig-post-modal-actions { margin-top: auto; }
+            .ig-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+            .ig-badge--pub { background: rgba(34,197,94,0.1); color: #15803d; }
+            .ig-badge--gate { background: rgba(99,102,241,0.1); color: #6366f1; }
+            .ig-post-modal-badge { margin-bottom: 4px; }
+
+            /* ── SIDE PANEL ── */
+            .ig-modal-overlay:has(.ig-side-panel) { align-items: stretch; justify-content: flex-end; padding: 0; }
+            .ig-side-panel { width: 100%; max-width: 480px; background: var(--dash-card); display: flex; flex-direction: column; animation: ig-slide 0.25s cubic-bezier(0.32,0.72,0,1); }
+            @keyframes ig-slide { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+            .ig-modal-box { background: var(--dash-card); border-radius: 16px; width: 100%; max-width: 480px; animation: ig-pop 0.2s ease; }
+            @keyframes ig-pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+            .ig-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--dash-border); }
+            .ig-panel-title { font-size: 17px; font-weight: 700; color: var(--dash-text-primary); margin: 0; }
+            .ig-close-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--dash-border); background: var(--dash-bg); color: var(--dash-text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+            .ig-close-btn:hover { background: var(--dash-border); }
+            .ig-panel-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+            .ig-panel-footer { display: flex; gap: 8px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--dash-border); flex-shrink: 0; background: var(--dash-card); }
+
+            /* ── FORM ── */
+            .ig-field { display: flex; flex-direction: column; gap: 6px; }
+            .ig-row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .ig-label { font-size: 13px; font-weight: 700; color: var(--dash-text-primary); display: flex; align-items: center; gap: 6px; }
+            .ig-req { color: #ef4444; }
+            .ig-char { font-size: 11px; font-weight: 400; color: var(--dash-text-muted); }
+            .ig-input { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1.5px solid var(--dash-border); background: var(--dash-bg); color: var(--dash-text-primary); font-size: 14px; outline: none; transition: border-color 0.15s; box-sizing: border-box; }
+            .ig-input:focus { border-color: var(--dash-text-primary); }
+            .ig-textarea { width: 100%; padding: 10px 12px; border-radius: 9px; border: 1.5px solid var(--dash-border); background: var(--dash-bg); color: var(--dash-text-primary); font-size: 14px; line-height: 1.6; resize: vertical; outline: none; font-family: inherit; box-sizing: border-box; }
+            .ig-textarea:focus { border-color: var(--dash-text-primary); }
+            .ig-avatar-edit-row { display: flex; align-items: center; gap: 10px; }
+            .ig-avatar-edit-preview { width: 56px; height: 56px; border-radius: 50%; background: var(--dash-border); border: 2px solid var(--dash-border); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+            .ig-link-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+            .ig-link-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--dash-bg); border: 1px solid var(--dash-border); display: flex; align-items: center; justify-content: center; color: var(--dash-text-muted); flex-shrink: 0; }
+
+            /* ── BUTTONS ── */
+            .ig-btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 8px; border: none; background: #0095f6; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; min-width: 100px; justify-content: center; }
+            .ig-btn-primary:hover { opacity: 0.88; }
+            .ig-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+            .ig-btn-primary--saved { background: #22c55e; }
+            .ig-btn-ghost { display: inline-flex; align-items: center; padding: 9px 16px; border-radius: 8px; border: 1.5px solid var(--dash-border); background: transparent; color: var(--dash-text-secondary); font-size: 14px; font-weight: 600; cursor: pointer; }
+            .ig-btn-ghost:hover { background: var(--dash-bg); }
+
+            /* ── SPINNER ── */
+            .ig-spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: ig-spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
+            @keyframes ig-spin { to { transform: rotate(360deg); } }
+
+            /* ── RESPONSIVE ── */
+            @media (max-width: 735px) {
+                .ig-header { gap: 24px; padding: 20px 12px 16px; }
+                .ig-avatar-ring { width: 86px; height: 86px; }
+                .ig-avatar-init { font-size: 28px; }
+                .ig-username { font-size: 18px; }
+                .ig-row-2 { display: none; }
+                .ig-mobile-stats { display: flex; }
+                .ig-row-fields { grid-template-columns: 1fr; }
+                .ig-post-modal { flex-direction: column; max-height: 95vh; border-radius: 12px; }
+                .ig-post-modal-img { width: 100%; height: 50vw; max-height: 360px; }
+                .ig-side-panel { max-width: 100%; }
+            }
+        `}</style>
+        </>
     );
 }

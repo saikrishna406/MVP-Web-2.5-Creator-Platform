@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CreatePostSchema } from '@/lib/validations';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
-// GET all posts (with unlock status for current user)
+// GET all posts (with creator profile, unlock status, and like status for current user)
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient();
@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
         const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'), 0);
 
+        // Fetch posts without the broken FK hint.
+        // posts.creator_id → auth.users(id), NOT profiles — there is no direct FK to profiles.
         let query = supabase
             .from('posts')
-            .select(`*, creator:profiles!posts_creator_id_fkey(
-        id, user_id, username, display_name, avatar_url, role
-      )`)
+            .select('*')
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
 
@@ -34,6 +34,23 @@ export async function GET(request: NextRequest) {
         }
 
         let enrichedPosts = posts || [];
+
+        // Batch-fetch creator profiles by user_id (posts.creator_id === profiles.user_id)
+        if (enrichedPosts.length > 0) {
+            const creatorIds = [...new Set(enrichedPosts.map(p => p.creator_id))];
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, user_id, username, display_name, avatar_url, role')
+                .in('user_id', creatorIds);
+
+            const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+            enrichedPosts = enrichedPosts.map(post => ({
+                ...post,
+                creator: profileMap.get(post.creator_id) ?? null,
+            }));
+        }
+
+        // Enrich with unlock/like status for the logged-in user
         if (user && enrichedPosts.length > 0) {
             const postIds = enrichedPosts.map(p => p.id);
 
