@@ -31,14 +31,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+      <div suppressHydrationWarning style={!mounted ? { visibility: "hidden" } : undefined}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }
