@@ -78,10 +78,16 @@ export const SignInFlo: React.FC = () => {
         setIsGoogleLoading(true);
         setError("");
         try {
+            // Save role to localStorage AND cookies
+            // Cookies survive the OAuth redirect chain (query params get stripped by Supabase)
+            localStorage.setItem('oauth_signup_role', role);
+            document.cookie = `oauth_role=${role}; path=/; max-age=600; SameSite=Lax`;
+            document.cookie = `oauth_flow=login; path=/; max-age=600; SameSite=Lax`;
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?role=${role}`,
+                    redirectTo: `${window.location.origin}/auth/callback`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
