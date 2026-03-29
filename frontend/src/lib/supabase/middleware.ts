@@ -51,15 +51,35 @@ export async function updateSession(request: NextRequest) {
     }
 
     // If logged in and trying to access auth pages, redirect to appropriate dashboard
+    // EXCEPTION: Allow /register?complete=true for Google OAuth profile completion
     if (user && (pathname === '/login' || pathname === '/register')) {
+        const isCompletingProfile = request.nextUrl.searchParams.get('complete') === 'true';
+        const isOAuthSignup = request.cookies.get('oauth_flow')?.value === 'signup';
+
+        // Let Google OAuth users through to complete their profile
+        if ((pathname === '/register') && (isCompletingProfile || isOAuthSignup)) {
+            return supabaseResponse;
+        }
+
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('user_id', user.id)
             .single();
 
+        // If user has no profile yet, let them register
+        if (!profile) {
+            if (pathname === '/register') {
+                return supabaseResponse;
+            }
+            const url = request.nextUrl.clone();
+            url.pathname = '/register';
+            url.searchParams.set('complete', 'true');
+            return NextResponse.redirect(url);
+        }
+
         const url = request.nextUrl.clone();
-        url.pathname = profile?.role === 'creator' ? '/creator' : '/fan';
+        url.pathname = profile.role === 'creator' ? '/creator' : '/fan';
         return NextResponse.redirect(url);
     }
 
