@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Twitter, Plus, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Check, Image as ImageIcon, Sparkles, Users } from "lucide-react";
 
 const GoogleIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@ export const MultiStepRegister = () => {
     const searchParams = useSearchParams();
     const supabase = createClient();
 
-    // Steps: 1 = Signup, 2 = Role, 3 = About You, 4 = Username, 5 = Avatar, 6 = Interests
+    // Steps: 1 = Role + Signup, 2 = About You, 3 = Username, 4 = Avatar, 5 = Interests
     const [step, setStep] = useState(1);
     
     // Form data
@@ -41,7 +41,7 @@ export const MultiStepRegister = () => {
     const [password, setPassword] = useState("");
     const [termsAccepted, setTermsAccepted] = useState(false);
     
-    const [role, setRole] = useState<'creator' | 'fan'>('creator');
+    const [role, setRole] = useState<'creator' | 'fan' | null>(null);
     
     const [bio, setBio] = useState("");
     const [username, setUsername] = useState("");
@@ -56,59 +56,66 @@ export const MultiStepRegister = () => {
 
     // Automatically generate username suggestion from email if empty
     useEffect(() => {
-        if (step === 4 && username === "" && email) {
+        if (step === 3 && username === "" && email) {
             const emailPrefix = email.split('@')[0];
             setUsername(emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g, '') + Math.floor(Math.random() * 10000));
         }
     }, [step, email, username]);
 
+    const totalSteps = 5;
+
     const handleNextStep = () => {
         setError("");
         
         if (step === 1) {
+            if (!role) {
+                setError("Please select whether you are a Creator or a Fan.");
+                return;
+            }
             if (!displayName || !email || !password) {
                 setError("Please fill in all fields.");
                 return;
             }
+            if (password.length < 6) {
+                setError("Password must be at least 6 characters.");
+                return;
+            }
             if (!termsAccepted) {
-                setError("You must accept the terms entirely.");
+                setError("You must accept the terms to continue.");
                 return;
             }
             setStep(2);
         } else if (step === 2) {
-            setStep(3);
-        } else if (step === 3) {
             if (!displayName) {
                 setError("Display name is required.");
                 return;
             }
-            setStep(4);
-        } else if (step === 4) {
+            setStep(3);
+        } else if (step === 3) {
             if (username.length < 3) {
                 setError("Username must be at least 3 characters.");
                 return;
             }
+            setStep(4);
+        } else if (step === 4) {
             setStep(5);
         } else if (step === 5) {
-            setStep(6);
-        } else if (step === 6) {
             handleFinalSubmit();
         }
     };
 
-    const handleRoleSelection = (selectedRole: 'creator' | 'fan') => {
-        setRole(selectedRole);
-        setStep(3);
-    };
-
     const handleGoogleSignIn = async () => {
+        if (!role) {
+            setError("Please select whether you are a Creator or a Fan before signing up with Google.");
+            return;
+        }
         setIsGoogleLoading(true);
         setError("");
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?complete=true`,
+                    redirectTo: `${window.location.origin}/auth/callback?complete=true&role=${role}`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -192,7 +199,8 @@ export const MultiStepRegister = () => {
                     console.error('Profile creation error:', err);
                 }
                 
-                router.push(role === 'creator' ? "/creator" : "/");
+                // Redirect to the correct dashboard based on role
+                router.push(role === 'creator' ? "/creator" : "/fan");
             } else {
                 setSuccess("Account created! Check your email to verify your account.");
             }
@@ -245,7 +253,7 @@ export const MultiStepRegister = () => {
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
         padding: "32px",
         width: "100%",
-        maxWidth: "460px",
+        maxWidth: "480px",
         position: "relative" as const,
         zIndex: 10
     };
@@ -259,6 +267,22 @@ export const MultiStepRegister = () => {
         opacity: isLoading ? 0.8 : 1, transition: "all 0.2s",
         marginTop: "16px"
     };
+
+    // Progress bar component
+    const ProgressBar = () => (
+        <div style={{ display: "flex", gap: "6px", marginBottom: "24px" }}>
+            {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                    key={i}
+                    style={{
+                        flex: 1, height: "3px", borderRadius: "2px",
+                        background: i < step ? "#FFFFFF" : "#333333",
+                        transition: "background 0.3s ease"
+                    }}
+                />
+            ))}
+        </div>
+    );
 
     if (success) {
         return (
@@ -297,6 +321,8 @@ export const MultiStepRegister = () => {
 
             <div style={cardStyle}>
                 
+                {step > 1 && <ProgressBar />}
+
                 {error && (
                     <div style={{
                         marginBottom: "16px", padding: "12px", borderRadius: "8px",
@@ -307,14 +333,91 @@ export const MultiStepRegister = () => {
                     </div>
                 )}
 
-                {/* STEP 1: SIGNUP */}
+                {/* STEP 1: ROLE SELECTION + SIGNUP */}
                 {step === 1 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                            <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF" }}>Sign up - it's free!</h1>
+                            <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "6px" }}>Join the community</h1>
+                            <p style={{ color: "#888", fontSize: "0.9rem" }}>Choose your role to get started</p>
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                        {/* Role Selection */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                            {/* Creator Option */}
+                            <button
+                                onClick={() => setRole('creator')}
+                                style={{
+                                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                    gap: "10px", padding: "20px 16px",
+                                    background: role === 'creator' ? "rgba(139, 92, 246, 0.15)" : "#111111",
+                                    border: role === 'creator' ? "2px solid #8B5CF6" : "1.5px solid #222",
+                                    borderRadius: "14px", cursor: "pointer",
+                                    transition: "all 0.25s ease",
+                                    position: "relative", overflow: "hidden"
+                                }}
+                            >
+                                {role === 'creator' && (
+                                    <div style={{
+                                        position: "absolute", top: "8px", right: "8px",
+                                        width: "20px", height: "20px", borderRadius: "50%",
+                                        background: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center"
+                                    }}>
+                                        <Check size={12} color="#FFFFFF" />
+                                    </div>
+                                )}
+                                <div style={{
+                                    width: "44px", height: "44px", borderRadius: "12px",
+                                    background: role === 'creator' ? "rgba(139, 92, 246, 0.25)" : "#1A1A1A",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    transition: "all 0.25s"
+                                }}>
+                                    <Sparkles size={22} color={role === 'creator' ? "#A78BFA" : "#666"} />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: "1rem", fontWeight: 700, color: role === 'creator' ? "#FFFFFF" : "#CCC", marginBottom: "2px" }}>Creator</div>
+                                    <div style={{ fontSize: "0.75rem", color: role === 'creator' ? "#A78BFA" : "#666", lineHeight: "1.3" }}>Monetize your content</div>
+                                </div>
+                            </button>
+
+                            {/* Fan Option */}
+                            <button
+                                onClick={() => setRole('fan')}
+                                style={{
+                                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                    gap: "10px", padding: "20px 16px",
+                                    background: role === 'fan' ? "rgba(59, 130, 246, 0.15)" : "#111111",
+                                    border: role === 'fan' ? "2px solid #3B82F6" : "1.5px solid #222",
+                                    borderRadius: "14px", cursor: "pointer",
+                                    transition: "all 0.25s ease",
+                                    position: "relative", overflow: "hidden"
+                                }}
+                            >
+                                {role === 'fan' && (
+                                    <div style={{
+                                        position: "absolute", top: "8px", right: "8px",
+                                        width: "20px", height: "20px", borderRadius: "50%",
+                                        background: "#3B82F6", display: "flex", alignItems: "center", justifyContent: "center"
+                                    }}>
+                                        <Check size={12} color="#FFFFFF" />
+                                    </div>
+                                )}
+                                <div style={{
+                                    width: "44px", height: "44px", borderRadius: "12px",
+                                    background: role === 'fan' ? "rgba(59, 130, 246, 0.25)" : "#1A1A1A",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    transition: "all 0.25s"
+                                }}>
+                                    <Users size={22} color={role === 'fan' ? "#60A5FA" : "#666"} />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: "1rem", fontWeight: 700, color: role === 'fan' ? "#FFFFFF" : "#CCC", marginBottom: "2px" }}>Fan</div>
+                                    <div style={{ fontSize: "0.75rem", color: role === 'fan' ? "#60A5FA" : "#666", lineHeight: "1.3" }}>Support creators you love</div>
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Signup Fields */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                             <input
                                 type="text"
                                 placeholder="Display name"
@@ -345,7 +448,7 @@ export const MultiStepRegister = () => {
                                 onBlur={e => e.target.style.borderColor = "transparent"}
                             />
                             
-                            <label style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginTop: "8px", cursor: "pointer" }}>
+                            <label style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginTop: "4px", cursor: "pointer" }}>
                                 <input 
                                     type="checkbox" 
                                     checked={termsAccepted}
@@ -356,18 +459,24 @@ export const MultiStepRegister = () => {
                                         accentColor: "#FFFFFF"
                                     }} 
                                 />
-                                <span style={{ fontSize: "0.85rem", color: "#A0A0A0", lineHeight: "1.4" }}>
-                                    App is a safe, friendly place. You must be 18 or over to use App. Pages that break our terms will be unpublished.<br/><br/>
-                                    <strong>I accept the <a href="#" style={{color:"#FFFFFF"}}>terms</a> and have read the <a href="#" style={{color:"#FFFFFF"}}>privacy policy</a></strong>
+                                <span style={{ fontSize: "0.8rem", color: "#A0A0A0", lineHeight: "1.4" }}>
+                                    I accept the <a href="#" style={{color:"#FFFFFF"}}>terms</a> and have read the <a href="#" style={{color:"#FFFFFF"}}>privacy policy</a>. You must be 18 or over.
                                 </span>
                             </label>
 
-                            <button onClick={handleNextStep} style={buttonStyle}>
-                                Create my account
+                            <button onClick={handleNextStep} style={{
+                                ...buttonStyle,
+                                background: role ? "#FFFFFF" : "#333",
+                                color: role ? "#000" : "#888",
+                                cursor: role ? "pointer" : "not-allowed",
+                            }}>
+                                {role === 'creator' ? "Continue as Creator →" : role === 'fan' ? "Continue as Fan →" : "Select a role to continue"}
                             </button>
                             
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "12px 0", justifyContent: "center" }}>
-                                <span style={{ fontSize: "0.85rem", color: "#A0A0A0" }}>or sign up with</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0", justifyContent: "center" }}>
+                                <div style={{ flex: 1, height: "1px", background: "#222" }} />
+                                <span style={{ fontSize: "0.8rem", color: "#666" }}>or sign up with</span>
+                                <div style={{ flex: 1, height: "1px", background: "#222" }} />
                             </div>
 
                             <button
@@ -385,7 +494,7 @@ export const MultiStepRegister = () => {
                                 <GoogleIcon /> Google
                             </button>
                             
-                            <div style={{ textAlign: "center", marginTop: "16px" }}>
+                            <div style={{ textAlign: "center", marginTop: "12px" }}>
                                 <p style={{ fontSize: "0.9rem", color: "#A0A0A0" }}>
                                     Already have an account? <Link href="/login" style={{ color: "#FFFFFF", fontWeight: 700 }}>Log in</Link>
                                 </p>
@@ -394,60 +503,16 @@ export const MultiStepRegister = () => {
                     </div>
                 )}
 
-                {/* STEP 2: ROLE SELECTION */}
+                {/* STEP 2: ABOUT YOU */}
                 {step === 2 && (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>I'm a...</h1>
-                        
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            <button
-                                onClick={() => handleRoleSelection('creator')}
-                                style={{
-                                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                                    padding: "20px", background: "#1A1A1A", border: "1px solid #222",
-                                    borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease"
-                                }}
-                            >
-                                <div style={{ textAlign: "left" }}>
-                                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>Creator</div>
-                                    <div style={{ fontSize: "0.9rem", color: "#A0A0A0" }}>I'm looking to make money from my passion</div>
-                                </div>
-                                <ArrowLeft style={{ transform: "rotate(180deg)", color: "#FFFFFF" }} size={20} />
-                            </button>
-
-                            <button
-                                onClick={() => handleRoleSelection('fan')}
-                                style={{
-                                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                                    padding: "20px", background: "#1A1A1A", border: "1px solid #222",
-                                    borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease"
-                                }}
-                            >
-                                <div style={{ textAlign: "left" }}>
-                                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>Supporter</div>
-                                    <div style={{ fontSize: "0.9rem", color: "#A0A0A0" }}>I'm here to help creators do what they love</div>
-                                </div>
-                                <ArrowLeft style={{ transform: "rotate(180deg)", color: "#FFFFFF" }} size={20} />
-                            </button>
-                            
-                            <div style={{ 
-                                background: "#1A1A1A", borderRadius: "8px", padding: "16px", 
-                                display: "flex", alignItems: "center", gap: "12px", 
-                                color: "#A0A0A0", fontSize: "0.9rem", border: "1px solid #222",
-                                marginTop: "8px"
-                            }}>
-                                <span style={{ fontSize: "1.2rem" }}>💡</span>
-                                <div style={{ width: "1px", height: "20px", background: "#333" }}></div>
-                                Everyone can give support!
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* STEP 3: ABOUT YOU */}
-                {step === 3 && (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>About you</h1>
+                        <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginBottom: "16px", padding: 0 }}>
+                            <ArrowLeft size={14} /> Back
+                        </button>
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>About you</h1>
+                        <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: "24px" }}>
+                            Tell us a bit about yourself
+                        </p>
                         
                         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                             <div>
@@ -485,9 +550,12 @@ export const MultiStepRegister = () => {
                     </div>
                 )}
 
-                {/* STEP 4: USERNAME */}
-                {step === 4 && (
+                {/* STEP 3: USERNAME */}
+                {step === 3 && (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <button onClick={() => setStep(2)} style={{ background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginBottom: "16px", padding: 0 }}>
+                            <ArrowLeft size={14} /> Back
+                        </button>
                         <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>Pick a username</h1>
                         
                         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -523,9 +591,12 @@ export const MultiStepRegister = () => {
                     </div>
                 )}
 
-                {/* STEP 5: AVATAR */}
-                {step === 5 && (
+                {/* STEP 4: AVATAR */}
+                {step === 4 && (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <button onClick={() => setStep(3)} style={{ background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginBottom: "16px", padding: 0 }}>
+                            <ArrowLeft size={14} /> Back
+                        </button>
                         <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>Choose your profile picture</h1>
                         
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" }}>
@@ -573,12 +644,15 @@ export const MultiStepRegister = () => {
                     </div>
                 )}
 
-                {/* STEP 6: INTERESTS */}
-                {step === 6 && (
+                {/* STEP 5: INTERESTS */}
+                {step === 5 && (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <button onClick={() => setStep(4)} style={{ background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginBottom: "16px", padding: 0 }}>
+                            <ArrowLeft size={14} /> Back
+                        </button>
                         <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>Choose your interests</h1>
                         <p style={{ color: "#D0D0D0", fontSize: "0.95rem", marginBottom: "24px", lineHeight: "1.4" }}>
-                            Pick the categories that best match what you do. You can update them at anytime!
+                            Pick the categories that best match {role === 'creator' ? 'what you do' : 'what you love'}. You can update them at anytime!
                         </p>
                         
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "32px", maxHeight: "300px", overflowY: "auto", paddingRight: "8px" }}>
@@ -606,15 +680,15 @@ export const MultiStepRegister = () => {
                         <button onClick={handleNextStep} style={buttonStyle}>
                             {isLoading ? (
                                 <span style={{ width: "20px", height: "20px", border: "2px solid rgba(0,0,0,0.3)", borderTopColor: "#000", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
-                            ) : "Submit and create account"}
+                            ) : `Create my ${role} account`}
                         </button>
                     </div>
                 )}
             </div>
 
-            {step === 2 && email && (
-                <div className="animate-in fade-in duration-300" style={{ textAlign: "center", marginTop: "24px", color: "#A0A0A0", fontSize: "0.95rem" }}>
-                    Signing up as <span style={{ color: "#FFFFFF", fontWeight: 700 }}>{email}</span>
+            {step === 1 && role && (
+                <div className="animate-in fade-in duration-300" style={{ textAlign: "center", marginTop: "20px", color: "#666", fontSize: "0.85rem" }}>
+                    Signing up as a <span style={{ color: role === 'creator' ? "#A78BFA" : "#60A5FA", fontWeight: 700, textTransform: "capitalize" }}>{role}</span>
                 </div>
             )}
             

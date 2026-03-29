@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, EyeOff, Mail, Lock, User, Palette, Heart, Sparkles, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Palette, Heart, Sparkles, Users, ArrowRight, ArrowLeft, CheckCircle, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -25,7 +25,7 @@ export const SignInFlo: React.FC = () => {
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [username, setUsername] = useState("");
-    const [role, setRole] = useState<"fan" | "creator">("fan");
+    const [role, setRole] = useState<"fan" | "creator" | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -45,7 +45,10 @@ export const SignInFlo: React.FC = () => {
             setNeedsProfile(true);
         }
         if (authError) {
-            setError('Authentication failed. Please try again.');
+            const decodedError = decodeURIComponent(authError);
+            setError(decodedError === 'auth_failed' 
+                ? 'Authentication failed. Please try again.' 
+                : decodedError);
         }
     }, [searchParams]);
 
@@ -58,7 +61,6 @@ export const SignInFlo: React.FC = () => {
                     const meta = user.user_metadata;
                     if (meta?.full_name) setName(meta.full_name);
                     if (meta?.name) setName(meta.name);
-                    // Generate a username suggestion from email
                     const emailPrefix = user.email?.split('@')[0] || '';
                     setUsername(emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g, ''));
                 }
@@ -69,13 +71,17 @@ export const SignInFlo: React.FC = () => {
 
     // ── Google OAuth ──
     const handleGoogleSignIn = async () => {
+        if (!role) {
+            setError("Please select whether you are a Creator or a Fan before signing in with Google.");
+            return;
+        }
         setIsGoogleLoading(true);
         setError("");
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${window.location.origin}/auth/callback?role=${role}`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -86,7 +92,6 @@ export const SignInFlo: React.FC = () => {
                 setError(error.message);
                 setIsGoogleLoading(false);
             }
-            // Browser will redirect — no need to setIsGoogleLoading(false)
         } catch (err: any) {
             setError(err.message || "Failed to initiate Google sign-in");
             setIsGoogleLoading(false);
@@ -96,6 +101,7 @@ export const SignInFlo: React.FC = () => {
     // ── Complete Profile (after first Google OAuth) ──
     const handleCompleteProfile = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!role) { setError("Please select a role"); return; }
         if (username.length < 3) { setError("Username must be at least 3 characters"); return; }
         setCompletingProfile(true);
         setError("");
@@ -106,7 +112,6 @@ export const SignInFlo: React.FC = () => {
 
             const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-            // Create profile via API
             const res = await fetch('/api/auth/complete-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -133,12 +138,16 @@ export const SignInFlo: React.FC = () => {
 
     // ── Email/Password Sign In ──
     const handleSignIn = async () => {
+        if (!role) {
+            setError("Please select whether you are a Creator or a Fan before signing in.");
+            return;
+        }
+
         if (authTab === "magic") {
-            // Magic link flow
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?role=${role}`,
                 },
             });
             if (error) { setError(error.message); return; }
@@ -155,8 +164,6 @@ export const SignInFlo: React.FC = () => {
         }
     };
 
-
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -170,20 +177,97 @@ export const SignInFlo: React.FC = () => {
         }
     };
 
+    // ── Shared role card component ──
+    const RoleSelector = ({ compact = false }: { compact?: boolean }) => (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: compact ? "1rem" : "20px" }}>
+            {/* Creator Option */}
+            <button
+                type="button"
+                onClick={() => { setRole('creator'); setError(''); }}
+                style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    gap: compact ? "8px" : "10px", padding: compact ? "16px 12px" : "20px 16px",
+                    background: role === 'creator' ? "rgba(139, 92, 246, 0.15)" : "#111111",
+                    border: role === 'creator' ? "2px solid #8B5CF6" : "1.5px solid #222",
+                    borderRadius: "14px", cursor: "pointer",
+                    transition: "all 0.25s ease",
+                    position: "relative", overflow: "hidden"
+                }}
+            >
+                {role === 'creator' && (
+                    <div style={{
+                        position: "absolute", top: "8px", right: "8px",
+                        width: "20px", height: "20px", borderRadius: "50%",
+                        background: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center"
+                    }}>
+                        <Check size={12} color="#FFFFFF" />
+                    </div>
+                )}
+                <div style={{
+                    width: compact ? "38px" : "44px", height: compact ? "38px" : "44px", borderRadius: "12px",
+                    background: role === 'creator' ? "rgba(139, 92, 246, 0.25)" : "#1A1A1A",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.25s"
+                }}>
+                    <Sparkles size={compact ? 18 : 22} color={role === 'creator' ? "#A78BFA" : "#666"} />
+                </div>
+                <div>
+                    <div style={{ fontSize: compact ? "0.9rem" : "1rem", fontWeight: 700, color: role === 'creator' ? "#FFFFFF" : "#CCC", marginBottom: "2px" }}>Creator</div>
+                    <div style={{ fontSize: "0.7rem", color: role === 'creator' ? "#A78BFA" : "#666", lineHeight: "1.3" }}>Monetize your content</div>
+                </div>
+            </button>
 
+            {/* Fan Option */}
+            <button
+                type="button"
+                onClick={() => { setRole('fan'); setError(''); }}
+                style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    gap: compact ? "8px" : "10px", padding: compact ? "16px 12px" : "20px 16px",
+                    background: role === 'fan' ? "rgba(59, 130, 246, 0.15)" : "#111111",
+                    border: role === 'fan' ? "2px solid #3B82F6" : "1.5px solid #222",
+                    borderRadius: "14px", cursor: "pointer",
+                    transition: "all 0.25s ease",
+                    position: "relative", overflow: "hidden"
+                }}
+            >
+                {role === 'fan' && (
+                    <div style={{
+                        position: "absolute", top: "8px", right: "8px",
+                        width: "20px", height: "20px", borderRadius: "50%",
+                        background: "#3B82F6", display: "flex", alignItems: "center", justifyContent: "center"
+                    }}>
+                        <Check size={12} color="#FFFFFF" />
+                    </div>
+                )}
+                <div style={{
+                    width: compact ? "38px" : "44px", height: compact ? "38px" : "44px", borderRadius: "12px",
+                    background: role === 'fan' ? "rgba(59, 130, 246, 0.25)" : "#1A1A1A",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.25s"
+                }}>
+                    <Users size={compact ? 18 : 22} color={role === 'fan' ? "#60A5FA" : "#666"} />
+                </div>
+                <div>
+                    <div style={{ fontSize: compact ? "0.9rem" : "1rem", fontWeight: 700, color: role === 'fan' ? "#FFFFFF" : "#CCC", marginBottom: "2px" }}>Fan</div>
+                    <div style={{ fontSize: "0.7rem", color: role === 'fan' ? "#60A5FA" : "#666", lineHeight: "1.3" }}>Support creators you love</div>
+                </div>
+            </button>
+        </div>
+    );
 
     // ── Profile Completion Screen ──
     if (needsProfile) {
         return (
             <div style={{
                 minHeight: "100vh",
-                background: "linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fff0f0 100%)",
+                background: "#000000",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 padding: "2rem",
                 fontFamily: "var(--font-sans, Inter, sans-serif)",
                 position: "relative", overflow: "hidden",
             }}>
-                <div style={{ position: "absolute", top: "-100px", right: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(255,66,77,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
+                <div style={{ position: "absolute", top: "-100px", right: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(255,255,255,0.02)", filter: "blur(60px)", pointerEvents: "none" }} />
 
                 <div style={{ width: "100%", maxWidth: "440px", position: "relative", zIndex: 10 }}>
                     <div style={{ textAlign: "center", marginBottom: "2rem" }}>
@@ -196,56 +280,31 @@ export const SignInFlo: React.FC = () => {
                         }}>
                             <CheckCircle size={28} color="#10B981" strokeWidth={1.8} />
                         </div>
-                        <h1 style={{ fontSize: "1.875rem", fontWeight: 800, color: "#0D0D0D", marginBottom: "0.375rem", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
+                        <h1 style={{ fontSize: "1.875rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "0.375rem", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
                             Complete Your Profile
                         </h1>
-                        <p style={{ fontSize: "0.9rem", color: "#6E6E6E", lineHeight: 1.5 }}>
+                        <p style={{ fontSize: "0.9rem", color: "#A0A0A0", lineHeight: 1.5 }}>
                             One last step — choose your role and username
                         </p>
                     </div>
 
                     <div style={{
-                        background: "#FFFFFF", borderRadius: "24px",
-                        border: "1.5px solid #E8E8E8",
-                        boxShadow: "0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+                        background: "#0A0A0A", borderRadius: "24px",
+                        border: "1px solid #222222",
+                        boxShadow: "0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2)",
                         padding: "2rem",
                     }}>
                         <form onSubmit={handleCompleteProfile}>
                             {/* Role selector */}
                             <div style={{ marginBottom: "1.25rem" }}>
-                                <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#4A4A4A", marginBottom: "0.625rem" }}>I am a...</p>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                                    {[
-                                        { val: "fan" as const, label: "Fan", Icon: Heart },
-                                        { val: "creator" as const, label: "Creator", Icon: Palette },
-                                    ].map(({ val, label, Icon }) => (
-                                        <button
-                                            key={val}
-                                            type="button"
-                                            onClick={() => setRole(val)}
-                                            style={{
-                                                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                                                gap: "8px", padding: "18px 12px",
-                                                borderRadius: "14px",
-                                                border: role === val ? "2px solid #FF424D" : "2px solid #E8E8E8",
-                                                background: role === val ? "rgba(255,66,77,0.06)" : "#FAFAFA",
-                                                color: role === val ? "#FF424D" : "#6E6E6E",
-                                                fontWeight: 600, fontSize: "0.875rem",
-                                                cursor: "pointer", transition: "all 0.2s",
-                                                boxShadow: role === val ? "0 2px 12px rgba(255,66,77,0.12)" : "none",
-                                            }}
-                                        >
-                                            <Icon size={20} />
-                                            {label}
-                                        </button>
-                                    ))}
-                                </div>
+                                <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#A0A0A0", marginBottom: "0.625rem" }}>I am a...</p>
+                                <RoleSelector compact />
                             </div>
 
                             {/* Name + Username */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
                                 <div style={{ position: "relative" }}>
-                                    <User size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#A8A8A8", pointerEvents: "none" }} />
+                                    <User size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#666666", pointerEvents: "none" }} />
                                     <input
                                         type="text"
                                         placeholder="Display Name"
@@ -253,17 +312,17 @@ export const SignInFlo: React.FC = () => {
                                         onChange={e => setName(e.target.value)}
                                         style={{
                                             width: "100%", boxSizing: "border-box",
-                                            background: "#F9F9F9", border: "1.5px solid #E8E8E8",
+                                            background: "#1A1A1A", border: "1.5px solid #333333",
                                             borderRadius: "12px", padding: "13px 14px 13px 36px",
-                                            fontSize: "0.875rem", color: "#0D0D0D", outline: "none",
+                                            fontSize: "0.875rem", color: "#FFFFFF", outline: "none",
                                             transition: "border-color 0.2s",
                                         }}
-                                        onFocus={e => (e.target.style.borderColor = "#FF424D")}
-                                        onBlur={e => (e.target.style.borderColor = "#E8E8E8")}
+                                        onFocus={e => (e.target.style.borderColor = "#555555")}
+                                        onBlur={e => (e.target.style.borderColor = "#333333")}
                                     />
                                 </div>
                                 <div style={{ position: "relative" }}>
-                                    <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#A8A8A8", pointerEvents: "none", fontSize: "0.875rem", fontWeight: 600 }}>@</span>
+                                    <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#666666", pointerEvents: "none", fontSize: "0.875rem", fontWeight: 600 }}>@</span>
                                     <input
                                         type="text"
                                         placeholder="username"
@@ -272,13 +331,13 @@ export const SignInFlo: React.FC = () => {
                                         required
                                         style={{
                                             width: "100%", boxSizing: "border-box",
-                                            background: "#F9F9F9", border: "1.5px solid #E8E8E8",
+                                            background: "#1A1A1A", border: "1.5px solid #333333",
                                             borderRadius: "12px", padding: "13px 14px 13px 32px",
-                                            fontSize: "0.875rem", color: "#0D0D0D", outline: "none",
+                                            fontSize: "0.875rem", color: "#FFFFFF", outline: "none",
                                             transition: "border-color 0.2s",
                                         }}
-                                        onFocus={e => (e.target.style.borderColor = "#FF424D")}
-                                        onBlur={e => (e.target.style.borderColor = "#E8E8E8")}
+                                        onFocus={e => (e.target.style.borderColor = "#555555")}
+                                        onBlur={e => (e.target.style.borderColor = "#333333")}
                                     />
                                 </div>
                             </div>
@@ -286,8 +345,8 @@ export const SignInFlo: React.FC = () => {
                             {error && (
                                 <div style={{
                                     marginBottom: "12px", padding: "12px 14px", borderRadius: "10px",
-                                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-                                    color: "#DC2626", fontSize: "0.8125rem",
+                                    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)",
+                                    color: "#FF6B6B", fontSize: "0.8125rem",
                                     display: "flex", alignItems: "flex-start", gap: "8px",
                                 }}>
                                     <span>⚠</span> {error}
@@ -300,18 +359,18 @@ export const SignInFlo: React.FC = () => {
                                 style={{
                                     width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                                     marginTop: "8px",
-                                    background: completingProfile ? "#E5333D" : "#FF424D",
-                                    color: "#FFFFFF", border: "none", borderRadius: "12px",
+                                    background: completingProfile ? "#D4D4D4" : "#FFFFFF",
+                                    color: "#000000", border: "none", borderRadius: "12px",
                                     padding: "15px 24px", fontSize: "0.9375rem", fontWeight: 700,
                                     cursor: completingProfile ? "not-allowed" : "pointer",
                                     opacity: completingProfile ? 0.8 : 1,
                                     transition: "all 0.2s", letterSpacing: "-0.01em",
-                                    boxShadow: "0 4px 16px rgba(255,66,77,0.3)",
+                                    boxShadow: "0 4px 16px rgba(255,255,255,0.06)",
                                 }}
                             >
                                 {completingProfile ? (
                                     <>
-                                        <span style={{ width: "16px", height: "16px", border: "2.5px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                                        <span style={{ width: "16px", height: "16px", border: "2.5px solid rgba(0,0,0,0.2)", borderTopColor: "#000", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
                                         Setting up...
                                     </>
                                 ) : (
@@ -326,11 +385,11 @@ export const SignInFlo: React.FC = () => {
         );
     }
 
-    // ── Main Login / Sign Up Screen ──
+    // ── Main Login Screen ──
     return (
         <div style={{
             minHeight: "100vh",
-            background: "linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fff0f0 100%)",
+            background: "#000000",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "2rem",
             fontFamily: "var(--font-sans, Inter, sans-serif)",
@@ -343,21 +402,21 @@ export const SignInFlo: React.FC = () => {
                     position: "absolute", top: "1.5rem", left: "1.5rem",
                     display: "inline-flex", alignItems: "center", gap: "6px",
                     padding: "8px 14px", borderRadius: "10px",
-                    border: "1.5px solid #E8E8E8", background: "#FFFFFF",
-                    color: "#4A4A4A", fontSize: "0.8125rem", fontWeight: 600,
-                    textDecoration: "none", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                    border: "1px solid #333333", background: "#0A0A0A",
+                    color: "#A0A0A0", fontSize: "0.8125rem", fontWeight: 600,
+                    textDecoration: "none", boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
                     transition: "all 0.2s", zIndex: 20,
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = "#FF424D"; e.currentTarget.style.color = "#FF424D"; }}
-                onMouseOut={e => { e.currentTarget.style.borderColor = "#E8E8E8"; e.currentTarget.style.color = "#4A4A4A"; }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = "#555555"; e.currentTarget.style.color = "#FFFFFF"; }}
+                onMouseOut={e => { e.currentTarget.style.borderColor = "#333333"; e.currentTarget.style.color = "#A0A0A0"; }}
             >
                 <ArrowLeft size={14} />
                 Back to Home
             </Link>
 
             {/* Accent blobs */}
-            <div style={{ position: "absolute", top: "-100px", right: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(255,66,77,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: "-100px", left: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(255,66,77,0.04)", filter: "blur(60px)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: "-100px", right: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(255,255,255,0.015)", filter: "blur(60px)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: "-100px", left: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(255,255,255,0.01)", filter: "blur(60px)", pointerEvents: "none" }} />
 
             <div style={{ width: "100%", maxWidth: "440px", position: "relative", zIndex: 10 }}>
 
@@ -366,25 +425,25 @@ export const SignInFlo: React.FC = () => {
                     <div style={{
                         display: "inline-flex", alignItems: "center", justifyContent: "center",
                         width: "64px", height: "64px",
-                        background: "rgba(255,66,77,0.12)",
+                        background: "rgba(255,255,255,0.06)",
                         borderRadius: "20px", marginBottom: "1rem",
-                        boxShadow: "0 4px 20px rgba(255,66,77,0.15)",
+                        boxShadow: "0 4px 20px rgba(255,255,255,0.04)",
                     }}>
-                        <User size={28} color="#FF424D" strokeWidth={1.8} />
+                        <User size={28} color="#FFFFFF" strokeWidth={1.8} />
                     </div>
-                    <h1 style={{ fontSize: "1.875rem", fontWeight: 800, color: "#0D0D0D", marginBottom: "0.375rem", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
+                    <h1 style={{ fontSize: "1.875rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "0.375rem", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
                         Welcome Back
                     </h1>
-                    <p style={{ fontSize: "0.9rem", color: "#6E6E6E", lineHeight: 1.5 }}>
+                    <p style={{ fontSize: "0.9rem", color: "#A0A0A0", lineHeight: 1.5 }}>
                         Sign in to the creator economy
                     </p>
                 </div>
 
                 {/* Card */}
                 <div style={{
-                    background: "#FFFFFF", borderRadius: "24px",
-                    border: "1.5px solid #E8E8E8",
-                    boxShadow: "0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+                    background: "#0A0A0A", borderRadius: "24px",
+                    border: "1px solid #222222",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2)",
                     overflow: "hidden",
                 }}>
                     {success ? (
@@ -392,15 +451,20 @@ export const SignInFlo: React.FC = () => {
                             <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "rgba(16,185,129,0.1)", border: "2px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem" }}>
                                 <Mail size={30} color="#10B981" />
                             </div>
-                            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0D0D0D", marginBottom: "0.75rem" }}>Check your email</h2>
-                            <p style={{ fontSize: "0.875rem", color: "#6E6E6E", marginBottom: "2rem", lineHeight: 1.6 }}>{success}</p>
-                            <button onClick={() => { setEmail(""); setPassword(""); setShowPassword(false); setError(""); setSuccess(""); }} style={{ color: "#FF424D", fontWeight: 600, fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "0.75rem" }}>Check your email</h2>
+                            <p style={{ fontSize: "0.875rem", color: "#A0A0A0", marginBottom: "2rem", lineHeight: 1.6 }}>{success}</p>
+                            <button onClick={() => { setEmail(""); setPassword(""); setShowPassword(false); setError(""); setSuccess(""); }} style={{ color: "#FFFFFF", fontWeight: 600, fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                                 Back to login
                             </button>
                         </div>
                     ) : (
                         <div style={{ padding: "2rem" }}>
-                            {/* ── Google OAuth Button (Primary CTA) ── */}
+                            
+                            {/* ── Role Selection ── */}
+                            <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#A0A0A0", marginBottom: "0.625rem" }}>Are you a...</p>
+                            <RoleSelector compact />
+
+                            {/* ── Google OAuth Button ── */}
                             <button
                                 type="button"
                                 onClick={handleGoogleSignIn}
@@ -409,23 +473,23 @@ export const SignInFlo: React.FC = () => {
                                     width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
                                     padding: "14px 24px",
                                     borderRadius: "12px",
-                                    border: "1.5px solid #E8E8E8",
-                                    background: "#FFFFFF",
-                                    color: "#3C4043",
+                                    border: "1px solid #333333",
+                                    background: role ? "#1A1A1A" : "#111",
+                                    color: role ? "#FFFFFF" : "#555",
                                     fontSize: "0.9375rem",
                                     fontWeight: 600,
-                                    cursor: isGoogleLoading ? "not-allowed" : "pointer",
-                                    opacity: isGoogleLoading ? 0.7 : 1,
+                                    cursor: isGoogleLoading ? "not-allowed" : role ? "pointer" : "not-allowed",
+                                    opacity: isGoogleLoading ? 0.7 : role ? 1 : 0.5,
                                     transition: "all 0.2s",
-                                    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                                     marginBottom: "1.25rem",
                                 }}
-                                onMouseOver={e => !isGoogleLoading && ((e.currentTarget.style.background = "#F8F9FA"), (e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.12)"))}
-                                onMouseOut={e => !isGoogleLoading && ((e.currentTarget.style.background = "#FFFFFF"), (e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)"))}
+                                onMouseOver={e => { if (!isGoogleLoading && role) { e.currentTarget.style.background = "#222222"; e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.4)"; }}}
+                                onMouseOut={e => { if (!isGoogleLoading && role) { e.currentTarget.style.background = "#1A1A1A"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)"; }}}
                             >
                                 {isGoogleLoading ? (
                                     <>
-                                        <span style={{ width: "16px", height: "16px", border: "2.5px solid #E8E8E8", borderTopColor: "#4285F4", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                                        <span style={{ width: "16px", height: "16px", border: "2.5px solid #333", borderTopColor: "#4285F4", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
                                         Redirecting to Google...
                                     </>
                                 ) : (
@@ -438,15 +502,15 @@ export const SignInFlo: React.FC = () => {
 
                             {/* Divider */}
                             <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "0 0 1.25rem" }}>
-                                <div style={{ flex: 1, height: "1px", background: "#E8E8E8" }} />
-                                <span style={{ fontSize: "0.75rem", color: "#A8A8A8", fontWeight: 500, whiteSpace: "nowrap" }}>or sign in with email</span>
-                                <div style={{ flex: 1, height: "1px", background: "#E8E8E8" }} />
+                                <div style={{ flex: 1, height: "1px", background: "#333333" }} />
+                                <span style={{ fontSize: "0.75rem", color: "#666666", fontWeight: 500, whiteSpace: "nowrap" }}>or sign in with email</span>
+                                <div style={{ flex: 1, height: "1px", background: "#333333" }} />
                             </div>
 
                             <form onSubmit={handleSubmit}>
 
                                 {/* Auth tab toggle */}
-                                <div style={{ display: "flex", background: "#F2F2F2", borderRadius: "14px", padding: "4px", marginBottom: "1.5rem" }}>
+                                <div style={{ display: "flex", background: "#1A1A1A", borderRadius: "14px", padding: "4px", marginBottom: "1.5rem" }}>
                                         {["password", "magic"].map(tab => (
                                             <button
                                                 key={tab}
@@ -460,9 +524,9 @@ export const SignInFlo: React.FC = () => {
                                                     fontSize: "0.875rem", fontWeight: 600,
                                                     cursor: "pointer",
                                                     transition: "all 0.2s",
-                                                    background: authTab === tab ? "#FFFFFF" : "transparent",
-                                                    color: authTab === tab ? "#0D0D0D" : "#6E6E6E",
-                                                    boxShadow: authTab === tab ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+                                                    background: authTab === tab ? "#333333" : "transparent",
+                                                    color: authTab === tab ? "#FFFFFF" : "#666666",
+                                                    boxShadow: authTab === tab ? "0 1px 4px rgba(0,0,0,0.3)" : "none",
                                                 }}
                                             >
                                                 {tab === "magic" && <Sparkles size={14} />}
@@ -473,7 +537,7 @@ export const SignInFlo: React.FC = () => {
 
                                 {/* Email */}
                                 <div style={{ position: "relative", marginBottom: "10px" }}>
-                                    <Mail size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#A8A8A8", pointerEvents: "none" }} />
+                                    <Mail size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#666666", pointerEvents: "none" }} />
                                     <input
                                         type="email"
                                         placeholder="Email Address"
@@ -482,23 +546,23 @@ export const SignInFlo: React.FC = () => {
                                         required
                                         style={{
                                             width: "100%", boxSizing: "border-box",
-                                            background: "#F9F9F9",
-                                            border: "1.5px solid #E8E8E8",
+                                            background: "#1A1A1A",
+                                            border: "1.5px solid #333333",
                                             borderRadius: "12px",
                                             padding: "14px 16px 14px 40px",
-                                            fontSize: "0.9rem", color: "#0D0D0D",
+                                            fontSize: "0.9rem", color: "#FFFFFF",
                                             outline: "none",
                                             transition: "border-color 0.2s",
                                         }}
-                                        onFocus={e => (e.target.style.borderColor = "#FF424D")}
-                                        onBlur={e => (e.target.style.borderColor = "#E8E8E8")}
+                                        onFocus={e => (e.target.style.borderColor = "#555555")}
+                                        onBlur={e => (e.target.style.borderColor = "#333333")}
                                     />
                                 </div>
 
                                 {/* Password */}
                                 {authTab === "password" && (
                                     <div style={{ position: "relative", marginBottom: "10px" }}>
-                                        <Lock size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#A8A8A8", pointerEvents: "none" }} />
+                                        <Lock size={15} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#666666", pointerEvents: "none" }} />
                                         <input
                                             type={showPassword ? "text" : "password"}
                                             placeholder="Password"
@@ -507,21 +571,21 @@ export const SignInFlo: React.FC = () => {
                                             required
                                             style={{
                                                 width: "100%", boxSizing: "border-box",
-                                                background: "#F9F9F9",
-                                                border: "1.5px solid #E8E8E8",
+                                                background: "#1A1A1A",
+                                                border: "1.5px solid #333333",
                                                 borderRadius: "12px",
                                                 padding: "14px 44px 14px 40px",
-                                                fontSize: "0.9rem", color: "#0D0D0D",
+                                                fontSize: "0.9rem", color: "#FFFFFF",
                                                 outline: "none",
                                                 transition: "border-color 0.2s",
                                             }}
-                                            onFocus={e => (e.target.style.borderColor = "#FF424D")}
-                                            onBlur={e => (e.target.style.borderColor = "#E8E8E8")}
+                                            onFocus={e => (e.target.style.borderColor = "#555555")}
+                                            onBlur={e => (e.target.style.borderColor = "#333333")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#A8A8A8", display: "flex" }}
+                                            style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#666666", display: "flex" }}
                                         >
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
@@ -531,9 +595,9 @@ export const SignInFlo: React.FC = () => {
                                 {/* Forgot password */}
                                 {authTab === "password" && (
                                     <div style={{ textAlign: "right", marginBottom: "6px" }}>
-                                        <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "#A8A8A8", textDecoration: "none", fontWeight: 500 }}
-                                            onMouseOver={e => (e.currentTarget.style.color = "#FF424D")}
-                                            onMouseOut={e => (e.currentTarget.style.color = "#A8A8A8")}
+                                        <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "#666666", textDecoration: "none", fontWeight: 500 }}
+                                            onMouseOver={e => (e.currentTarget.style.color = "#FFFFFF")}
+                                            onMouseOut={e => (e.currentTarget.style.color = "#666666")}
                                         >
                                             Forgot password?
                                         </Link>
@@ -545,9 +609,9 @@ export const SignInFlo: React.FC = () => {
                                     <div style={{
                                         marginBottom: "12px", padding: "12px 14px",
                                         borderRadius: "10px",
-                                        background: "rgba(239,68,68,0.08)",
-                                        border: "1px solid rgba(239,68,68,0.2)",
-                                        color: "#DC2626", fontSize: "0.8125rem",
+                                        background: "rgba(239,68,68,0.1)",
+                                        border: "1px solid rgba(239,68,68,0.25)",
+                                        color: "#FF6B6B", fontSize: "0.8125rem",
                                         display: "flex", alignItems: "flex-start", gap: "8px",
                                     }}>
                                         <span>⚠</span> {error}
@@ -557,31 +621,33 @@ export const SignInFlo: React.FC = () => {
                                 {/* Submit button */}
                                 <button
                                     type="submit"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !role}
                                     style={{
                                         width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                                         marginTop: "8px",
-                                        background: isSubmitting ? "#E5333D" : "#FF424D",
-                                        color: "#FFFFFF",
+                                        background: isSubmitting ? "#D4D4D4" : role ? "#FFFFFF" : "#333",
+                                        color: role ? "#000000" : "#888",
                                         border: "none",
                                         borderRadius: "12px",
                                         padding: "15px 24px",
                                         fontSize: "0.9375rem",
                                         fontWeight: 700,
-                                        cursor: isSubmitting ? "not-allowed" : "pointer",
+                                        cursor: isSubmitting || !role ? "not-allowed" : "pointer",
                                         opacity: isSubmitting ? 0.8 : 1,
                                         transition: "all 0.2s",
                                         letterSpacing: "-0.01em",
-                                        boxShadow: "0 4px 16px rgba(255,66,77,0.3)",
+                                        boxShadow: role ? "0 4px 16px rgba(255,255,255,0.06)" : "none",
                                     }}
-                                    onMouseOver={e => !isSubmitting && ((e.currentTarget.style.background = "#E5333D"), (e.currentTarget.style.transform = "translateY(-1px)"), (e.currentTarget.style.boxShadow = "0 6px 20px rgba(255,66,77,0.38)"))}
-                                    onMouseOut={e => !isSubmitting && ((e.currentTarget.style.background = "#FF424D"), (e.currentTarget.style.transform = ""), (e.currentTarget.style.boxShadow = "0 4px 16px rgba(255,66,77,0.3)"))}
+                                    onMouseOver={e => { if (!isSubmitting && role) { e.currentTarget.style.background = "#E5E5E5"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(255,255,255,0.08)"; }}}
+                                    onMouseOut={e => { if (!isSubmitting && role) { e.currentTarget.style.background = "#FFFFFF"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 16px rgba(255,255,255,0.06)"; }}}
                                 >
                                     {isSubmitting ? (
-                                        <><span style={{ width: "16px", height: "16px", border: "2.5px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                                        <><span style={{ width: "16px", height: "16px", border: "2.5px solid rgba(0,0,0,0.2)", borderTopColor: "#000", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
                                             Signing in...</>
+                                    ) : !role ? (
+                                        "Select a role to sign in"
                                     ) : (
-                                        <>{authTab === "magic" ? "Send Magic Link" : "Sign In"} <ArrowRight size={16} /></>
+                                        <>{authTab === "magic" ? "Send Magic Link" : `Sign In as ${role === 'creator' ? 'Creator' : 'Fan'}`} <ArrowRight size={16} /></>
                                     )}
                                 </button>
                             </form>
@@ -591,21 +657,28 @@ export const SignInFlo: React.FC = () => {
 
                 {/* Switch mode — below card */}
                 <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-                    <p style={{ fontSize: "0.875rem", color: "#6E6E6E" }}>
+                    <p style={{ fontSize: "0.875rem", color: "#A0A0A0" }}>
                         Don't have an account?{" "}
                         <Link
                             href="/register"
-                            style={{ color: "#FF424D", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontSize: "0.875rem", textDecoration: "none" }}
+                            style={{ color: "#FFFFFF", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontSize: "0.875rem", textDecoration: "none" }}
                         >
                             Sign up
                         </Link>
                     </p>
                 </div>
+
+                {/* Role indicator below card */}
+                {role && (
+                    <div className="animate-in fade-in duration-300" style={{ textAlign: "center", marginTop: "12px", color: "#666", fontSize: "0.8rem" }}>
+                        Signing in as <span style={{ color: role === 'creator' ? "#A78BFA" : "#60A5FA", fontWeight: 700, textTransform: "capitalize" }}>{role}</span>
+                    </div>
+                )}
             </div>
 
             <style>{`
                 @keyframes spin { to { transform: rotate(360deg); } }
-                input::placeholder { color: #A8A8A8; }
+                input::placeholder { color: #666666; }
             `}</style>
         </div>
     );
