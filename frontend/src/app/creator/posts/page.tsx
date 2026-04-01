@@ -65,7 +65,7 @@ export default function CreatorPostsPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchPosts = useCallback(async () => {
-        const res = await fetch('/api/posts');
+        const res = await fetch('/api/posts?creator_id=me');
         if (res.ok) {
             const data = await res.json();
             setPosts(data.posts);

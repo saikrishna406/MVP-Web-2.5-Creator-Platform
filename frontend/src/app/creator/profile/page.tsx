@@ -55,7 +55,7 @@ export default function CreatorProfilePage() {
         if (res.ok) { const d = await res.json(); setPackages(d.packages ?? []); }
     }, []);
     const fetchPosts = useCallback(async () => {
-        const res = await fetch('/api/posts');
+        const res = await fetch('/api/posts?creator_id=me');
         if (res.ok) { const d = await res.json(); setPosts(d.posts ?? []); }
     }, []);
 

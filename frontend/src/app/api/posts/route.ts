@@ -10,7 +10,12 @@ export async function GET(request: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser();
 
         const url = new URL(request.url);
-        const creatorId = url.searchParams.get('creator_id');
+        let creatorId = url.searchParams.get('creator_id');
+
+        if (creatorId === 'me' && user) {
+            creatorId = user.id;
+        }
+
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
         const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'), 0);
 

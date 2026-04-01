@@ -32,12 +32,15 @@ export function CreatorPostsFeed({
     const [unlocking, setUnlocking] = useState<string | null>(null);
 
     const fetchPosts = useCallback(async () => {
+        setLoading(true);
         const params = new URLSearchParams({ limit: String(limit) });
         if (creatorId) params.set('creator_id', creatorId);
         const res = await fetch(`/api/posts?${params.toString()}`);
         if (res.ok) {
             const data = await res.json();
             setPosts(data.posts || []);
+        } else {
+            setPosts([]);
         }
         setLoading(false);
     }, [creatorId, limit]);
