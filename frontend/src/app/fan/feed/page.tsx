@@ -87,35 +87,70 @@ export default function FeedPage() {
         if (submitLockRef.current.has(postId)) return;
         submitLockRef.current.add(postId);
 
+        // Record the current state just in case we need to revert
+        const targetPost = posts.find(p => p.id === postId);
+        const wasLiked = targetPost?.is_liked || false;
+        const nextLiked = !wasLiked;
+
         // Optimistic update
         setPosts(prev => prev.map(p => {
             if (p.id !== postId) return p;
-            const liked = !p.is_liked;
-            return { ...p, is_liked: liked, likes_count: liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1) };
+            return {
+                ...p,
+                is_liked: nextLiked,
+                likes_count: nextLiked
+                    ? (p.likes_count || 0) + 1
+                    : Math.max(0, (p.likes_count || 0) - 1),
+            };
         }));
 
-        const res = await fetch('/api/posts/interact', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ postId, action: 'like' }),
-        });
+        try {
+            const res = await fetch('/api/posts/interact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId, action: 'like' }),
+            });
 
-        if (res.ok) {
-            const data = await res.json();
+            if (res.ok) {
+                const data = await res.json();
+                // If it earned points for a new like
+                if (data.pointsEarned && nextLiked) {
+                    setToast({ message: `+${data.pointsEarned} pts for liking!`, type: 'success' });
+                }
+                
+                // If the server disagreed with our optimistic update for some reason, sync it
+                if (data.liked !== nextLiked) {
+                    setPosts(prev => prev.map(p => {
+                        if (p.id !== postId) return p;
+                        return {
+                            ...p,
+                            is_liked: data.liked,
+                            likes_count: data.liked
+                                ? (p.likes_count || 0) + 1
+                                : Math.max(0, (p.likes_count || 1) - 1)
+                        };
+                    }));
+                }
+            } else {
+                throw new Error('API failure');
+            }
+        } catch (error) {
+            // Revert on network failure or 500
             setPosts(prev => prev.map(p => {
                 if (p.id !== postId) return p;
-                return { ...p, is_liked: data.liked, likes_count: data.liked ? (p.likes_count || 0) : Math.max(0, (p.likes_count || 0)) };
+                return {
+                    ...p,
+                    is_liked: wasLiked,
+                    // Reversing what we added/subtracted
+                    likes_count: wasLiked
+                        ? (p.likes_count || 0) + 1
+                        : Math.max(0, (p.likes_count || 0) - 1)
+                };
             }));
-            if (data.pointsEarned) setToast({ message: `+${data.pointsEarned} points earned!`, type: 'success' });
-        } else {
-            // Revert
-            setPosts(prev => prev.map(p => {
-                if (p.id !== postId) return p;
-                const liked = p.is_liked;
-                return { ...p, is_liked: !liked, likes_count: !liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1) };
-            }));
+            setToast({ message: 'Failed to like post', type: 'error' });
+        } finally {
+            submitLockRef.current.delete(postId);
         }
-        submitLockRef.current.delete(postId);
     };
 
     // Double-tap to like

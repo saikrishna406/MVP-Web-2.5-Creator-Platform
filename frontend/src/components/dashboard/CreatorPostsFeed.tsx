@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Heart, MessageCircle, Lock, Unlock, Eye,
     Coins, Send, Globe, Shield, ChevronDown, ChevronUp
@@ -47,30 +47,75 @@ export function CreatorPostsFeed({
 
     useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
+    const submitLockRef = useRef<Set<string>>(new Set());
+
     const handleLike = async (postId: string) => {
-        const res = await fetch('/api/posts/interact', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ postId, action: 'like' }),
-        });
-        if (res.ok) {
-            const data = await res.json();
+        if (submitLockRef.current.has(postId)) return;
+        submitLockRef.current.add(postId);
+
+        // Record the current state just in case we need to revert
+        const targetPost = posts.find(p => p.id === postId);
+        const wasLiked = targetPost?.is_liked || false;
+        const nextLiked = !wasLiked;
+
+        // Optimistic update
+        setPosts(prev => prev.map(p => {
+            if (p.id !== postId) return p;
+            return {
+                ...p,
+                is_liked: nextLiked,
+                likes_count: nextLiked
+                    ? (p.likes_count || 0) + 1
+                    : Math.max(0, (p.likes_count || 0) - 1),
+            };
+        }));
+
+        try {
+            const res = await fetch('/api/posts/interact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId, action: 'like' }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                // If it earned points for a new like
+                if (data.pointsEarned && nextLiked) {
+                    setToast({ message: `+${data.pointsEarned} pts for liking!`, type: 'success' });
+                }
+                
+                // If the server disagreed with our optimistic update for some reason, sync it
+                if (data.liked !== nextLiked) {
+                    setPosts(prev => prev.map(p => {
+                        if (p.id !== postId) return p;
+                        return {
+                            ...p,
+                            is_liked: data.liked,
+                            likes_count: data.liked
+                                ? (p.likes_count || 0) + 1
+                                : Math.max(0, (p.likes_count || 1) - 1)
+                        };
+                    }));
+                }
+            } else {
+                throw new Error('API failure');
+            }
+        } catch (error) {
+            // Revert on network failure or 500
             setPosts(prev => prev.map(p => {
                 if (p.id !== postId) return p;
                 return {
                     ...p,
-                    is_liked: data.liked,
-                    likes_count: data.liked
+                    is_liked: wasLiked,
+                    // Reversing what we added/subtracted
+                    likes_count: wasLiked
                         ? (p.likes_count || 0) + 1
-                        : Math.max(0, (p.likes_count || 0) - 1),
+                        : Math.max(0, (p.likes_count || 0) - 1)
                 };
             }));
-            if (data.pointsEarned) {
-                setToast({ message: `+${data.pointsEarned} pts for liking!`, type: 'success' });
-            }
-        } else {
-            const d = await res.json();
-            setToast({ message: d.error || 'Login to like posts', type: 'error' });
+            setToast({ message: 'Failed to like post', type: 'error' });
+        } finally {
+            submitLockRef.current.delete(postId);
         }
     };
 
