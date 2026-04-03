@@ -4057,3 +4057,631 @@ body {
 html[data-scroll-behavior="smooth"] {
   scroll-behavior: smooth;
 }
+
+/* ════════════════════════════════════════════════════════
+   SOCIAL INTEGRATIONS PAGE
+   ════════════════════════════════════════════════════════ */
+
+.social-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ─── Header ─── */
+.social-header {
+  margin-bottom: 2rem;
+}
+
+.social-header__title {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--dash-text-primary);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.social-header__subtitle {
+  font-size: 1.125rem;
+  color: var(--dash-text-secondary);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Grid ─── */
+.social-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ─── Alerts ─── */
+.social-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  animation: fade-in-up 0.3s ease-out;
+}
+
+.social-alert--error {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.social-alert--success {
+  background: var(--dash-success-bg);
+  color: var(--dash-success-text);
+  border: 1px solid rgba(5, 150, 105, 0.15);
+}
+
+.social-alert__close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  color: inherit;
+}
+
+.social-alert__close:hover {
+  opacity: 1;
+}
+
+/* ─── Card ─── */
+.social-card {
+  background: var(--dash-card);
+  border: 1px solid var(--dash-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: var(--dash-shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+.social-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.social-card:hover {
+  border-color: var(--dash-border-hover);
+  box-shadow: var(--dash-shadow-md);
+}
+
+.social-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.social-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.social-card__icon--discord {
+  background: #5865F2;
+  color: white;
+}
+
+.social-card__icon--fans {
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  border: 1px solid var(--dash-accent-border);
+}
+
+.social-card__title {
+  font-size: 1.125rem;
+  font-weight: 650;
+  color: var(--dash-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.social-card__desc {
+  font-size: 0.8125rem;
+  color: var(--dash-text-secondary);
+  margin-top: 2px;
+}
+
+.social-card__count {
+  color: var(--dash-text-muted);
+}
+
+/* ─── Badge ─── */
+.social-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.social-badge--connected {
+  background: var(--dash-success-bg);
+  color: var(--dash-success-text);
+}
+
+.social-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Connected State ─── */
+.social-connected {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.social-connected__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--dash-bg);
+  border: 1px solid var(--dash-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.social-connected__row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+}
+
+.social-connected__icon {
+  color: var(--dash-text-muted);
+  flex-shrink: 0;
+}
+
+.social-connected__icon--active {
+  color: var(--dash-success-text);
+}
+
+.social-connected__label {
+  color: var(--dash-text-secondary);
+  min-width: 100px;
+  font-weight: 500;
+}
+
+.social-connected__value {
+  color: var(--dash-text-primary);
+  font-weight: 600;
+}
+
+.social-connected__value--mono {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8125rem;
+  background: var(--dash-accent-soft);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.social-connected__value--active {
+  color: var(--dash-success-text);
+}
+
+.social-connected__copy {
+  background: none;
+  border: none;
+  color: var(--dash-text-muted);
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.social-connected__copy:hover {
+  color: var(--dash-text-primary);
+  background: var(--dash-accent-soft);
+}
+
+/* ─── Setup Steps ─── */
+.social-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.social-step {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-step__number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  border: 1px solid var(--dash-accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.social-step__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.social-step__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--dash-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.social-step__desc {
+  font-size: 0.8125rem;
+  color: var(--dash-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 0.875rem;
+}
+
+/* ─── Form ─── */
+.social-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.social-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.social-input-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dash-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.social-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--dash-text-primary);
+  background: var(--dash-input-bg);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.social-input:focus {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
+}
+
+.social-input::placeholder {
+  color: var(--dash-text-muted);
+}
+
+/* ─── Buttons ─── */
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  transition: all 0.2s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.social-btn--primary {
+  background: var(--dash-accent);
+  color: var(--dash-btn-text);
+  width: fit-content;
+}
+
+.social-btn--primary:hover:not(:disabled) {
+  background: var(--dash-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--dash-shadow-md);
+}
+
+.social-btn--primary:disabled {
+  opacity: 0.5;
+}
+
+.social-btn--outline {
+  background: transparent;
+  color: var(--dash-text-primary);
+  border: 1px solid var(--dash-border);
+  width: fit-content;
+}
+
+.social-btn--outline:hover {
+  border-color: var(--dash-border-hover);
+  background: var(--dash-accent-soft);
+}
+
+.social-btn--danger {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  width: fit-content;
+}
+
+.social-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.social-btn--danger:disabled {
+  opacity: 0.5;
+}
+
+/* ─── Leaderboard ─── */
+.social-leaderboard {
+  display: flex;
+  flex-direction: column;
+}
+
+.social-fan {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--dash-border);
+  transition: background 0.15s;
+}
+
+.social-fan:last-child {
+  border-bottom: none;
+}
+
+.social-fan:hover {
+  background: var(--dash-accent-soft);
+  margin: 0 -0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 10px;
+}
+
+/* ─── Rank Badge ─── */
+.social-rank {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--dash-bg);
+  color: var(--dash-text-muted);
+  border: 1px solid var(--dash-border);
+}
+
+.social-rank--gold {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  font-size: 1rem;
+}
+
+.social-rank--silver {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af);
+  color: white;
+  border-color: #9ca3af;
+  font-size: 1rem;
+}
+
+.social-rank--bronze {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: white;
+  border-color: #b45309;
+  font-size: 1rem;
+}
+
+/* ─── Fan Avatar ─── */
+.social-fan__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--dash-border);
+}
+
+.social-fan__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.social-fan__avatar-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+}
+
+/* ─── Fan Info ─── */
+.social-fan__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.social-fan__name {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dash-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.social-fan__linked {
+  color: var(--dash-success-text);
+}
+
+.social-fan__username {
+  font-size: 0.75rem;
+  color: var(--dash-text-muted);
+  margin-top: 1px;
+}
+
+/* ─── Fan Stats ─── */
+.social-fan__stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.social-fan__stat {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--dash-text-secondary);
+  font-weight: 500;
+}
+
+.social-fan__score {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--dash-text-primary);
+  font-weight: 700;
+}
+
+/* ─── Empty & Loading ─── */
+.social-empty {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: var(--dash-bg);
+  border: 1px dashed var(--dash-border);
+  border-radius: 12px;
+}
+
+.social-empty__icon {
+  width: 40px;
+  height: 40px;
+  color: var(--dash-text-muted);
+  margin: 0 auto 1rem;
+}
+
+.social-empty__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dash-text-primary);
+  margin-bottom: 0.375rem;
+}
+
+.social-empty__desc {
+  font-size: 0.8125rem;
+  color: var(--dash-text-secondary);
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.social-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 0;
+  color: var(--dash-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.social-loading--sm {
+  padding: 2rem 0;
+}
+
+.social-loading__spinner {
+  width: 20px;
+  height: 20px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .social-card {
+    padding: 1.25rem;
+  }
+
+  .social-card__header {
+    flex-wrap: wrap;
+  }
+
+  .social-badge {
+    margin-left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .social-connected__row {
+    flex-wrap: wrap;
+  }
+
+  .social-connected__label {
+    min-width: auto;
+  }
+
+  .social-fan__stats {
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+  }
+}

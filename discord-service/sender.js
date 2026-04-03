@@ -1,97 +1,140 @@
 'use strict';
 
 /**
- * sender.js
- * ---------
- * Sends Discord activity events to the Next.js backend API.
- *
+ * sender.js — Sends events to the Next.js backend
+ * -------------------------------------------------
  * Architecture: Discord Bot → (this module) → Next.js API → Supabase
  *
- * Future extension points:
- *  - Swap `fetch` for a queue-backed sender (e.g., BullMQ / Redis)
- *  - Add exponential back-off in the retry loop
- *  - Support batching multiple events in one request
+ * Two sender functions:
+ *   sendEvent()      → POST /api/discord/event  (engagement tracking)
+ *   sendLinkVerify() → POST /api/link/discord/verify (identity linking)
+ *
+ * All requests are HMAC-SHA256 signed using DISCORD_INTERNAL_SECRET.
  */
 
-const BACKEND_URL =
-  process.env.BACKEND_URL || 'http://localhost:3000/api/discord/activity';
+const crypto = require('crypto');
+
+const BACKEND_BASE =
+  process.env.BACKEND_URL || 'http://localhost:3000';
+
+const EVENT_URL = `${BACKEND_BASE}/api/discord/event`;
+const LINK_URL = `${BACKEND_BASE}/api/link/discord/verify`;
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000; // placeholder — extend with exponential back-off
+const BASE_RETRY_DELAY_MS = 500;
 
 /**
  * Sleep helper for retry delays.
- * @param {number} ms
  */
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Send a single Discord activity event to the backend.
- *
- * @param {{
- *   discord_user_id: string,
- *   guild_id: string,
- *   event_type: string,
- *   points: number,
- *   timestamp?: string
- * }} payload
- * @returns {Promise<void>}
+ * Generate HMAC-SHA256 signature for a request body.
  */
-async function sendActivity(payload) {
-  const body = JSON.stringify({
-    ...payload,
-    timestamp: payload.timestamp ?? new Date().toISOString(),
-  });
+function signBody(body) {
+  const secret = process.env.DISCORD_INTERNAL_SECRET || '';
+  return crypto.createHmac('sha256', secret).update(body).digest('hex');
+}
+
+/**
+ * Send a request to the backend with HMAC signing and retry logic.
+ *
+ * @param {string} url    - Backend endpoint URL
+ * @param {object} payload - Request body object
+ * @param {object} options - { retries, throwOnFailure }
+ * @returns {Promise<object>} - Parsed JSON response
+ */
+async function sendWithRetry(url, payload, options = {}) {
+  const { retries = MAX_RETRIES, throwOnFailure = false } = options;
+  const body = JSON.stringify(payload);
+  const signature = signBody(body);
 
   let lastError = null;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(
-        `[sender] Attempt ${attempt}/${MAX_RETRIES} — sending activity:`,
-        payload.event_type,
-        'from',
-        payload.discord_user_id
-      );
-
-      const response = await fetch(BACKEND_URL, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Forward a shared secret so the API can reject unauthenticated bots
+          'x-bot-signature': signature,
+          // Keep legacy header for backward compat with old activity endpoint
           'x-discord-secret': process.env.DISCORD_INTERNAL_SECRET || '',
         },
         body,
       });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '(no body)');
-        throw new Error(`HTTP ${response.status}: ${text}`);
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok && response.status >= 500) {
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(json)}`);
       }
 
-      const json = await response.json().catch(() => null);
-      console.log('[sender] Activity accepted by backend:', json);
-      return; // success — exit retry loop
+      // 4xx responses are not retryable — return immediately
+      return json;
+
     } catch (err) {
       lastError = err;
-      console.warn(`[sender] Attempt ${attempt} failed:`, err.message);
+      console.warn(
+        `[sender] Attempt ${attempt}/${retries} to ${url} failed:`,
+        err.message
+      );
 
-      if (attempt < MAX_RETRIES) {
-        // TODO: replace with exponential back-off (RETRY_DELAY_MS * 2^attempt)
-        await sleep(RETRY_DELAY_MS);
+      if (attempt < retries) {
+        // Exponential backoff: 500ms, 1000ms, 2000ms
+        await sleep(BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1));
       }
     }
   }
 
-  // All retries exhausted — log and swallow so the bot never crashes
+  // All retries exhausted
   console.error(
-    '[sender] All retries exhausted. Event could not be delivered:',
+    `[sender] All ${retries} retries exhausted for ${url}. Payload:`,
     payload,
     '\nLast error:',
     lastError?.message
   );
+
+  if (throwOnFailure) {
+    throw lastError || new Error('All retries exhausted');
+  }
+
+  return { success: false, error: 'All retries exhausted' };
 }
 
-module.exports = { sendActivity };
+/**
+ * Send an engagement event to POST /api/discord/event
+ *
+ * @param {{
+ *   external_user_id: string,
+ *   channel_id: string,
+ *   event_id: string,
+ *   action_type: string,
+ *   metadata?: object
+ * }} payload
+ */
+async function sendEvent(payload) {
+  console.log(
+    `[sender] Sending event: ${payload.action_type} from ${payload.external_user_id}`
+  );
+  return sendWithRetry(EVENT_URL, payload);
+}
+
+/**
+ * Send a link verification to POST /api/link/discord/verify
+ * This DOES throw on failure so the bot can show an error to the user.
+ *
+ * @param {{
+ *   code: string,
+ *   external_user_id: string,
+ *   external_username: string
+ * }} payload
+ */
+async function sendLinkVerify(payload) {
+  console.log(`[sender] Verifying link code: ${payload.code}`);
+  return sendWithRetry(LINK_URL, payload, { throwOnFailure: true });
+}
+
+module.exports = { sendEvent, sendLinkVerify };

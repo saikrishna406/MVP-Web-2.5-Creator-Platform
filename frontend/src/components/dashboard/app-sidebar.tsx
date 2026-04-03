@@ -21,6 +21,7 @@ import {
   Crown,
   CalendarDays,
   Flame,
+  Share2,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import {
@@ -37,6 +38,7 @@ const CREATOR_NAV = [
   { href: "/creator/founder-pass", label: "Founder Pass", icon: Flame           },
   { href: "/creator/revenue",      label: "Revenue",      icon: BarChart3       },
   { href: "/creator/posts",        label: "Posts",        icon: FileText        },
+  { href: "/creator/social",       label: "Social",       icon: Share2          },
 ];
 
 // "Create" and "Profile" are rendered separately in the component (special styling)
