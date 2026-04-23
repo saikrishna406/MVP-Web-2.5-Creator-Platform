@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Image as ImageIcon, Sparkles, Users, X, Shield } from "lucide-react";
+import { ArrowLeft, Check, Image as ImageIcon, Sparkles, Users, X } from "lucide-react";
 
 const GoogleIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -897,18 +897,9 @@ export const MultiStepRegister = () => {
                             borderBottom: "1px solid #1A1A1A",
                             flexShrink: 0,
                         }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <div style={{
-                                    width: "36px", height: "36px", borderRadius: "10px",
-                                    background: "rgba(139,92,246,0.15)",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                }}>
-                                    <Shield size={18} color="#A78BFA" />
-                                </div>
-                                <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#FFFFFF", margin: 0, letterSpacing: "-0.02em" }}>
-                                    Privacy Policy
-                                </h2>
-                            </div>
+                            <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#FFFFFF", margin: 0, letterSpacing: "-0.02em" }}>
+                                Privacy Policy
+                            </h2>
                             <button
                                 onClick={() => setShowPrivacyPolicy(false)}
                                 style={{
