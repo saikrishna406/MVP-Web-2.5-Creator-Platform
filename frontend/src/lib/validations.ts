@@ -77,11 +77,3 @@ export const RedemptionSchema = z.discriminatedUnion('action', [
     RedeemItemSchema,
 ]);
 
-// --- Type exports ---
-export type CheckoutInput = z.infer<typeof CheckoutSchema>;
-export type CreatePostInput = z.infer<typeof CreatePostSchema>;
-export type UnlockPostInput = z.infer<typeof UnlockPostSchema>;
-export type InteractPostInput = z.infer<typeof InteractPostSchema>;
-export type CommentInput = z.infer<typeof CommentSchema>;
-export type GamificationActionInput = z.infer<typeof GamificationActionSchema>;
-export type RedemptionInput = z.infer<typeof RedemptionSchema>;

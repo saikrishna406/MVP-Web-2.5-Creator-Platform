@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Image as ImageIcon, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, Check, Image as ImageIcon, Sparkles, Users, X, Shield } from "lucide-react";
 
 const GoogleIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -56,6 +56,9 @@ export const MultiStepRegister = () => {
 
     // Track if this is a Google OAuth completion flow
     const [isGoogleFlow, setIsGoogleFlow] = useState(false);
+
+    // Privacy policy modal
+    const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
 
     // Detect Google OAuth return (?complete=true) — pre-fill data and skip to step 2
     useEffect(() => {
@@ -175,8 +178,8 @@ export const MultiStepRegister = () => {
                 setError(error.message);
                 setIsGoogleLoading(false);
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to initiate Google sign-in");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to initiate Google sign-in");
             setIsGoogleLoading(false);
         }
     };
@@ -305,8 +308,8 @@ export const MultiStepRegister = () => {
                 setSuccess("Account created! Check your email to verify your account.");
             }
             
-        } catch (err: any) {
-            setError(err.message || "An unexpected error occurred");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "An unexpected error occurred");
         } finally {
             setIsLoading(false);
         }
@@ -560,7 +563,7 @@ export const MultiStepRegister = () => {
                                     }} 
                                 />
                                 <span style={{ fontSize: "0.8rem", color: "#A0A0A0", lineHeight: "1.4" }}>
-                                    I accept the <a href="#" style={{color:"#FFFFFF"}}>terms</a> and have read the <a href="#" style={{color:"#FFFFFF"}}>privacy policy</a>. You must be 18 or over.
+                                    I accept the <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacyPolicy(true); }} style={{ color: "#FFFFFF", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>terms</button> and have read the <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacyPolicy(true); }} style={{ color: "#FFFFFF", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>privacy policy</button>. You must be 18 or over.
                                 </span>
                             </label>
 
@@ -859,7 +862,197 @@ export const MultiStepRegister = () => {
                     Signing up as a <span style={{ color: role === 'creator' ? "#A78BFA" : "#60A5FA", fontWeight: 700, textTransform: "capitalize" }}>{role}</span>
                 </div>
             )}
-            
+
+            {/* ── Privacy Policy Modal ── */}
+            {showPrivacyPolicy && (
+                <div
+                    style={{
+                        position: "fixed", inset: 0, zIndex: 9999,
+                        background: "rgba(0,0,0,0.8)",
+                        backdropFilter: "blur(8px)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: "1.5rem",
+                    }}
+                    onClick={() => setShowPrivacyPolicy(false)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            background: "#0A0A0A",
+                            border: "1px solid #222",
+                            borderRadius: "20px",
+                            width: "100%",
+                            maxWidth: "680px",
+                            maxHeight: "85vh",
+                            display: "flex",
+                            flexDirection: "column",
+                            boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+                            overflow: "hidden",
+                        }}
+                    >
+                        {/* Modal Header */}
+                        <div style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "20px 24px",
+                            borderBottom: "1px solid #1A1A1A",
+                            flexShrink: 0,
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                <div style={{
+                                    width: "36px", height: "36px", borderRadius: "10px",
+                                    background: "rgba(139,92,246,0.15)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                    <Shield size={18} color="#A78BFA" />
+                                </div>
+                                <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#FFFFFF", margin: 0, letterSpacing: "-0.02em" }}>
+                                    Privacy Policy
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => setShowPrivacyPolicy(false)}
+                                style={{
+                                    width: "32px", height: "32px", borderRadius: "8px",
+                                    border: "1px solid #333", background: "#111",
+                                    color: "#888", cursor: "pointer",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    transition: "all 0.15s",
+                                }}
+                                onMouseOver={e => { e.currentTarget.style.background = "#222"; e.currentTarget.style.color = "#FFF"; }}
+                                onMouseOut={e => { e.currentTarget.style.background = "#111"; e.currentTarget.style.color = "#888"; }}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body — scrollable */}
+                        <div style={{
+                            overflowY: "auto",
+                            padding: "24px",
+                            flex: 1,
+                            lineHeight: 1.7,
+                            fontSize: "0.875rem",
+                            color: "#CCCCCC",
+                        }}>
+                            <p style={{ color: "#666", fontSize: "0.75rem", marginBottom: "20px" }}>Last updated: April 2025</p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px", marginTop: "0" }}>1. Introduction</h3>
+                            <p style={{ marginBottom: "20px" }}>
+                                Black Bolt Provisions LLC (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) provides a Discord-integrated engagement and
+                                rewards infrastructure designed to track and reward community participation. This Privacy Policy
+                                explains how we collect, use, and protect information when users interact with our Discord bot,
+                                platform, and related services.
+                            </p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>2. Information We Collect</h3>
+                            <p style={{ marginBottom: "8px" }}>To operate our services, we may collect the following categories of data:</p>
+                            <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
+                                <li style={{ marginBottom: "8px" }}><strong style={{ color: "#FFF" }}>Discord Identity Data:</strong> Discord User ID, username, discriminator, and global display name to identify and associate activity with your account.</li>
+                                <li style={{ marginBottom: "8px" }}><strong style={{ color: "#FFF" }}>Engagement &amp; Activity Data:</strong> We collect interaction metadata such as message frequency, timestamps, and participation signals to calculate reward points.</li>
+                                <li style={{ marginBottom: "8px" }}><strong style={{ color: "#FFF" }}>Message Content (Limited Use):</strong> If enabled through Discord&apos;s Message Content Intent, message content may be temporarily processed only to analyze engagement context. We do not store message content long-term unless explicitly required for moderation, fraud prevention, or compliance purposes.</li>
+                                <li style={{ marginBottom: "8px" }}><strong style={{ color: "#FFF" }}>Presence Data:</strong> Online status and activity signals (if enabled) to enhance engagement tracking.</li>
+                                <li style={{ marginBottom: "8px" }}><strong style={{ color: "#FFF" }}>Transaction Data:</strong> If you redeem rewards, we may collect necessary contact or shipping information to fulfill orders.</li>
+                            </ul>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>3. How We Use Your Data</h3>
+                            <p style={{ marginBottom: "8px" }}>We use collected data strictly for the following purposes:</p>
+                            <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Reward Processing:</strong> To calculate, assign, and manage engagement-based rewards (&ldquo;Black Bolt&rdquo; points).</li>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Platform Functionality:</strong> To operate, maintain, and improve our engagement infrastructure.</li>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Fraud Prevention &amp; Security:</strong> To detect abuse, bot activity, or manipulation of engagement systems.</li>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Fulfillment:</strong> To process and deliver redeemed goods or services.</li>
+                            </ul>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>4. Data Sharing and Third-Party Services</h3>
+                            <p style={{ marginBottom: "8px" }}>
+                                We do not sell your personal data. We may share limited data only with trusted service providers necessary to operate our platform, including:
+                            </p>
+                            <ul style={{ paddingLeft: "20px", marginBottom: "8px" }}>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Infrastructure Providers:</strong> such as Vercel, Supabase (hosting, database, and backend services)</li>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Payment Processors:</strong> such as Stripe (for secure transaction handling)</li>
+                            </ul>
+                            <p style={{ marginBottom: "20px" }}>These providers process data on our behalf and are subject to their own privacy and security obligations.</p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>5. Data Retention</h3>
+                            <p style={{ marginBottom: "8px" }}>We retain user data only as long as necessary to operate our services:</p>
+                            <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
+                                <li style={{ marginBottom: "6px" }}>Engagement and activity data is retained while you are actively using servers where our bot is installed.</li>
+                                <li style={{ marginBottom: "6px" }}>Data may be deleted upon request or after a period of inactivity.</li>
+                                <li style={{ marginBottom: "6px" }}>Message content, if processed, is not stored long-term unless required for security or legal reasons.</li>
+                            </ul>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>6. User Rights and Control</h3>
+                            <p style={{ marginBottom: "8px" }}>You have control over your data:</p>
+                            <ul style={{ paddingLeft: "20px", marginBottom: "8px" }}>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Access &amp; Deletion:</strong> You may request access to or deletion of your data at any time.</li>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Opt-Out:</strong> You can stop data collection by removing the Black Bolt bot from your server or revoking its permissions.</li>
+                                <li style={{ marginBottom: "6px" }}><strong style={{ color: "#FFF" }}>Post-Removal Data:</strong> Upon removal, associated data will be deleted within a reasonable timeframe unless required for security or legal obligations.</li>
+                            </ul>
+                            <p style={{ marginBottom: "20px" }}>To make a request, contact us using the details below.</p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>7. Children&apos;s Privacy</h3>
+                            <p style={{ marginBottom: "20px" }}>
+                                Our services are not intended for individuals under the age of 13 (or the minimum age required by Discord in your region). We do not knowingly collect personal data from children.
+                            </p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>8. Security</h3>
+                            <p style={{ marginBottom: "20px" }}>
+                                We implement reasonable technical and organizational safeguards to protect your data. However, no system is completely secure, and we cannot guarantee absolute security.
+                            </p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>9. Changes to This Policy</h3>
+                            <p style={{ marginBottom: "20px" }}>
+                                We may update this Privacy Policy from time to time. Continued use of our services after changes constitutes acceptance of the updated policy. We encourage users to review this policy periodically.
+                            </p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>10. Governing Law</h3>
+                            <p style={{ marginBottom: "20px" }}>
+                                This Privacy Policy is governed by the laws of the State of Wyoming, United States.
+                            </p>
+
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>11. Contact Information</h3>
+                            <p style={{ marginBottom: "4px" }}>For questions, requests, or concerns regarding this Privacy Policy, please contact:</p>
+                            <div style={{
+                                background: "#111", border: "1px solid #222", borderRadius: "12px",
+                                padding: "16px", marginTop: "8px",
+                            }}>
+                                <p style={{ margin: "0 0 4px", fontWeight: 700, color: "#FFFFFF" }}>Black Bolt Provisions LLC</p>
+                                <a href="mailto:srichard@blackboltprovisions.com" style={{ color: "#A78BFA", textDecoration: "none", fontSize: "0.85rem" }}>
+                                    srichard@blackboltprovisions.com
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div style={{
+                            padding: "16px 24px",
+                            borderTop: "1px solid #1A1A1A",
+                            flexShrink: 0,
+                        }}>
+                            <button
+                                onClick={() => setShowPrivacyPolicy(false)}
+                                style={{
+                                    width: "100%",
+                                    padding: "14px",
+                                    borderRadius: "12px",
+                                    border: "none",
+                                    background: "#FFFFFF",
+                                    color: "#000000",
+                                    fontSize: "0.9375rem",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    transition: "all 0.15s",
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = "#E5E5E5"}
+                                onMouseOut={e => e.currentTarget.style.background = "#FFFFFF"}
+                            >
+                                I Understand
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>

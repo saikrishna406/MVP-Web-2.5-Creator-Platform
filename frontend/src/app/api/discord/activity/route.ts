@@ -150,6 +150,22 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
+        // Require either the internal secret or an authenticated session
+        const internalSecret = process.env.DISCORD_INTERNAL_SECRET;
+        const hasValidSecret = internalSecret &&
+            internalSecret !== 'your_discord_internal_secret_here' &&
+            request.headers.get('x-discord-secret') === internalSecret;
+
+        if (!hasValidSecret) {
+            // Fall back to session-based auth
+            const { createClient } = await import('@/lib/supabase/server');
+            const supabase = await createClient();
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            if (authError || !user) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+        }
+
         const { searchParams } = new URL(request.url);
         const discordUserId = searchParams.get('discord_user_id');
 
@@ -183,3 +199,4 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
+

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { POINT_ACTIONS } from '@/lib/constants';
+import { CommentSchema } from '@/lib/validations';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 // GET - get comments for a post
 export async function GET(request: NextRequest) {
@@ -47,15 +48,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { postId, content } = await request.json();
-
-        if (!postId || !content || !content.trim()) {
-            return NextResponse.json({ error: 'Post ID and content required' }, { status: 400 });
+        // Rate limit
+        const rl = checkRateLimit(`comment:${user.id}`, RATE_LIMITS.comment);
+        if (!rl.allowed) {
+            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }
 
-        if (content.length > 1000) {
-            return NextResponse.json({ error: 'Comment too long (max 1000 chars)' }, { status: 400 });
+        // Validate with Zod
+        const body = await request.json();
+        const parsed = CommentSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+                { status: 400 }
+            );
         }
+
+        const { postId, content } = parsed.data;
 
         // Insert comment
         const { data: comment, error } = await supabase
@@ -79,6 +88,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update comment count
+        // TODO: Replace with atomic SQL increment RPC to prevent race conditions
         const serviceClient = await createServiceClient();
         const { data: post } = await serviceClient
             .from('posts')
@@ -93,16 +103,21 @@ export async function POST(request: NextRequest) {
                 .eq('id', postId);
         }
 
-        // Award points for commenting
+        // Award points for commenting (uses reward_action RPC with daily cap)
         const commentAction = POINT_ACTIONS['comment_post'];
-        await serviceClient.rpc('award_points', {
-            p_user_id: user.id,
-            p_action: 'comment_post',
-            p_points: commentAction.points,
-            p_daily_limit: commentAction.daily_limit,
-            p_description: commentAction.description,
-            p_reference_id: postId,
-        });
+        try {
+            await serviceClient.rpc('reward_action', {
+                p_user_id: user.id,
+                p_action: 'comment_post',
+                p_points: commentAction.points,
+                p_daily_limit: commentAction.daily_limit,
+                p_description: commentAction.description,
+                p_reference_id: postId,
+                p_cooldown_minutes: 0,
+            });
+        } catch {
+            // Points are bonus — don't fail the comment
+        }
 
         return NextResponse.json({ comment, pointsEarned: commentAction.points }, { status: 201 });
     } catch (error) {

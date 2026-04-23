@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
                     .eq('user_id', user.id)
                     .eq('post_id', postId);
 
+                // TODO: Replace with atomic SQL decrement RPC to prevent race conditions
                 // Decrement count
                 const { data: unlikePost } = await serviceClient
                     .from('posts')
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
                     return NextResponse.json({ error: 'Failed to like post' }, { status: 500 });
                 }
 
+                // TODO: Replace with atomic SQL increment RPC to prevent race conditions
                 // Increment count
                 const { data: post } = await serviceClient
                     .from('posts')
