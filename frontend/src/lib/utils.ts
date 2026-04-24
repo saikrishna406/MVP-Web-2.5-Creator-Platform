@@ -9,9 +9,8 @@ export function formatTokens(amount: number): string {
     return new Intl.NumberFormat('en-US').format(amount);
 }
 
-export function formatPoints(amount: number): string {
-    return new Intl.NumberFormat('en-US').format(amount);
-}
+// Alias — same formatting, separate name for semantic clarity
+export const formatPoints = formatTokens;
 
 export function formatCurrency(cents: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -58,6 +57,4 @@ export function getInitials(name: string): string {
         .slice(0, 2);
 }
 
-export function generateId(): string {
-    return crypto.randomUUID();
-}
+

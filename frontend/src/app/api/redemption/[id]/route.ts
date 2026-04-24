@@ -13,6 +13,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         const body = await request.json();
 
+        // Validate input
+        if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 1 || body.name.length > 200) {
+            return NextResponse.json({ error: 'Name is required (max 200 characters)' }, { status: 400 });
+        }
+        if (body.description && (typeof body.description !== 'string' || body.description.length > 2000)) {
+            return NextResponse.json({ error: 'Description too long (max 2000 characters)' }, { status: 400 });
+        }
+        if (typeof body.point_cost !== 'number' || body.point_cost < 1 || !Number.isInteger(body.point_cost)) {
+            return NextResponse.json({ error: 'Point cost must be a positive integer' }, { status: 400 });
+        }
+        if (body.quantity_available !== undefined && body.quantity_available !== null) {
+            if (typeof body.quantity_available !== 'number' || body.quantity_available < 0 || !Number.isInteger(body.quantity_available)) {
+                return NextResponse.json({ error: 'Quantity must be a non-negative integer' }, { status: 400 });
+            }
+        }
+
         // Check ownership
         const { data: item, error: fetchError } = await supabase
             .from('redemption_items')
@@ -31,8 +47,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const { data: updatedItem, error: updateError } = await supabase
             .from('redemption_items')
             .update({
-                name: body.name,
-                description: body.description,
+                name: body.name.trim(),
+                description: body.description?.trim() || null,
                 point_cost: body.point_cost,
                 quantity_available: body.quantity_available,
             })

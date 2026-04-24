@@ -1,6 +1,7 @@
 "use client";
 
 import "./app-sidebar.css";
+import type { Profile, Wallet as WalletType } from "@/types";
 
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -51,7 +52,7 @@ const FAN_NAV = [
   { href: "/fan/store",  label: "Store",     icon: ShoppingBag     },
 ];
 
-export function AppSidebar({ profile, wallet }: { profile: any; wallet?: any }) {
+export function AppSidebar({ profile, wallet }: { profile: Partial<Profile> | null; wallet?: Partial<WalletType> | null }) {
   const pathname = usePathname();
   const supabase = createClient();
   const navItems = profile?.role === "fan" ? FAN_NAV : CREATOR_NAV;

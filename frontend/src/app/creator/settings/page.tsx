@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
 import { Sun, Moon, User, Palette, Save, Loader2, Lock, CheckCircle } from "lucide-react";
+import type { Profile } from "@/types";
 
 export default function CreatorSettingsPage() {
     const { theme, toggleTheme } = useTheme();
     const supabase = createClient();
 
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [displayName, setDisplayName] = useState("");
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);

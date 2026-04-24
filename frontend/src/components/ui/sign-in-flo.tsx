@@ -98,8 +98,8 @@ export const SignInFlo: React.FC = () => {
                 setError(error.message);
                 setIsGoogleLoading(false);
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to initiate Google sign-in");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to initiate Google sign-in");
             setIsGoogleLoading(false);
         }
     };
@@ -136,8 +136,8 @@ export const SignInFlo: React.FC = () => {
             }
 
             router.push(role === 'creator' ? '/creator' : '/fan');
-        } catch (err: any) {
-            setError(err.message || "Failed to complete profile");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to complete profile");
             setCompletingProfile(false);
         }
     };
@@ -176,8 +176,8 @@ export const SignInFlo: React.FC = () => {
         setError(""); setSuccess("");
         try {
             await handleSignIn();
-        } catch (err: any) {
-            setError(err.message || "An unexpected error occurred");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "An unexpected error occurred");
         } finally {
             setIsSubmitting(false);
         }

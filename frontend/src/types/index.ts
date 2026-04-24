@@ -5,6 +5,7 @@ export interface Profile {
   user_id: string;
   username: string;
   display_name: string;
+  email?: string;
   avatar_url: string | null;
   banner_url: string | null;
   category: string | null;
