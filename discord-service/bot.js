@@ -7,27 +7,100 @@
  *
  * Environment variables required:
  *   DISCORD_BOT_TOKEN       — your bot token from the Discord Developer Portal
- *   BACKEND_URL             — (optional) defaults to http://localhost:3000/api/discord/activity
- *   DISCORD_INTERNAL_SECRET — (optional) shared secret validated by the API route
+ *   BACKEND_URL             — defaults to http://localhost:3000
+ *   DISCORD_INTERNAL_SECRET — shared secret for HMAC signing API requests
  *
  * Events handled:
- *   messageCreate — fires when a user sends a message in any channel the bot can see
+ *   messageCreate — tracks messages in guild channels
+ *   interactionCreate — handles /link slash command
  *
- * Future extension points (see sender.js):
- *   - messageReactionAdd  → event_type: "reaction",  points: 1
- *   - guildMemberAdd      → event_type: "join",       points: 5
- *   - voiceStateUpdate    → event_type: "voice",      points: 3/min
+ * Future extension points:
+ *   - messageReactionAdd  → action_type: "reaction"
+ *   - guildMemberAdd      → action_type: "join"
+ *   - voiceStateUpdate    → action_type: "voice"
  */
 
 require('dotenv').config({ path: '../frontend/.env.local' });
 
+const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 const client = require('./client');
-const { sendActivity } = require('./sender');
+const { sendEvent, sendLinkVerify } = require('./sender');
+
+// ── Slash Command Registration ───────────────────────────────────
+const linkCommand = new SlashCommandBuilder()
+  .setName('link')
+  .setDescription('Link your Discord account to the Creator Platform')
+  .addStringOption((option) =>
+    option
+      .setName('code')
+      .setDescription('Your link code (e.g., LINK-A3F9)')
+      .setRequired(true)
+  );
+
+async function registerCommands() {
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
+  try {
+    console.log('[bot] Registering slash commands...');
+    await rest.put(Routes.applicationCommands(client.user.id), {
+      body: [linkCommand.toJSON()],
+    });
+    console.log('[bot] Slash commands registered.');
+  } catch (err) {
+    console.error('[bot] Failed to register commands:', err.message);
+  }
+}
 
 // ── Event: Ready ──────────────────────────────────────────────
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`[bot] Logged in as ${client.user?.tag}`);
   console.log(`[bot] Watching ${client.guilds.cache.size} guild(s)`);
+  await registerCommands();
+});
+
+// ── Event: interactionCreate (Slash Commands) ────────────────
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName !== 'link') return;
+
+  const code = interaction.options.getString('code');
+
+  if (!code) {
+    await interaction.reply({
+      content: '❌ Please provide a link code. Example: `/link LINK-A3F9`',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  // Defer reply so we have time to call the backend
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    const result = await sendLinkVerify({
+      code: code.toUpperCase().trim(),
+      external_user_id: interaction.user.id,
+      external_username: `${interaction.user.username}#${interaction.user.discriminator}`,
+    });
+
+    if (result.success) {
+      await interaction.editReply({
+        content:
+          '✅ **Discord account linked!**\n' +
+          'Your activity in this server will now be tracked on the Creator Platform.\n' +
+          'Keep chatting to earn engagement credit!',
+      });
+    } else {
+      const errorMsg = result.error || 'Unknown error';
+      await interaction.editReply({
+        content: `❌ **Link failed:** ${errorMsg}\n\nGenerate a new code at the Creator Platform dashboard.`,
+      });
+    }
+  } catch (err) {
+    console.error('[bot] Link command error:', err.message);
+    await interaction.editReply({
+      content: '❌ Something went wrong. Please try again later.',
+    });
+  }
 });
 
 // ── Event: messageCreate ──────────────────────────────────────
@@ -39,15 +112,19 @@ client.on('messageCreate', async (message) => {
   if (!message.guildId) return;
 
   console.log(
-    `[bot] Discord event captured — message from ${message.author.tag} in guild ${message.guildId}`
+    `[bot] Message from ${message.author.tag} in guild ${message.guildId}`
   );
 
-  await sendActivity({
-    discord_user_id: message.author.id,
-    guild_id: message.guildId,
-    event_type: 'message',
-    points: 2,
-    timestamp: message.createdAt.toISOString(),
+  await sendEvent({
+    external_user_id: message.author.id,
+    channel_id: message.guildId,
+    event_id: message.id,
+    action_type: 'message',
+    metadata: {
+      channel_id: message.channelId,
+      content_length: message.content?.length ?? 0,
+      has_attachments: message.attachments.size > 0,
+    },
   });
 });
 
