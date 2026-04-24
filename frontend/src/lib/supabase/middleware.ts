@@ -41,8 +41,8 @@ export async function updateSession(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Public paths that don't need auth
-    const publicPaths = ['/', '/login', '/register', '/auth/callback', '/api/stripe/webhook', '/privacy'];
-    const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook'));
+    const publicPaths = ['/', '/login', '/register', '/auth/callback', '/api/stripe/webhook', '/privacy', '/api/discord/callback', '/api/discord/connect'];
+    const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/discord/'));
 
     if (!user && !isPublicPath) {
         const url = request.nextUrl.clone();
