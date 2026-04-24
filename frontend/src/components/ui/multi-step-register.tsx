@@ -563,7 +563,7 @@ export const MultiStepRegister = () => {
                                     }} 
                                 />
                                 <span style={{ fontSize: "0.8rem", color: "#A0A0A0", lineHeight: "1.4" }}>
-                                    I accept the <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacyPolicy(true); }} style={{ color: "#FFFFFF", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>terms</button> and have read the <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacyPolicy(true); }} style={{ color: "#FFFFFF", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>privacy policy</button>. You must be 18 or over.
+                                    I accept the <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "#FFFFFF", fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>terms</a> and have read the <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "#FFFFFF", fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>privacy policy</a>. You must be 18 or over.
                                 </span>
                             </label>
 
