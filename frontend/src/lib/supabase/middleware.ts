@@ -41,7 +41,7 @@ export async function updateSession(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Public paths that don't need auth
-    const publicPaths = ['/', '/login', '/register', '/auth/callback', '/api/stripe/webhook'];
+    const publicPaths = ['/', '/login', '/register', '/auth/callback', '/api/stripe/webhook', '/privacy'];
     const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook'));
 
     if (!user && !isPublicPath) {
