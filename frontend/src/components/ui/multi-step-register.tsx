@@ -551,21 +551,24 @@ export const MultiStepRegister = () => {
                                 onBlur={e => e.target.style.borderColor = "transparent"}
                             />
                             
-                            <label style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginTop: "4px", cursor: "pointer" }}>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginTop: "4px" }}>
                                 <input 
                                     type="checkbox" 
+                                    id="terms-checkbox"
                                     checked={termsAccepted}
                                     onChange={(e) => setTermsAccepted(e.target.checked)}
                                     style={{ 
                                         width: "18px", height: "18px", 
                                         borderRadius: "4px", marginTop: "2px",
-                                        accentColor: "#FFFFFF"
+                                        accentColor: "#FFFFFF",
+                                        cursor: "pointer",
+                                        flexShrink: 0
                                     }} 
                                 />
                                 <span style={{ fontSize: "0.8rem", color: "#A0A0A0", lineHeight: "1.4" }}>
-                                    I accept the <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "#FFFFFF", fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>terms</a> and have read the <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "#FFFFFF", fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>privacy policy</a>. You must be 18 or over.
+                                    <label htmlFor="terms-checkbox" style={{ cursor: "pointer" }}>I accept the </label><a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: "#FFFFFF", fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>terms</a><label htmlFor="terms-checkbox" style={{ cursor: "pointer" }}> and have read the </label><a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: "#FFFFFF", fontSize: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px" }}>privacy policy</a><label htmlFor="terms-checkbox" style={{ cursor: "pointer" }}>. You must be 18 or over.</label>
                                 </span>
-                            </label>
+                            </div>
 
                             <button onClick={handleNextStep} style={{
                                 ...buttonStyle,
