@@ -495,3 +495,88 @@
 .alert-close:hover {
   opacity: 1;
 }
+
+/* ─── Server ID Input Section ─── */
+.server-id-section {
+  margin-top: 1.75rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.server-id-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.server-id-input-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.server-id-input {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.4);
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: monospace;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.server-id-input::placeholder {
+  color: #475569;
+  font-family: monospace;
+}
+
+.server-id-input:focus {
+  border-color: rgba(88, 101, 242, 0.5);
+  box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+}
+
+.save-server-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 6px 15px rgba(16, 185, 129, 0.25);
+}
+
+.save-server-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+}
+
+.save-server-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.server-id-hint {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #475569;
+  line-height: 1.5;
+  font-style: italic;
+}

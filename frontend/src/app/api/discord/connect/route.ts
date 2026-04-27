@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * GET /api/discord/connect
@@ -47,4 +48,116 @@ export async function GET() {
     const discordAuthUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
 
     return NextResponse.redirect(discordAuthUrl);
+}
+
+/**
+ * POST /api/discord/connect
+ * -------------------------
+ * Save a creator's Discord server guild_id after bot is added.
+ *
+ * Body: { guild_id: string }
+ */
+export async function POST(request: NextRequest) {
+    try {
+        const supabase = await createClient();
+
+        // 1. Authenticate user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        // 2. Parse and validate input
+        const body = await request.json();
+        const { guild_id } = body;
+
+        if (!guild_id || typeof guild_id !== 'string' || guild_id.trim().length === 0) {
+            return NextResponse.json(
+                { error: 'guild_id is required and must be a non-empty string' },
+                { status: 400 }
+            );
+        }
+
+        // 3. Verify user is a creator
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+
+        if (profileError || !profile) {
+            return NextResponse.json(
+                { error: 'Profile not found' },
+                { status: 404 }
+            );
+        }
+
+        if (profile.role !== 'creator') {
+            return NextResponse.json(
+                { error: 'Only creators can connect a Discord server' },
+                { status: 403 }
+            );
+        }
+
+        // 4. Check if creator already has a Discord connection
+        const { data: existing } = await supabase
+            .from('creator_channels')
+            .select('id')
+            .eq('creator_id', user.id)
+            .eq('platform', 'discord')
+            .maybeSingle();
+
+        if (existing) {
+            // Update existing connection
+            const { error } = await supabase
+                .from('creator_channels')
+                .update({
+                    external_channel_id: guild_id.trim(),
+                    is_active: true,
+                })
+                .eq('id', existing.id);
+
+            if (error) {
+                console.error('[discord/connect POST] Update error:', error.message);
+                return NextResponse.json({ error: 'Failed to update connection' }, { status: 500 });
+            }
+        } else {
+            // Insert new connection
+            const { error } = await supabase
+                .from('creator_channels')
+                .insert({
+                    creator_id: user.id,
+                    platform: 'discord',
+                    external_channel_id: guild_id.trim(),
+                    is_active: true,
+                });
+
+            if (error) {
+                if (error.code === '23505') {
+                    return NextResponse.json(
+                        { error: 'This Discord server is already connected to another creator' },
+                        { status: 409 }
+                    );
+                }
+                console.error('[discord/connect POST] Insert error:', error.message);
+                return NextResponse.json({ error: 'Failed to save connection' }, { status: 500 });
+            }
+        }
+
+        // 5. Return success
+        return NextResponse.json({
+            success: true,
+            guild_id: guild_id.trim(),
+        });
+    } catch (error) {
+        console.error('[discord/connect] POST error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     Unlink, CheckCircle2, AlertCircle, Copy, Check,
     Trophy, MessageSquare, Crown, Users, Loader2,
-    Hash, Shield,
+    Hash, Shield, ExternalLink,
 } from 'lucide-react';
 import './social.css';
 
@@ -32,6 +32,8 @@ interface TopFan {
     score: number;
 }
 
+const BOT_INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1497933681271242822&permissions=68608&scope=bot+applications.commands';
+
 /* ─────────── Component ─────────── */
 export default function SocialPage() {
     // Discord connection state
@@ -42,6 +44,10 @@ export default function SocialPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+    // Guild ID input state
+    const [guildId, setGuildId] = useState('');
+    const [saving, setSaving] = useState(false);
+
     // Top fans state
     const [fans, setFans] = useState<TopFan[]>([]);
     const [totalFans, setTotalFans] = useState(0);
@@ -49,7 +55,6 @@ export default function SocialPage() {
 
     // Copy state
     const [copied, setCopied] = useState(false);
-
 
 
     /* ─── Fetch Discord Connection ─── */
@@ -90,6 +95,46 @@ export default function SocialPage() {
         fetchTopFans();
     }, [fetchConnection, fetchTopFans]);
 
+    /* ─── Connect Discord (Save Guild ID) ─── */
+    const handleSaveServer = async () => {
+        setError('');
+        setSuccess('');
+
+        if (!guildId.trim()) {
+            setError('Please enter your Discord Server ID');
+            return;
+        }
+
+        if (!/^\d{17,22}$/.test(guildId.trim())) {
+            setError('Invalid Server ID format. It should be 17-22 digits.');
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const res = await fetch('/api/discord/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guild_id: guildId.trim() }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || 'Failed to connect server');
+                return;
+            }
+
+            setSuccess('Discord server connected successfully!');
+            setGuildId('');
+            await fetchConnection();
+            await fetchTopFans();
+        } catch {
+            setError('Network error. Please try again.');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     /* ─── Disconnect Discord ─── */
     const handleDisconnect = async () => {
@@ -214,36 +259,73 @@ export default function SocialPage() {
                             </div>
                         ) : (
                             <div>
-                                <div className="text-center py-6 mb-6">
+                                <div className="text-center py-4 mb-4">
                                     <h3 className="text-xl font-bold text-white mb-3">Connect Your Community</h3>
                                     <p className="text-sm text-slate-400 max-w-sm mx-auto leading-relaxed">
-                                        Securely connect your Discord server to unlock powerful community insights, automated roles, and real-time activity tracking.
+                                        Add the bot to your Discord server, then paste your Server ID below to start tracking engagement.
                                     </p>
                                 </div>
 
+                                {/* Step 1: Connect Discord Button */}
                                 <a
-                                    href="/api/discord/connect"
+                                    href={BOT_INVITE_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="connect-btn"
                                 >
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 relative z-10">
                                         <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
                                     </svg>
-                                    <span className="relative z-10">Link Discord Server</span>
+                                    <span className="relative z-10">Connect Discord</span>
+                                    <ExternalLink className="w-4 h-4 relative z-10 opacity-60" />
                                 </a>
+
+                                {/* Step 2: Server ID Input */}
+                                <div className="server-id-section">
+                                    <label className="server-id-label">
+                                        <Shield className="w-4 h-4" />
+                                        Enter your Discord Server ID
+                                    </label>
+                                    <div className="server-id-input-group">
+                                        <input
+                                            type="text"
+                                            value={guildId}
+                                            onChange={(e) => setGuildId(e.target.value)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') handleSaveServer(); }}
+                                            placeholder="e.g. 1234567890123456789"
+                                            className="server-id-input"
+                                        />
+                                        <button
+                                            onClick={handleSaveServer}
+                                            disabled={saving || !guildId.trim()}
+                                            className="save-server-btn"
+                                        >
+                                            {saving ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <CheckCircle2 className="w-4 h-4" />
+                                            )}
+                                            {saving ? 'Saving...' : 'Save Server'}
+                                        </button>
+                                    </div>
+                                    <p className="server-id-hint">
+                                        Open Discord → Right-click your server name → Server Settings → Widget → Copy Server ID
+                                    </p>
+                                </div>
 
                                 <div className="steps-container">
                                     <h4 className="steps-title">Setup Process</h4>
                                     <div className="step-item">
                                         <div className="step-number">1</div>
-                                        <span>Authorize your Discord account securely</span>
+                                        <span>Click &quot;Connect Discord&quot; to add the bot to your server</span>
                                     </div>
                                     <div className="step-item">
                                         <div className="step-number">2</div>
-                                        <span>Invite the analytics bot to your server</span>
+                                        <span>Copy your Discord Server ID from server settings</span>
                                     </div>
                                     <div className="step-item">
                                         <div className="step-number">3</div>
-                                        <span>Start tracking engagement instantly</span>
+                                        <span>Paste the ID above and click &quot;Save Server&quot;</span>
                                     </div>
                                 </div>
                             </div>
@@ -322,4 +404,3 @@ export default function SocialPage() {
         </div>
     );
 }
-
