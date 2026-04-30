@@ -8,6 +8,7 @@ import {
 import { formatRelativeTime, getInitials, truncateText } from '@/lib/utils';
 import Toast from '@/components/ui/Toast';
 import type { Post, PostComment } from '@/types';
+import Link from 'next/link';
 
 interface CreatorPostsFeedProps {
     /** If provided, only shows posts from this creator (by user_id / creator_id) */
@@ -269,23 +270,33 @@ export function CreatorPostsFeed({
                                 {/* Creator info row */}
                                 {!hideCreatorInfo && post.creator && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                        <div style={{
-                                            width: '34px', height: '34px', borderRadius: '50%',
-                                            background: 'var(--dash-border)', overflow: 'hidden', flexShrink: 0,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '12px', fontWeight: 700, color: 'var(--dash-text-secondary)',
-                                        }}>
-                                            {post.creator.avatar_url
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                ? <img src={post.creator.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                : getInitials(post.creator.display_name || 'C')
-                                            }
-                                        </div>
+                                        <Link href={`/fan/${post.creator.username}`} style={{ textDecoration: 'none' }}>
+                                            <div style={{
+                                                width: '34px', height: '34px', borderRadius: '50%',
+                                                background: 'var(--dash-border)', overflow: 'hidden', flexShrink: 0,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '12px', fontWeight: 700, color: 'var(--dash-text-secondary)',
+                                                cursor: 'pointer',
+                                            }}>
+                                                {post.creator.avatar_url
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    ? <img src={post.creator.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    : getInitials(post.creator.display_name || 'C')
+                                                }
+                                            </div>
+                                        </Link>
                                         <div>
-                                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--dash-text-primary)' }}>
-                                                {post.creator.display_name}
-                                            </span>
-                                            <span style={{ fontSize: '12px', color: 'var(--dash-text-muted)', marginLeft: '6px' }}>
+                                            <Link href={`/fan/${post.creator.username}`} style={{ textDecoration: 'none' }}>
+                                                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--dash-text-primary)', cursor: 'pointer' }}>
+                                                    {post.creator.display_name}
+                                                </span>
+                                            </Link>
+                                            <Link href={`/fan/${post.creator.username}`} style={{ textDecoration: 'none' }}>
+                                                <span style={{ fontSize: '12px', color: 'var(--dash-text-muted)', marginLeft: '4px', cursor: 'pointer' }}>
+                                                    @{post.creator.username}
+                                                </span>
+                                            </Link>
+                                            <span style={{ fontSize: '12px', color: 'var(--dash-text-muted)', marginLeft: '4px' }}>
                                                 · {formatRelativeTime(post.created_at)}
                                             </span>
                                         </div>

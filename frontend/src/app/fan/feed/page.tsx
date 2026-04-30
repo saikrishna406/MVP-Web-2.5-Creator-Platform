@@ -8,6 +8,7 @@ import {
 import { formatRelativeTime, getInitials, truncateText } from '@/lib/utils';
 import Toast from '@/components/ui/Toast';
 import type { Post, PostComment } from '@/types';
+import Link from 'next/link';
 
 // ─── Skeleton card ──────────────────────────────────────────────────
 function FeedSkeleton() {
@@ -291,16 +292,18 @@ export default function FeedPage() {
 
                                 {/* Creator header */}
                                 <div className="ff-card-header">
-                                    <div className="ff-avatar">
+                                    <Link href={`/fan/${post.creator?.username}`} className="ff-avatar ff-avatar-link" style={{ textDecoration: 'none' }}>
                                         {post.creator?.avatar_url
                                             // eslint-disable-next-line @next/next/no-img-element
                                             ? <img src={post.creator.avatar_url} alt="" className="ff-avatar-img" />
                                             : <span className="ff-avatar-initials">{getInitials(post.creator?.display_name || 'C')}</span>
                                         }
-                                    </div>
+                                    </Link>
                                     <div className="ff-creator-info">
-                                        <span className="ff-creator-name">{post.creator?.display_name}</span>
-                                        <span className="ff-creator-meta">@{post.creator?.username} · {formatRelativeTime(post.created_at)}</span>
+                                        <Link href={`/fan/${post.creator?.username}`} className="ff-creator-name-link">
+                                            <span className="ff-creator-name">{post.creator?.display_name}</span>
+                                        </Link>
+                                        <span className="ff-creator-meta"><Link href={`/fan/${post.creator?.username}`} className="ff-creator-handle-link">@{post.creator?.username}</Link> · {formatRelativeTime(post.created_at)}</span>
                                     </div>
                                     {/* Access chip */}
                                     {post.access_type === 'public' ? (
@@ -535,11 +538,16 @@ export default function FeedPage() {
 
                 /* Creator header */
                 .ff-card-header { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; }
-                .ff-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--dash-border); display: flex; align-items: center; justify-content: center; border: 2px solid var(--dash-border); }
+                .ff-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--dash-border); display: flex; align-items: center; justify-content: center; border: 2px solid var(--dash-border); transition: transform 0.18s, box-shadow 0.18s; }
+                .ff-avatar-link:hover { transform: scale(1.07); box-shadow: 0 0 0 2px var(--dash-text-primary); }
                 .ff-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
                 .ff-avatar-initials { font-size: 14px; font-weight: 800; color: var(--dash-text-secondary); }
                 .ff-creator-info { flex: 1; min-width: 0; }
                 .ff-creator-name { display: block; font-size: 14px; font-weight: 700; color: var(--dash-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .ff-creator-name-link { text-decoration: none; }
+                .ff-creator-name-link:hover .ff-creator-name { text-decoration: underline; }
+                .ff-creator-handle-link { color: var(--dash-text-muted); text-decoration: none; font-weight: 600; }
+                .ff-creator-handle-link:hover { text-decoration: underline; color: var(--dash-text-primary); }
                 .ff-creator-meta { display: block; font-size: 12px; color: var(--dash-text-muted); font-weight: 500; margin-top: 1px; }
 
                 /* Chips */

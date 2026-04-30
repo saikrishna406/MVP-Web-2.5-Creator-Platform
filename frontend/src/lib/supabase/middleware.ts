@@ -7,6 +7,12 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.next({ request });
     }
 
+    // Public creator profiles at /fan/[username] — skip ALL auth
+    const fanProfileMatch = /^\/fan\/[a-zA-Z0-9_]+$/.test(request.nextUrl.pathname);
+    if (fanProfileMatch) {
+        return NextResponse.next({ request });
+    }
+
     let supabaseResponse = NextResponse.next({
         request,
     });
@@ -42,9 +48,13 @@ export async function updateSession(request: NextRequest) {
 
     // Public paths that don't need auth
     const publicPaths = ['/', '/login', '/register', '/auth/callback', '/api/stripe/webhook', '/privacy', '/api/discord/callback', '/api/discord/connect'];
-    const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/discord/'));
+    const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/discord/') || pathname.startsWith('/p/'));
 
-    if (!user && !isPublicPath) {
+    // Public creator profile pages: /p/[username] or /[username]
+    const knownPrefixes = ['/login', '/register', '/auth', '/creator', '/fan', '/api', '/demo', '/privacy', '/_next', '/favicon'];
+    const isPublicProfile = pathname.startsWith('/p/') || (!knownPrefixes.some(p => pathname.startsWith(p)) && /^\/[a-zA-Z0-9_]+$/.test(pathname) && pathname !== '/');
+
+    if (!user && !isPublicPath && !isPublicProfile) {
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         return NextResponse.redirect(url);
@@ -99,16 +109,23 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (user && pathname.startsWith('/fan')) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('user_id', user.id)
-            .single();
+        // Allow any logged-in user to view creator profiles at /fan/[username]
+        // Only restrict the fan dashboard itself (/fan, /fan/feed, /fan/wallet, etc.)
+        const fanProfileRegex = /^\/fan\/[^/]+$/;
+        const isCreatorProfile = fanProfileRegex.test(pathname);
 
-        if (profile?.role !== 'fan') {
-            const url = request.nextUrl.clone();
-            url.pathname = '/creator';
-            return NextResponse.redirect(url);
+        if (!isCreatorProfile) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profile?.role !== 'fan') {
+                const url = request.nextUrl.clone();
+                url.pathname = '/creator';
+                return NextResponse.redirect(url);
+            }
         }
     }
 

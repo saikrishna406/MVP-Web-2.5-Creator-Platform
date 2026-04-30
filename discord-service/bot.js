@@ -20,7 +20,8 @@
  *   - voiceStateUpdate    → action_type: "voice"
  */
 
-require('dotenv').config({ path: '../frontend/.env.local' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', 'frontend', '.env.local') });
 
 const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 const client = require('./client');

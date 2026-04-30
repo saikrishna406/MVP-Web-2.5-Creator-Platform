@@ -634,9 +634,11 @@ export const MultiStepRegister = () => {
                             </div>
                         )}
 
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>About you</h1>
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>
+                            {role === 'creator' ? 'About you' : 'Your Fan Profile'}
+                        </h1>
                         <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: "24px" }}>
-                            Tell us a bit about yourself
+                            {role === 'creator' ? 'Tell us a bit about yourself' : 'Set up your profile to connect with creators'}
                         </p>
 
                         {/* Role selection for Google OAuth users */}
@@ -702,9 +704,11 @@ export const MultiStepRegister = () => {
                             </div>
                             
                             <div>
-                                <label style={{ display: "block", fontSize: "0.95rem", fontWeight: 700, marginBottom: "8px", color: "#FFFFFF" }}>Bio</label>
+                                <label style={{ display: "block", fontSize: "0.95rem", fontWeight: 700, marginBottom: "8px", color: "#FFFFFF" }}>
+                                    {role === 'creator' ? 'Bio' : 'About Me'}
+                                </label>
                                 <textarea
-                                    placeholder="Introduce yourself so others can get to know you..."
+                                    placeholder={role === 'creator' ? "Introduce yourself so fans can get to know you..." : "What kind of content do you enjoy?"}
                                     value={bio}
                                     onChange={e => setBio(e.target.value)}
                                     style={{
@@ -730,13 +734,21 @@ export const MultiStepRegister = () => {
                         <button onClick={() => setStep(2)} style={{ background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginBottom: "16px", padding: 0 }}>
                             <ArrowLeft size={14} /> Back
                         </button>
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>Pick a username</h1>
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>
+                            {role === 'creator' ? 'Claim your creator link' : 'Pick a username'}
+                        </h1>
                         
                         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                            <p style={{ color: "#D0D0D0", fontSize: "0.95rem" }}>What would you like your link to be?</p>
+                            <p style={{ color: "#D0D0D0", fontSize: "0.95rem" }}>
+                                {role === 'creator' ? 'What would you like your link to be?' : 'Choose a unique username for your account'}
+                            </p>
                             
                             <div style={{ ...renderInputStyle, display: "flex", alignItems: "center", padding: "14px 16px" }}>
-                                <span style={{ fontWeight: 700, color: "#FFFFFF", marginRight: "4px" }}>mvpcreator.com/</span>
+                                {role === 'creator' ? (
+                                    <span style={{ fontWeight: 700, color: "#FFFFFF", marginRight: "4px" }}>mvpcreator.com/</span>
+                                ) : (
+                                    <span style={{ fontWeight: 700, color: "#FFFFFF", marginRight: "4px" }}>@</span>
+                                )}
                                 <input
                                     type="text"
                                     value={username}
@@ -771,7 +783,9 @@ export const MultiStepRegister = () => {
                         <button onClick={() => setStep(3)} style={{ background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginBottom: "16px", padding: 0 }}>
                             <ArrowLeft size={14} /> Back
                         </button>
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>Choose your profile picture</h1>
+                        <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "24px" }}>
+                            {role === 'creator' ? 'Choose your profile picture' : 'Choose your avatar'}
+                        </h1>
                         
                         <div style={{ display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" }}>
                             

@@ -32,6 +32,15 @@ interface TopFan {
     score: number;
 }
 
+interface LeaderboardFan {
+    rank: number;
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+    total_points: number;
+    message_count: number;
+}
+
 const BOT_INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1497933681271242822&permissions=68608&scope=bot+applications.commands';
 
 /* ─────────── Component ─────────── */
@@ -51,6 +60,11 @@ export default function SocialPage() {
     // Top fans state
     const [fans, setFans] = useState<TopFan[]>([]);
     const [totalFans, setTotalFans] = useState(0);
+
+    // Leaderboard state (from creator_points_agg)
+    const [lbFans, setLbFans] = useState<LeaderboardFan[]>([]);
+    const [lbTotal, setLbTotal] = useState(0);
+    const [lbLoading, setLbLoading] = useState(true);
     const [fansLoading, setFansLoading] = useState(true);
 
     // Copy state
@@ -90,10 +104,25 @@ export default function SocialPage() {
         }
     }, []);
 
+    /* ─── Fetch Leaderboard (creator_points_agg) ─── */
+    const fetchLeaderboard = useCallback(async () => {
+        try {
+            const res = await fetch('/api/creator/leaderboard');
+            const data = await res.json();
+            setLbFans(data.leaderboard || []);
+            setLbTotal(data.total || 0);
+        } catch {
+            console.error('Failed to fetch leaderboard');
+        } finally {
+            setLbLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchConnection();
         fetchTopFans();
-    }, [fetchConnection, fetchTopFans]);
+        fetchLeaderboard();
+    }, [fetchConnection, fetchTopFans, fetchLeaderboard]);
 
     /* ─── Connect Discord (Save Guild ID) ─── */
     const handleSaveServer = async () => {
@@ -333,7 +362,7 @@ export default function SocialPage() {
                     </div>
 
                     {/* ══════════════════════════════════════════════ */}
-                    {/* Section B: Top Fans Leaderboard               */}
+                    {/* Section B: Creator-Scoped Leaderboard         */}
                     {/* ══════════════════════════════════════════════ */}
                     <div className="premium-card">
                         <div className="leaderboard-header">
@@ -341,61 +370,70 @@ export default function SocialPage() {
                                 <Trophy className="w-6 h-6 text-indigo-400" />
                                 Global Leaderboard
                             </h3>
-                            {totalFans > 0 && <span className="fans-count">{totalFans} Active Fans</span>}
+                            {lbTotal > 0 && <span className="fans-count">{lbTotal} Active Fans</span>}
                         </div>
 
-                        {fansLoading ? (
+                        {lbLoading ? (
                             <div className="flex items-center justify-center gap-3 py-16 text-slate-400">
                                 <Loader2 className="w-5 h-5 animate-spin" /> Compiling rankings...
                             </div>
-                        ) : fans.length === 0 ? (
+                        ) : lbFans.length === 0 ? (
                             <div className="empty-state">
                                 <Users className="w-12 h-12 text-slate-600 mx-auto empty-icon" />
                                 <h3 className="empty-title">Awaiting Activity</h3>
-                                <p className="empty-subtitle">Once your server is linked, top contributors will be immortalized here.</p>
+                                <p className="empty-subtitle">When fans send messages in your Discord, their points and rankings will appear here.</p>
                             </div>
                         ) : (
-                            <div className="space-y-1">
-                                {fans.map((fan, i) => (
-                                    <div key={fan.external_user_id} className="fan-row">
-                                        <div className={`rank-badge ${
-                                            i === 0 ? 'rank-1' :
-                                            i === 1 ? 'rank-2' :
-                                            i === 2 ? 'rank-3' :
-                                            'rank-other'
-                                        }`}>
-                                            {i === 0 ? '1' : i === 1 ? '2' : i === 2 ? '3' : `${i + 1}`}
-                                        </div>
-                                        
-                                        <div className="avatar-wrapper">
-                                            {fan.avatar_url ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={fan.avatar_url} alt={fan.display_name} className="avatar-img" />
-                                            ) : (
-                                                <span className="avatar-fallback">{fan.display_name.charAt(0).toUpperCase()}</span>
-                                            )}
-                                        </div>
+                            <div>
+                                {/* Table Header */}
+                                <div className="lb-table-header">
+                                    <span className="lb-col-rank">Rank</span>
+                                    <span className="lb-col-user">User</span>
+                                    <span className="lb-col-pts">Points</span>
+                                    <span className="lb-col-msgs">Messages</span>
+                                </div>
+                                {/* Table Rows */}
+                                <div className="space-y-1">
+                                    {lbFans.map((fan, i) => (
+                                        <div key={fan.username + i} className="fan-row">
+                                            <div className={`rank-badge ${
+                                                i === 0 ? 'rank-1' :
+                                                i === 1 ? 'rank-2' :
+                                                i === 2 ? 'rank-3' :
+                                                'rank-other'
+                                            }`}>
+                                                {i + 1}
+                                            </div>
 
-                                        <div className="fan-info">
-                                            <div className="fan-name">
-                                                {fan.display_name}
-                                                {fan.is_linked && <CheckCircle2 className="w-4 h-4 text-emerald-400" aria-label="Linked account" />}
+                                            <div className="avatar-wrapper">
+                                                {fan.avatar_url ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={fan.avatar_url} alt={fan.display_name} className="avatar-img" />
+                                                ) : (
+                                                    <span className="avatar-fallback">{(fan.display_name || fan.username || '?').charAt(0).toUpperCase()}</span>
+                                                )}
                                             </div>
-                                            <div className="fan-username">
-                                                @{fan.username}
-                                            </div>
-                                        </div>
 
-                                        <div className="fan-stats">
-                                            <div className="stat-item stat-msgs">
-                                                <MessageSquare className="w-3.5 h-3.5" /> {fan.message_count}
+                                            <div className="fan-info">
+                                                <div className="fan-name">
+                                                    {fan.display_name || fan.username}
+                                                </div>
+                                                <div className="fan-username">
+                                                    @{fan.username}
+                                                </div>
                                             </div>
-                                            <div className="stat-item stat-pts">
-                                                <Crown className="w-3.5 h-3.5" /> {fan.score}
+
+                                            <div className="fan-stats">
+                                                <div className="stat-item stat-pts">
+                                                    <Crown className="w-3.5 h-3.5" /> {fan.total_points}
+                                                </div>
+                                                <div className="stat-item stat-msgs">
+                                                    <MessageSquare className="w-3.5 h-3.5" /> {fan.message_count}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

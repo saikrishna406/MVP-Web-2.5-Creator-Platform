@@ -442,6 +442,25 @@
 .stat-msgs { color: #94a3b8; margin-bottom: 0.25rem; }
 .stat-pts { color: #fbbf24; }
 
+/* Leaderboard table header */
+.lb-table-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.lb-col-rank { width: 32px; text-align: center; flex-shrink: 0; }
+.lb-col-user { flex: 1; margin-left: 52px; }
+.lb-col-pts { width: 64px; text-align: right; }
+.lb-col-msgs { width: 72px; text-align: right; }
+
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }

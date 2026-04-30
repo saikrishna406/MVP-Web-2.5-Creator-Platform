@@ -103,7 +103,55 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. Check if creator already has a Discord connection
+        // 4. Fetch guild name + create invite from Discord API using bot token
+        let guildName: string | null = null;
+        let discordInviteUrl: string | null = null;
+        const botToken = process.env.DISCORD_BOT_TOKEN;
+        if (botToken) {
+            try {
+                // Fetch guild info
+                const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guild_id.trim()}`, {
+                    headers: { Authorization: `Bot ${botToken}` },
+                });
+                if (guildRes.ok) {
+                    const guildData = await guildRes.json();
+                    guildName = guildData.name || null;
+                } else {
+                    console.warn('[discord/connect] Could not fetch guild info:', guildRes.status);
+                }
+
+                // Fetch guild channels to find a text channel for the invite
+                const channelsRes = await fetch(`https://discord.com/api/v10/guilds/${guild_id.trim()}/channels`, {
+                    headers: { Authorization: `Bot ${botToken}` },
+                });
+                if (channelsRes.ok) {
+                    const channels = await channelsRes.json();
+                    // Find the first text channel (type 0) the bot can access
+                    const textChannel = channels.find((ch: { type: number }) => ch.type === 0);
+                    if (textChannel) {
+                        // Create a permanent invite (max_age=0 means never expires, max_uses=0 means unlimited)
+                        const inviteRes = await fetch(`https://discord.com/api/v10/channels/${textChannel.id}/invites`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bot ${botToken}`,
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ max_age: 0, max_uses: 0, unique: false }),
+                        });
+                        if (inviteRes.ok) {
+                            const inviteData = await inviteRes.json();
+                            discordInviteUrl = `https://discord.gg/${inviteData.code}`;
+                        } else {
+                            console.warn('[discord/connect] Could not create invite:', inviteRes.status);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[discord/connect] Discord API error:', e);
+            }
+        }
+
+        // 5. Check if creator already has a Discord connection
         const { data: existing } = await supabase
             .from('creator_channels')
             .select('id')
@@ -117,6 +165,8 @@ export async function POST(request: NextRequest) {
                 .from('creator_channels')
                 .update({
                     external_channel_id: guild_id.trim(),
+                    channel_name: guildName,
+                    discord_invite_url: discordInviteUrl,
                     is_active: true,
                 })
                 .eq('id', existing.id);
@@ -133,6 +183,8 @@ export async function POST(request: NextRequest) {
                     creator_id: user.id,
                     platform: 'discord',
                     external_channel_id: guild_id.trim(),
+                    channel_name: guildName,
+                    discord_invite_url: discordInviteUrl,
                     is_active: true,
                 });
 

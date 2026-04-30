@@ -152,6 +152,24 @@ export default function CreatorProfilePage() {
                             {primaryLink.replace(/^https?:\/\/(www\.)?/,'')}
                         </a>
                     )}
+
+                    {/* Shareable public profile URL */}
+                    <div className="ig-share-url-row">
+                        <Link2 size={13} style={{ color: 'var(--dash-text-muted)', flexShrink: 0 }} />
+                        <span className="ig-share-url-text">
+                            {typeof window !== 'undefined' ? window.location.origin : 'https://blackbolts.com'}/fan/{profile.username}
+                        </span>
+                        <button
+                            className="ig-share-copy-btn"
+                            onClick={() => {
+                                const url = `${window.location.origin}/fan/${profile!.username}`;
+                                navigator.clipboard.writeText(url);
+                                setToast({ message: 'Profile URL copied!', type: 'success' });
+                            }}
+                        >
+                            Copy
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -428,6 +446,12 @@ export default function CreatorProfilePage() {
             .ig-link { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; color: #00376b; text-decoration: none; }
             .dark .ig-link { color: #8ac7ff; }
             .ig-link:hover { text-decoration: underline; }
+
+            /* Shareable URL row */
+            .ig-share-url-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--dash-bg); border: 1px solid var(--dash-border); border-radius: 8px; margin-top: 4px; }
+            .ig-share-url-text { font-size: 13px; font-weight: 500; color: var(--dash-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+            .ig-share-copy-btn { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--dash-border); background: var(--dash-card); color: var(--dash-text-primary); font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.15s; flex-shrink: 0; }
+            .ig-share-copy-btn:hover { background: var(--dash-border); }
 
             /* Mobile stats row (hidden on desktop) */
             .ig-mobile-stats { display: none; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--dash-border); border-bottom: 1px solid var(--dash-border); margin: 0 0 4px; }

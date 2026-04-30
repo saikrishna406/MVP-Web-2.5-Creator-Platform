@@ -185,6 +185,71 @@ export async function POST(request: NextRequest) {
       `user=${userId ?? 'unlinked'} action=${action_type} event=${event_id}`
     );
 
+    // ── Step 5: Message Reward Processing (AFTER log) ──────────
+    // Only award points for messages from linked, non-bot users
+    if (action_type === 'message' && userId) {
+      try {
+        const content = typeof metadata?.content === 'string' ? metadata.content : '';
+        const isBot = metadata?.is_bot === true;
+
+        // Skip: bot messages or content too short
+        if (!isBot && content.length >= 5) {
+          // Anti-spam: 30-second cooldown per user
+          const cooldownKey = `discord_reward_cooldown:${userId}`;
+          const cooldownRl = checkRateLimit(cooldownKey, { maxRequests: 1, windowSeconds: 30 });
+
+          if (cooldownRl.allowed) {
+            // Anti-spam: reject duplicate content (same as last message)
+            const { data: lastMsg } = await supabase
+              .from('engagement_logs')
+              .select('metadata')
+              .eq('user_id', userId)
+              .eq('action_type', 'message')
+              .neq('external_event_id', externalEventId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            const lastContent = typeof lastMsg?.metadata?.content === 'string' ? lastMsg.metadata.content : '';
+            const isDuplicate = lastContent.length > 0 && lastContent === content;
+
+            if (!isDuplicate) {
+              // Call reward_action() RPC — handles daily cap + cooldown internally
+              const idempotencyKey = `discord_msg_${event_id}`;
+              const { data: rewardResult, error: rewardError } = await supabase.rpc('reward_action', {
+                p_user_id: userId,
+                p_action: 'discord_message',
+                p_points: 1,
+                p_daily_limit: 100,
+                p_description: 'Discord message reward',
+                p_reference_id: idempotencyKey,
+                p_cooldown_minutes: 0.5,
+              });
+
+              const row = Array.isArray(rewardResult) ? rewardResult[0] : rewardResult;
+
+              if (!rewardError && row?.success) {
+                // Atomic increment in creator_points_agg (INSERT ON CONFLICT)
+                await supabase.rpc('increment_creator_points', {
+                  p_user_id: userId,
+                  p_creator_id: channel.creator_id,
+                });
+
+                console.log(`[discord/event] Rewarded user=${userId} +1pt for message in creator=${channel.creator_id}`);
+              }
+            } else {
+              console.log(`[discord/event] Skipped reward — duplicate content for user=${userId}`);
+            }
+          } else {
+            console.log(`[discord/event] Skipped reward — cooldown active for user=${userId}`);
+          }
+        }
+      } catch (rewardErr) {
+        // Never let reward failures crash the event pipeline
+        console.error('[discord/event] Reward processing error (non-fatal):', rewardErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       logged: true,

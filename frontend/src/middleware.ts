@@ -1,7 +1,11 @@
-import { type NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 export async function middleware(request: NextRequest) {
+    // Public creator profiles — no auth needed
+    if (/^\/fan\/[a-zA-Z0-9_]+$/.test(request.nextUrl.pathname)) {
+        return NextResponse.next();
+    }
     return await updateSession(request);
 }
 
