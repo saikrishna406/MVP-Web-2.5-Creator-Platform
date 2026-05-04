@@ -47,14 +47,15 @@ export default async function FanDashboardPage() {
         .order('created_at', { ascending: false })
         .limit(5);
 
-    const { data: unlockedPosts } = await supabase
+    // Use count-only queries to avoid loading all rows into memory
+    const { count: unlockedCount } = await supabase
         .from('post_unlocks')
-        .select('id')
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-    const { data: orders } = await supabase
+    const { count: ordersCount } = await supabase
         .from('redemption_orders')
-        .select('id')
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
     // Phase 2: Active memberships
@@ -120,13 +121,13 @@ export default async function FanDashboardPage() {
         },
         {
             label: 'Content Unlocked',
-            value: unlockedPosts?.length || 0,
+            value: unlockedCount || 0,
             desc: 'Premium posts accessed',
             icon: Newspaper,
         },
         {
             label: 'Items Redeemed',
-            value: orders?.length || 0,
+            value: ordersCount || 0,
             desc: 'Rewards claimed',
             icon: ShoppingBag,
         },

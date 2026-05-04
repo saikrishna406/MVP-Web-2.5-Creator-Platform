@@ -39,15 +39,17 @@ export default async function CreatorDashboardPage() {
         .eq('creator_id', user.id)
         .order('created_at', { ascending: false });
 
-    const { data: postUnlocks } = await supabase
+    // Fetch unlock stats scoped to this creator's posts only (server-side aggregation)
+    const { data: unlockStats } = await supabase
         .from('post_unlocks')
-        .select('*, post:posts!post_unlocks_post_id_fkey(creator_id)')
-        .order('created_at', { ascending: false });
+        .select('user_id, tokens_spent, posts!inner(creator_id)')
+        .eq('posts.creator_id', user.id);
 
-    const creatorUnlocks = postUnlocks?.filter(u => u.post?.creator_id === user.id) || [];
+    const creatorUnlocks = unlockStats || [];
     const totalTokensEarned = creatorUnlocks.reduce((sum, u) => sum + (u.tokens_spent || 0), 0);
-    const uniqueFans = new Set(creatorUnlocks.map(u => u.user_id)).size;
+    const uniqueFans = new Set(creatorUnlocks.map((u: any) => u.user_id)).size;
 
+    // Fetch pending redemption orders scoped to creator's own items
     const { data: orders } = await supabase
         .from('redemption_orders')
         .select(`
@@ -56,9 +58,11 @@ export default async function CreatorDashboardPage() {
       profile:profiles!redemption_orders_user_id_fkey(display_name, username)
     `)
         .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+        .eq('redemption_items.creator_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-    const pendingOrders = orders?.filter(o => o.item?.creator_id === user.id) || [];
+    const pendingOrders = orders?.filter((o: any) => o.item?.creator_id === user.id) || [];
 
     const stats = [
         { label: 'Tokens Earned', value: formatTokens(totalTokensEarned), icon: Coins, desc: 'Total revenue from fans' },
