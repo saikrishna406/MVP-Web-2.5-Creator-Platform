@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/app-sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { DailyLoginTracker } from '@/components/dashboard/DailyLoginTracker';
 
 export default async function FanLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
@@ -65,6 +66,7 @@ export default async function FanLayout({ children }: { children: React.ReactNod
                         paddingBottom: '40px',
                     }}
                 >
+                    <DailyLoginTracker />
                     {children}
                 </div>
             </SidebarInset>
