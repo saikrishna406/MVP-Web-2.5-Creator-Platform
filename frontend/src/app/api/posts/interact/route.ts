@@ -53,17 +53,22 @@ export async function POST(request: NextRequest) {
 
                 // TODO: Replace with atomic SQL decrement RPC to prevent race conditions
                 // Decrement count
-                const { data: unlikePost } = await serviceClient
+                const { data: unlikePost, error: unlikeFetchErr } = await serviceClient
                     .from('posts')
                     .select('likes_count')
                     .eq('id', postId)
                     .single();
 
-                if (unlikePost) {
-                    await serviceClient
+                if (unlikeFetchErr) {
+                    console.warn('[interact] Failed to fetch post for unlike count update:', unlikeFetchErr.message);
+                } else if (unlikePost) {
+                    const { error: unlikeUpdateErr } = await serviceClient
                         .from('posts')
                         .update({ likes_count: Math.max(0, (unlikePost.likes_count || 1) - 1) })
                         .eq('id', postId);
+                    if (unlikeUpdateErr) {
+                        console.warn('[interact] Failed to decrement likes_count:', unlikeUpdateErr.message);
+                    }
                 }
 
                 return NextResponse.json({ liked: false });
@@ -83,17 +88,22 @@ export async function POST(request: NextRequest) {
 
                 // TODO: Replace with atomic SQL increment RPC to prevent race conditions
                 // Increment count
-                const { data: post } = await serviceClient
+                const { data: post, error: likeFetchErr } = await serviceClient
                     .from('posts')
                     .select('likes_count')
                     .eq('id', postId)
                     .single();
 
-                if (post) {
-                    await serviceClient
+                if (likeFetchErr) {
+                    console.warn('[interact] Failed to fetch post for like count update:', likeFetchErr.message);
+                } else if (post) {
+                    const { error: likeUpdateErr } = await serviceClient
                         .from('posts')
                         .update({ likes_count: (post.likes_count || 0) + 1 })
                         .eq('id', postId);
+                    if (likeUpdateErr) {
+                        console.warn('[interact] Failed to increment likes_count:', likeUpdateErr.message);
+                    }
                 }
 
                 // Award points (uses reward_action with daily cap)
@@ -108,8 +118,9 @@ export async function POST(request: NextRequest) {
                         p_reference_id: postId,
                         p_cooldown_minutes: 0,
                     });
-                } catch {
-                    // Points are bonus — don't fail the like
+                } catch (err) {
+                    // Points are bonus — don't fail the like, but log so we can debug
+                    console.warn('[interact] reward_action RPC failed (points not awarded):', err);
                 }
 
                 return NextResponse.json({ liked: true, pointsEarned: likeAction.points });

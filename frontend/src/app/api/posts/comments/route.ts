@@ -15,14 +15,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Post ID required' }, { status: 400 });
         }
 
+        // Fetch comments without FK join hint (post_comments.user_id → auth.users, NOT profiles)
         const { data: comments, error } = await supabase
             .from('post_comments')
-            .select(`
-        *,
-        profile:profiles!post_comments_user_id_fkey(
-          id, username, display_name, avatar_url
-        )
-      `)
+            .select('*')
             .eq('post_id', postId)
             .order('created_at', { ascending: true });
 
@@ -31,7 +27,23 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
         }
 
-        return NextResponse.json({ comments: comments || [] });
+        // Batch-fetch profiles by user_id (same pattern as the posts API)
+        let enrichedComments = comments || [];
+        if (enrichedComments.length > 0) {
+            const userIds = [...new Set(enrichedComments.map(c => c.user_id))];
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, user_id, username, display_name, avatar_url')
+                .in('user_id', userIds);
+
+            const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+            enrichedComments = enrichedComments.map(comment => ({
+                ...comment,
+                profile: profileMap.get(comment.user_id) ?? null,
+            }));
+        }
+
+        return NextResponse.json({ comments: enrichedComments });
     } catch (error) {
         console.error('Comments GET error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -66,7 +78,7 @@ export async function POST(request: NextRequest) {
 
         const { postId, content } = parsed.data;
 
-        // Insert comment
+        // Insert comment without FK join hint (post_comments.user_id → auth.users, NOT profiles)
         const { data: comment, error } = await supabase
             .from('post_comments')
             .insert({
@@ -74,12 +86,7 @@ export async function POST(request: NextRequest) {
                 post_id: postId,
                 content: content.trim(),
             })
-            .select(`
-        *,
-        profile:profiles!post_comments_user_id_fkey(
-          id, username, display_name, avatar_url
-        )
-      `)
+            .select('*')
             .single();
 
         if (error) {
@@ -87,25 +94,45 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
         }
 
-        // Update comment count
-        // TODO: Replace with atomic SQL increment RPC to prevent race conditions
-        const serviceClient = await createServiceClient();
-        const { data: post } = await serviceClient
-            .from('posts')
-            .select('comments_count')
-            .eq('id', postId)
+        // Fetch the commenter's profile separately
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, user_id, username, display_name, avatar_url')
+            .eq('user_id', user.id)
             .single();
 
-        if (post) {
-            await serviceClient
+        const enrichedComment = { ...comment, profile: profile ?? null };
+
+        // Update comment count
+        // TODO: Replace with atomic SQL increment RPC to prevent race conditions
+        try {
+            const serviceClient = await createServiceClient();
+            const { data: post, error: postFetchError } = await serviceClient
                 .from('posts')
-                .update({ comments_count: (post.comments_count || 0) + 1 })
-                .eq('id', postId);
+                .select('comments_count')
+                .eq('id', postId)
+                .single();
+
+            if (postFetchError) {
+                console.warn('[comments] Failed to fetch post for count update:', postFetchError.message);
+            } else if (post) {
+                const { error: updateError } = await serviceClient
+                    .from('posts')
+                    .update({ comments_count: (post.comments_count || 0) + 1 })
+                    .eq('id', postId);
+
+                if (updateError) {
+                    console.warn('[comments] Failed to update comments_count:', updateError.message);
+                }
+            }
+        } catch (err) {
+            console.warn('[comments] Service client error during count update:', err);
         }
 
         // Award points for commenting (uses reward_action RPC with daily cap)
         const commentAction = POINT_ACTIONS['comment_post'];
         try {
+            const serviceClient = await createServiceClient();
             await serviceClient.rpc('reward_action', {
                 p_user_id: user.id,
                 p_action: 'comment_post',
@@ -115,11 +142,12 @@ export async function POST(request: NextRequest) {
                 p_reference_id: postId,
                 p_cooldown_minutes: 0,
             });
-        } catch {
-            // Points are bonus — don't fail the comment
+        } catch (err) {
+            // Points are bonus — don't fail the comment, but log so we can debug
+            console.warn('[comments] reward_action RPC failed (points not awarded):', err);
         }
 
-        return NextResponse.json({ comment, pointsEarned: commentAction.points }, { status: 201 });
+        return NextResponse.json({ comment: enrichedComment, pointsEarned: commentAction.points }, { status: 201 });
     } catch (error) {
         console.error('Comments POST error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
