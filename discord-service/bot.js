@@ -123,8 +123,10 @@ client.on('messageCreate', async (message) => {
     action_type: 'message',
     metadata: {
       channel_id: message.channelId,
+      content: message.content || '',
       content_length: message.content?.length ?? 0,
       has_attachments: message.attachments.size > 0,
+      is_bot: message.author.bot,
     },
   });
 });

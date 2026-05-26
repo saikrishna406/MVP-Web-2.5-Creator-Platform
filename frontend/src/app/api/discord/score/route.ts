@@ -42,19 +42,31 @@ export async function GET() {
         // ── Fetch aggregated Discord score ────────────────────────────────────
         // Use service client so the read isn't blocked by per-row RLS
         const serviceClient = await createServiceClient();
-        const { data: score, error: scoreError } = await serviceClient
-            .from('user_engagement_scores')
-            .select('discord_points')
-            .eq('user_id', profile.id)
-            .maybeSingle();
+        const [scoreRes, identityRes] = await Promise.all([
+            serviceClient
+                .from('user_engagement_scores')
+                .select('discord_points')
+                .eq('user_id', profile.id)
+                .maybeSingle(),
+            serviceClient
+                .from('user_identities')
+                .select('external_username')
+                .eq('user_id', user.id)
+                .eq('platform', 'discord')
+                .maybeSingle()
+        ]);
 
-        if (scoreError) {
-            console.error('[discord/score] Score fetch error:', scoreError.message);
-            return NextResponse.json({ discord_points: 0 });
+        if (scoreRes.error) {
+            console.error('[discord/score] Score fetch error:', scoreRes.error.message);
+        }
+        if (identityRes.error) {
+            console.error('[discord/score] Identity fetch error:', identityRes.error.message);
         }
 
         return NextResponse.json({
-            discord_points: score?.discord_points ?? 0,
+            discord_points: scoreRes.data?.discord_points ?? 0,
+            linked: !!identityRes.data,
+            discord_username: identityRes.data?.external_username ?? null,
         });
 
     } catch (err) {
