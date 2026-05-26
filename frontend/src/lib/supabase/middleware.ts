@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
 
     // Public paths that don't need auth
     const publicPaths = ['/', '/login', '/register', '/auth/callback', '/api/stripe/webhook', '/privacy', '/api/discord/callback', '/api/discord/connect'];
-    const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/discord/') || pathname.startsWith('/p/'));
+    const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/discord/') || pathname.startsWith('/api/link/discord/verify') || pathname.startsWith('/p/'));
 
     // Public creator profile pages: /p/[username] or /[username]
     const knownPrefixes = ['/login', '/register', '/auth', '/creator', '/fan', '/api', '/demo', '/privacy', '/_next', '/favicon'];
