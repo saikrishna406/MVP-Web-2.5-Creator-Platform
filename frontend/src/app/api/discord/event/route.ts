@@ -223,20 +223,17 @@ export async function POST(request: NextRequest) {
                 referenceUuid = null;
               }
 
-              // Call reward_action() RPC — handles daily cap + cooldown internally
-              const { data: rewardResult, error: rewardError } = await supabase.rpc('reward_action', {
+              // Call award_points() RPC — handles daily cap internally
+              const { data: rewardResult, error: rewardError } = await supabase.rpc('award_points', {
                 p_user_id: userId,
                 p_action: 'discord_message',
                 p_points: 1,
                 p_daily_limit: 100,
                 p_description: 'Discord message reward',
                 p_reference_id: referenceUuid,
-                p_cooldown_minutes: 0,
               });
 
-              const row = Array.isArray(rewardResult) ? rewardResult[0] : rewardResult;
-
-              if (!rewardError && row?.success) {
+              if (!rewardError && rewardResult) {
                 // Atomic increment in creator_points_agg (INSERT ON CONFLICT)
                 await supabase.rpc('increment_creator_points', {
                   p_user_id: userId,
