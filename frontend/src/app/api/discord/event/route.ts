@@ -214,16 +214,24 @@ export async function POST(request: NextRequest) {
             const isDuplicate = lastContent.length > 0 && lastContent === content;
 
             if (!isDuplicate) {
+              // Convert event_id (snowflake string) to a valid UUID format for p_reference_id
+              let referenceUuid = null;
+              try {
+                const hex = BigInt(event_id).toString(16).padStart(16, '0');
+                referenceUuid = `00000000-0000-0000-${hex.slice(0, 4)}-${hex.slice(4)}`;
+              } catch {
+                referenceUuid = null;
+              }
+
               // Call reward_action() RPC — handles daily cap + cooldown internally
-              const idempotencyKey = `discord_msg_${event_id}`;
               const { data: rewardResult, error: rewardError } = await supabase.rpc('reward_action', {
                 p_user_id: userId,
                 p_action: 'discord_message',
                 p_points: 1,
                 p_daily_limit: 100,
                 p_description: 'Discord message reward',
-                p_reference_id: idempotencyKey,
-                p_cooldown_minutes: 0.5,
+                p_reference_id: referenceUuid,
+                p_cooldown_minutes: 0,
               });
 
               const row = Array.isArray(rewardResult) ? rewardResult[0] : rewardResult;
